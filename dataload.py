@@ -38,3 +38,15 @@ def load_dataset_iris():
 
 X_train, X_test, y_train, y_test, feature_names, target_names = load_dataset_iris()
 
+
+#This method will need to be expanded as the project expands with architectural control i imagine
+
+def get_dataset_stats(X, y):
+    """Return dataset info for UI"""
+    unique_classes = len(np.unique(y))
+    return {
+        'samples': X.shape[0],
+        'features': X.shape[1],
+        'classes': unique_classes,
+        'class_names': [f'Class {i}' for i in range(unique_classes)]
+    }
