@@ -1,25 +1,2 @@
-#Core dependencies
-fastapi
-uvicorn
-pydantic
-pydantic settings
-
-#Dashboard
--plotly
--dash
--dash-bootstrap
-
-#Machine Learning with neural networks
--pytorch
--numpy
--pandas
--scikit-learn 
-
-#Process simulation
--sproclib
-
-#Utilities
--python-multipart
--websockets
--pyyaml
--python-dotnev 
+dash==3.3.0
+plotly==5.24.0
