@@ -61,7 +61,66 @@ app.layout = html.Div([
     # Hidden store for model history
     dcc.Store(id='model-history-store')
 ])
-
+ 
+@app.callback(
+    [Output('training-curves', 'figure'),
+     Output('test-accuracy', 'children'),
+     Output('status-text', 'children'),
+     Output('model-history-store', 'data')],
+    Input('train-btn', 'n_clicks'),
+    [State('hidden-size', 'value'),
+     State('learning-rate', 'value'),
+     State('epochs', 'value')],
+    prevent_initial_call=True
+)
+def train_and_visualize(n_clicks, hidden_size, learning_rate_log, epochs):
+    """Train model and update visualizations"""
+   
+    # Convert log scale back to linear
+    learning_rate = 10 ** learning_rate_log
+   
+    # Train
+    model, history = train_model(X_train, y_train,
+                                epochs=int(epochs),
+                                learning_rate=learning_rate,
+                                hidden_size=int(hidden_size))
+   
+    # Test accuracy
+    test_output = model.forward(X_test)
+    test_preds = np.argmax(test_output, axis=1)
+    test_acc = np.mean(test_preds == y_test)
+   
+    # Create training curves figure
+    fig = go.Figure()
+   
+    fig.add_trace(go.Scatter(
+        y=history['loss'],
+        mode='lines',
+        name='Loss',
+        line=dict(color='#FF6B6B', width=2)
+    ))
+   
+    fig.add_trace(go.Scatter(
+        y=history['accuracy'],
+        mode='lines',
+        name='Accuracy',
+        line=dict(color='#4ECDC4', width=2),
+        yaxis='y2'
+    ))
+   
+    fig.update_layout(
+        title='Training Progress',
+        xaxis_title='Epoch',
+        yaxis_title='Loss',
+        yaxis2=dict(title='Accuracy', overlaying='y', side='right'),
+        hovermode='x unified',
+        height=400
+    )
+   
+    status_msg = f"✓ Training complete! (Config: {int(hidden_size)}-neuron hidden layer, LR={learning_rate:.4f})"
+    accuracy_msg = f"Test Accuracy: {test_acc:.2%}"
+   
+    return fig, accuracy_msg, status_msg, {'loss': history['loss'], 'accuracy': history['accuracy']}
  
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run(debug=True)
