@@ -4,10 +4,15 @@ import plotly.graph_objects as go
 import numpy as np
 from dataload import load_dataset_iris, get_dataset_stats
 from trainer import train_model
+from sklearn.model_selection import train_test_split
  
 # Load data once at startup
-X_train, X_test, y_train, y_test, feature_names, class_names = load_dataset_iris()
-dataset_stats = get_dataset_stats(X_train, y_train)
+X_train_full, X_test, y_train_full, y_test, feature_names, class_names = load_dataset_iris()
+#dataset_stats = get_dataset_stats(X_train, y_train)
+
+X_train, X_val, y_train, y_val = train_test_split(
+    X_train_full, y_train_full, test_size=0.2, random_state=42, stratify=y_train_full
+)
  
 app = dash.Dash(__name__)
  
@@ -40,24 +45,25 @@ app.layout = html.Div([
             html.Button('Train Model', id='train-btn', n_clicks=0,
                        style={'marginTop': 30, 'padding': '10px 20px', 'width': '100%'}),
            
-            html.Div(id='status-text', style={'marginTop': 10, 'color': 'green'}),
+            html.Div(id='status-text', style={'marginTop': 10, 'colour': 'green'}),
            
         ], style={'width': '22%', 'display': 'inline-block', 'verticalAlign': 'top',
-                 'padding': '20px', 'backgroundColor': '#f9f9f9', 'borderRadius': '5px'}),
+                 'padding': '20px', 'backgroundColour': '#f9f9f9', 'borderRadius': '5px'}),
        
         # RIGHT: Visualizations
         html.Div([
             # Dataset info
             html.Div([
                 html.H4("Dataset Info"),
-                html.P(f"Samples: {dataset_stats['samples']} | Features: {dataset_stats['features']} | Classes: {dataset_stats['classes']}")
-            ], style={'marginBottom': 20, 'padding': '10px', 'backgroundColor': '#e8f4f8', 'borderRadius': '5px'}),
+                html.P(f"Train: {X_train.shape[0]} | Val: {X_val.shape[0]} | Test {X_test.shape[0]} | Features {X_train.shape[1]} | Classes: 3")
+            ], style={'marginBottom': 20, 'padding': '10px', 'backgroundColour': '#e8f4f8', 'borderRadius': '5px'}),
            
             # Training curves
             dcc.Graph(id='training-curves'),
+
+            #accuracy metrics box
+            html.Div(id='accuracy-metrics', style={'margintop': 10, 'fontSize': 14})
            
-            # Test accuracy
-            html.Div(id='test-accuracy', style={'marginTop': 10, 'fontSize': 16, 'fontWeight': 'bold'})
            
         ], style={'width': '76%', 'display': 'inline-block', 'verticalAlign': 'top', 'marginLeft': '2%'}),
     ]),
@@ -95,6 +101,23 @@ def train_and_visualize(n_clicks, seed, hidden_size, learning_rate_log, epochs):
                                 learning_rate=learning_rate,
                                 hidden_size=int(hidden_size),
                                 seed=seed)
+    
+    from nn_model import SimpleNN
+    np.random.seed(seed)
+    val_model = SimpleNN(input_size=X_train.shape[1],
+                         hidden_size=int(hidden_size),
+                         output_size=3,
+                         seed=seed)
+    
+    val_history = {'loss': [], 'accuracy': []}
+    for epoch in range(int(epochs)):
+        val_model.train_epoch(X_train, y_train, learning_rate)
+        val_output = val_model.forward(X_val)
+        val_loss = val_model.compute_loss(val_output, y_val)
+        val_preds = np.argmax(val_output, axis = 1)
+        val_acc =np.mean(val_preds == y_val)
+        val_history['loss'].append(val_loss)
+        val_history['accuracy'].append == (val_acc)
    
     # Test accuracy
     test_output = model.forward(X_test)
@@ -104,34 +127,72 @@ def train_and_visualize(n_clicks, seed, hidden_size, learning_rate_log, epochs):
     # Create training curves figure
     fig = go.Figure()
    
+    #Training loss
     fig.add_trace(go.Scatter(
         y=history['loss'],
         mode='lines',
-        name='Loss',
-        line=dict(color='#FF6B6B', width=2)
+        name='Trn Loss',
+        line=dict(colour='#FF6B6B', width=2)
     ))
-   
+
+    #Validation loss (will be with a dashed line)
     fig.add_trace(go.Scatter(
-        y=history['accuracy'],
+        y=history['loss'],
         mode='lines',
-        name='Accuracy',
-        line=dict(color='#4ECDC4', width=2),
+        name='Val Loss',
+        line=dict(colour='#F97316', width=2, dash='dash'),
+    ))
+
+    #Training accuracy
+    fig.add_trace(go.Scatter(
+        y=history['loss'],
+        mode='lines',
+        name='Trn Loss',
+        line=dict(colour='#4ECDC4', width=2),
         yaxis='y2'
     ))
    
+    #Validation accuracy (will be with a dashed line)
+    fig.add_trace(go.Scatter(
+        y=history['accuracy'],
+        mode='lines',
+        name='Val Acc',
+        line=dict(colour='#22C55E', width=2, dash='dash'),
+        yaxis='y2'
+    ))
+
+   
     fig.update_layout(
-        title='Training Progress',
+        title='Training Progress (Solid: Training, Dashed: Validation)',
         xaxis_title='Epoch',
         yaxis_title='Loss',
         yaxis2=dict(title='Accuracy', overlaying='y', side='right'),
         hovermode='x unified',
         height=400
     )
+
+    #Accuracy metrics display
+    train_acc_final = history['accuracy'][-1]
+    val_acc_final = val_history['accuracy'][-1]
+    overfitting_gap = train_acc_final - val_acc_final
+
+    accuracy_metrics = html.Div([
+        html.P(f"Train Accuracy: {train_acc_final:.2%}", style={'colour': '#4ECDC4', 'marginBottom': '5px'}),
+        html.P(f"Val Accuracy: {val_acc_final:.2%}", style={'colour': '#22C55E', 'marginBottom': '5px'}),
+        html.P(f"Test Accuracy: {test_acc:.2%}", style={'colour': '#FF6B6B', 'marginBottom': '5px', 'fontWeight': 'bold'}),
+        html.P(f"Overfitting Gap: {overfitting_gap:.2%}", style={'colour': '#FF6B6B' if overfitting_gap > 0.05 else 'green', 'fontSize': '12px'})
+    ])
    
-    status_msg = f"✓ Training complete! (Config: {int(hidden_size)}-neuron hidden layer, LR={learning_rate:.4f})"
-    accuracy_msg = f"Test Accuracy: {test_acc:.2%}"
+    status_msg = f"✓ Training complete! (Seed={seed}, {int(hidden_size)}-neuron, LR={learning_rate:.4f})"
+    #accuracy_msg = f"Test Accuracy: {test_acc:.2%}"
+    return fig, accuracy_metrics, status_msg, {
+        'train_loss': history['loss'],
+        'train_acc': history['accuracy'],
+        'val_loss': val_history['loss'],
+        'val_acc': val_history['accuracy']
+    }
    
-    return fig, accuracy_msg, status_msg, {'loss': history['loss'], 'accuracy': history['accuracy']}
+    #return fig, accuracy_msg, status_msg, {'loss': history['loss'], 'accuracy': history['accuracy']}
  
 if __name__ == '__main__':
     app.run(debug=False)   #changed debug to false because otherwise it resets the page every minute
