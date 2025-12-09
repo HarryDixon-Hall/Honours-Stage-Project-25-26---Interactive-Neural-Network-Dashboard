@@ -1,8 +1,11 @@
 import numpy as np
 
 class SimpleNN:
-    def __init__(self, input_size=4, hidden_size=8, output_size=3):
-        # Random initialization
+    def __init__(self, input_size=4, hidden_size=8, output_size=3, seed = None):
+        #Reproducible weight initalisation
+        np.random.seed(seed)
+
+        # Random initialisation
         self.W1 = np.random.randn(input_size, hidden_size) * 0.01
         self.b1 = np.zeros((1, hidden_size))
         self.W2 = np.random.randn(hidden_size, output_size) * 0.01
@@ -59,4 +62,8 @@ class SimpleNN:
         accuracy = np.mean(predictions == y)
         return loss, accuracy
 
+
+#Intermediate model
+
+#Complex model
 

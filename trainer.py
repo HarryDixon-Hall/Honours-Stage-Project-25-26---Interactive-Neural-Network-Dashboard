@@ -1,11 +1,15 @@
 from nn_model import SimpleNN
 import numpy as np
 
-def train_model(X_train, y_train, epochs=50, learning_rate=0.01, hidden_size=8):
+def train_model(X_train, y_train, epochs=50, learning_rate=0.01, hidden_size=8, seed = 42):
     """Train and return model + history"""
+
+    np.random.seed(seed)
+
     model = SimpleNN(input_size=X_train.shape[1],
                      hidden_size=hidden_size,
-                     output_size=len(np.unique(y_train)))
+                     output_size=len(np.unique(y_train)),
+                     seed=seed) #this will create a consistent weight initalisation 
    
     history = {'loss': [], 'accuracy': []}
    

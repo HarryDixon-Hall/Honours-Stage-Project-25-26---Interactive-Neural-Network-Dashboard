@@ -19,6 +19,10 @@ app.layout = html.Div([
         # LEFT: Controls
         html.Div([
             html.H3("Configuration"),
+
+            html.Label("Weight initalisation seed:"),
+            dcc.Input(id='seed-input', type='number', value=42,
+                      style={'width': '100%', 'padding': '8px', 'marginBottom': '20px'}),
            
             html.Label("Hidden Layer Size:"),
             dcc.Slider(id='hidden-size', min=4, max=64, step=4, value=8,
@@ -68,13 +72,19 @@ app.layout = html.Div([
      Output('status-text', 'children'),
      Output('model-history-store', 'data')],
     Input('train-btn', 'n_clicks'),
-    [State('hidden-size', 'value'),
+    [State('seed-input', 'value'),
+     State('hidden-size', 'value'),
      State('learning-rate', 'value'),
      State('epochs', 'value')],
     prevent_initial_call=True
 )
-def train_and_visualize(n_clicks, hidden_size, learning_rate_log, epochs):
+def train_and_visualize(n_clicks, seed, hidden_size, learning_rate_log, epochs):
     """Train model and update visualizations"""
+
+    #Seed weight validation
+    if seed is None:
+        seed = 42
+    seed = int(seed)
    
     # Convert log scale back to linear
     learning_rate = 10 ** learning_rate_log
@@ -83,7 +93,8 @@ def train_and_visualize(n_clicks, hidden_size, learning_rate_log, epochs):
     model, history = train_model(X_train, y_train,
                                 epochs=int(epochs),
                                 learning_rate=learning_rate,
-                                hidden_size=int(hidden_size))
+                                hidden_size=int(hidden_size),
+                                seed=seed)
    
     # Test accuracy
     test_output = model.forward(X_test)
