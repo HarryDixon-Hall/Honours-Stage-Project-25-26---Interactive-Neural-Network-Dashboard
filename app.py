@@ -134,4 +134,4 @@ def train_and_visualize(n_clicks, seed, hidden_size, learning_rate_log, epochs):
     return fig, accuracy_msg, status_msg, {'loss': history['loss'], 'accuracy': history['accuracy']}
  
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False)   #changed debug to false because otherwise it resets the page every minute
