@@ -17,8 +17,8 @@ X_train, X_val, y_train, y_val = train_test_split(
 app = dash.Dash(__name__)
 
 # Disable caching for development
-#app.config.suppress_callback_exceptions = False
-#app.config.assets_folder = 'assets'
+#app.contrain_fig.suppress_callback_exceptions = False
+#app.contrain_fig.assets_folder = 'assets'
 
 # Add cache busting headers
 #@app.server.after_request
@@ -73,6 +73,8 @@ app.layout = html.Div([
             # Training curves
             dcc.Graph(id='training-curves'),
 
+            dcc.Graph(id='architecture-graph', style={'marginTop': 20, 'height': 350}),
+
             #accuracy metrics box
             html.Div(id='accuracy-metrics', style={'marginTop': 10, 'fontSize': 14})
            
@@ -86,6 +88,7 @@ app.layout = html.Div([
  
 @app.callback(
     [Output('training-curves', 'figure'),
+     Output('architecture-graph', 'figure'),
      Output('accuracy-metrics', 'children'),
      Output('status-text', 'children'),
      Output('model-history-store', 'data')],
@@ -116,16 +119,20 @@ def train_and_visualize(n_clicks, seed, hidden_size, learning_rate_log, epochs):
     
     from nn_model import SimpleNN
     np.random.seed(seed)
-    val_model = SimpleNN(input_size=X_train.shape[1],
+    val_tracking_model = SimpleNN(input_size=X_train.shape[1],
                          hidden_size=int(hidden_size),
                          output_size=3,
                          seed=seed)
     
     val_history = {'loss': [], 'accuracy': []}
     for epoch in range(int(epochs)):
-        val_model.train_epoch(X_train, y_train, learning_rate)
-        val_output = val_model.forward(X_val)
-        val_loss = val_model.compute_loss(val_output, y_val)
+
+        #Train in one epoch
+        val_tracking_model.train_epoch
+
+        #val_model.train_epoch(X_train, y_train, learning_rate)
+        val_output = val_tracking_model.forward(X_val)
+        val_loss = val_tracking_model.compute_loss(val_output, y_val)
         val_preds = np.argmax(val_output, axis = 1)
         val_acc =np.mean(val_preds == y_val)
         val_history['loss'].append(val_loss)
@@ -137,10 +144,10 @@ def train_and_visualize(n_clicks, seed, hidden_size, learning_rate_log, epochs):
     test_acc = np.mean(test_preds == y_test)
    
     # Create training curves figure
-    fig = go.Figure()
+    train_fig= go.Figure()
    
     #Training loss
-    fig.add_trace(go.Scatter(
+    train_fig.add_trace(go.Scatter(
         y=history['loss'],
         mode='lines',
         name='Trn Loss',
@@ -148,7 +155,7 @@ def train_and_visualize(n_clicks, seed, hidden_size, learning_rate_log, epochs):
     ))
 
     #Validation loss (will be with a dashed line)
-    fig.add_trace(go.Scatter(
+    train_fig.add_trace(go.Scatter(
         y=val_history['loss'],
         mode='lines',
         name='Val Loss',
@@ -156,7 +163,7 @@ def train_and_visualize(n_clicks, seed, hidden_size, learning_rate_log, epochs):
     ))
 
     #Training accuracy
-    fig.add_trace(go.Scatter(
+    train_fig.add_trace(go.Scatter(
         y=history['accuracy'],
         mode='lines',
         name='Trn Acc',
@@ -165,7 +172,7 @@ def train_and_visualize(n_clicks, seed, hidden_size, learning_rate_log, epochs):
     ))
    
     #Validation accuracy (will be with a dashed line)
-    fig.add_trace(go.Scatter(
+    train_fig.add_trace(go.Scatter(
         y=val_history['accuracy'],
         mode='lines',
         name='Val Acc',
@@ -174,7 +181,7 @@ def train_and_visualize(n_clicks, seed, hidden_size, learning_rate_log, epochs):
     ))
 
    
-    fig.update_layout(
+    train_fig.update_layout(
         title='Training Progress (Solid: Training, Dashed: Validation)',
         xaxis_title='Epoch',
         yaxis_title='Loss',
@@ -182,6 +189,96 @@ def train_and_visualize(n_clicks, seed, hidden_size, learning_rate_log, epochs):
         hovermode='x unified',
         height=400
     )
+
+    #Architecture diagram figure
+
+    input_size = X_train.shape[1]
+    hidden_size_int = int(hidden_size)
+    output_size = len(np.unique(y_train))
+
+    x_input, x_hidden, x_output = 0, 1, 2
+
+    node_x = []
+    node_y = []
+    node_text = []
+    node_layer = []
+
+    #Input layer nodes
+    for i in range(input_size):
+        node_x.append(x_input)
+        node_y.append(i)
+        node_text.append(f"I{i+1}")
+        node_layer.append("Input")
+
+    #Hidden layer nodes
+    for i in range(hidden_size_int):
+        node_x.append(x_hidden)
+        node_y.append(i)
+        node_text.append(f"H{i+1}")
+        node_layer.append("Hidden")
+
+    # Output layer nodes
+    for i in range(output_size):
+        node_x.append(x_output)
+        node_y.append(i)
+        node_text.append(f"O{i+1}")
+        node_layer.append("Output")
+
+    edge_x = []
+    edge_y = []
+
+    # Input → Hidden connections
+    for i in range(input_size):
+        for j in range(hidden_size_int):
+            edge_x += [x_input, x_hidden, None]
+            edge_y += [i, j, None]
+
+    # Hidden → Output connections
+    for j in range(hidden_size_int):
+        for k in range(output_size):
+            edge_x += [x_hidden, x_output, None]
+            edge_y += [j, k, None]
+
+    edge_trace = go.Scatter(
+        x=edge_x,
+        y=edge_y,
+        mode='lines',
+        line=dict(width=1, color='#BBBBBB'),
+        hoverinfo='none',
+        showlegend=False
+    )
+
+    node_colors = [
+        '#60A5FA' if layer == 'Input'
+        else '#A855F7' if layer == 'Hidden'
+        else '#F97316'
+        for layer in node_layer
+    ]
+
+    node_trace = go.Scatter(
+        x=node_x,
+        y=node_y,
+        mode='markers+text',
+        text=node_text,
+        textposition='middle right',
+        marker=dict(
+            size=18,
+            color=node_colors,
+            line=dict(width=1, color='#333333')
+        ),
+        hoverinfo='text',
+        showlegend=False
+    )
+
+    arch_fig= go.Figure(data=[edge_trace, node_trace])
+    arch_fig.update_layout(
+        title=f"Network Architecture: {input_size}–{hidden_size_int}–{output_size}",
+        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+        margin=dict(l=20, r=20, t=40, b=20),
+        height=350
+    )
+
 
     #Accuracy metrics display
     train_acc_final = history['accuracy'][-1]
@@ -197,14 +294,14 @@ def train_and_visualize(n_clicks, seed, hidden_size, learning_rate_log, epochs):
    
     status_msg = f"✓ Training complete! (Seed={seed}, {int(hidden_size)}-neuron, LR={learning_rate:.4f})"
     #accuracy_msg = f"Test Accuracy: {test_acc:.2%}"
-    return fig, accuracy_metrics, status_msg, {
+    return train_fig, arch_fig, accuracy_metrics, status_msg, {
         'train_loss': history['loss'],
         'train_acc': history['accuracy'],
         'val_loss': val_history['loss'],
         'val_acc': val_history['accuracy']
     }
    
-    #return fig, accuracy_msg, status_msg, {'loss': history['loss'], 'accuracy': history['accuracy']}
+
  
 if __name__ == '__main__':
     app.run(debug=False)   #changed debug to false because otherwise it resets the page every minute
