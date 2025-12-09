@@ -5,6 +5,7 @@ import numpy as np
 from dataload import load_dataset_iris, get_dataset_stats
 from trainer import train_model
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
  
 # Load data once at startup
 X_train_full, X_test, y_train_full, y_test, feature_names, class_names = load_dataset_iris()
@@ -71,12 +72,17 @@ app.layout = html.Div([
             ], style={'marginBottom': 20, 'padding': '10px', 'backgroundColor': '#e8f4f8', 'borderRadius': '5px'}),
            
             # Training curves
-            dcc.Graph(id='training-curves'),
+            dcc.Graph(id='training-curves', style={'width': '48%', 'display': 'inline-block', 'marginLeft': '2%'}),
 
+           #architecture graph
             dcc.Graph(id='architecture-graph', style={'marginTop': 20, 'height': 350}),
 
+            #heatm map graph
+
+            dcc.Graph(id='confusion-matrix-heatmap', style={'marginTop': 20, 'height': 300}),
+
             #accuracy metrics box
-            html.Div(id='accuracy-metrics', style={'marginTop': 10, 'fontSize': 14})
+            html.Div(id='accuracy-metrics', style={'marginTop': 20, 'height': 400})
            
            
         ], style={'width': '76%', 'display': 'inline-block', 'verticalAlign': 'top', 'marginLeft': '2%'}),
@@ -89,7 +95,9 @@ app.layout = html.Div([
 @app.callback(
     [Output('training-curves', 'figure'),
      Output('architecture-graph', 'figure'),
+     Output('confusion-matrix-heatmap', 'figure'),
      Output('accuracy-metrics', 'children'),
+     Output('per-class-metrics', 'children'),
      Output('status-text', 'children'),
      Output('model-history-store', 'data')],
     Input('train-btn', 'n_clicks'),
@@ -128,7 +136,7 @@ def train_and_visualize(n_clicks, seed, hidden_size, learning_rate_log, epochs):
     for epoch in range(int(epochs)):
 
         #Train in one epoch
-        val_tracking_model.train_epoch
+        val_tracking_model.train_epoch(X_train, y_train, learning_rate)
 
         #val_model.train_epoch(X_train, y_train, learning_rate)
         val_output = val_tracking_model.forward(X_val)
@@ -142,8 +150,31 @@ def train_and_visualize(n_clicks, seed, hidden_size, learning_rate_log, epochs):
     test_output = model.forward(X_test)
     test_preds = np.argmax(test_output, axis=1)
     test_acc = np.mean(test_preds == y_test)
+
+    #confusion matrix - config ================================
+    cm = confusion_matrix(y_test, test_preds, labels=[0,1,2])
+
+    cm_fig = go.Figure(data=go.Heatmap(
+        z=cm,
+        x=class_names,
+        y=class_names,
+        text=cm,
+        texttemplate='%{text}',
+        textfont={"size": 14},
+        colorscale='Blues',
+        hovertemplate='True: %{y}<br>Pred: %{x}<br>Count: %{z}<extra></extra'
+    ))
+
+    cm_fig.update_layout (
+        title='Test Set Confusion Matrix (per class performance)',
+        xaxis_title='Predicted Label',
+        yaxis_title='True Label',
+        height=400,
+        margin=dict(l=100, r=50, t=80, b=80)
+    )
+
    
-    # Create training curves figure
+    # Create training curves figure============================
     train_fig= go.Figure()
    
     #Training loss
@@ -279,6 +310,40 @@ def train_and_visualize(n_clicks, seed, hidden_size, learning_rate_log, epochs):
         height=350
     )
 
+    #Per-class metrics such as (precision, recall, f1) ================================
+    precision, recall, f1, support = precision_recall_fscore_support(y_test, test_preds, labels=[0, 1, 2])
+
+    per_class_metrics = html.Div([
+        html.H4("Per-Class Performance", style={'marginBottom': 10}),
+        html.Table([
+            html.Thead(
+                html.Tr([
+                    html.Th("Class", style={'padding': '8px', 'textAlign': 'left'}),
+                    html.Th("Precision", style={'padding': '8px', 'textAlign': 'center'}),
+                    html.Th("Recall", style={'padding': '8px', 'textAlign': 'center'}),
+                    html.Th("F1-Score", style={'padding': '8px', 'textAlign': 'center'}),
+                    html.Th("Support", style={'padding': '8px', 'textAlign': 'center'}),
+                ], style={'borderBottom': '2px solid #333'})
+            ),
+            html.Tbody([
+                html.Tr([
+                    html.Td(class_names[i], style={'padding': '6px', 'fontWeight': 'bold'}),
+                    html.Td(f"{precision[i]:.3f}", style={'padding': '6px', 'textAlign': 'center', 'color': '#4ECDC4'}),
+                    html.Td(f"{recall[i]:.3f}", style={'padding': '6px', 'textAlign': 'center', 'color': '#22C55E'}),
+                    html.Td(f"{f1[i]:.3f}", style={'padding': '6px', 'textAlign': 'center', 'color': '#F97316'}),
+                    html.Td(f"{support[i]}", style={'padding': '6px', 'textAlign': 'center', 'color': '#666'}),
+                ]) for i in range(3)
+            ])
+        ], style={
+            'borderCollapse': 'collapse',
+            'width': '100%',
+            'fontSize': '13px',
+            'border': '1px solid #ddd'
+        })
+    ])
+
+
+
 
     #Accuracy metrics display
     train_acc_final = history['accuracy'][-1]
@@ -294,7 +359,7 @@ def train_and_visualize(n_clicks, seed, hidden_size, learning_rate_log, epochs):
    
     status_msg = f"✓ Training complete! (Seed={seed}, {int(hidden_size)}-neuron, LR={learning_rate:.4f})"
     #accuracy_msg = f"Test Accuracy: {test_acc:.2%}"
-    return train_fig, arch_fig, accuracy_metrics, status_msg, {
+    return train_fig, arch_fig, cm_fig, per_class_metrics, accuracy_metrics, status_msg, {
         'train_loss': history['loss'],
         'train_acc': history['accuracy'],
         'val_loss': val_history['loss'],
