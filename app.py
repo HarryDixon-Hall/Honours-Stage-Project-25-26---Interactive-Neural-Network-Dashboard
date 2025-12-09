@@ -15,6 +15,18 @@ X_train, X_val, y_train, y_val = train_test_split(
 )
  
 app = dash.Dash(__name__)
+
+# Disable caching for development
+#app.config.suppress_callback_exceptions = False
+#app.config.assets_folder = 'assets'
+
+# Add cache busting headers
+#@app.server.after_request
+#def add_header(response):
+#    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+#    response.headers['Pragma'] = 'no-cache'
+#    response.headers['Expires'] = '0'
+#    return response
  
 # App layout
 app.layout = html.Div([
@@ -45,10 +57,10 @@ app.layout = html.Div([
             html.Button('Train Model', id='train-btn', n_clicks=0,
                        style={'marginTop': 30, 'padding': '10px 20px', 'width': '100%'}),
            
-            html.Div(id='status-text', style={'marginTop': 10, 'colour': 'green'}),
+            html.Div(id='status-text', style={'marginTop': 10, 'color': 'green'}),
            
         ], style={'width': '22%', 'display': 'inline-block', 'verticalAlign': 'top',
-                 'padding': '20px', 'backgroundColour': '#f9f9f9', 'borderRadius': '5px'}),
+                 'padding': '20px', 'backgroundColor': '#f9f9f9', 'borderRadius': '5px'}),
        
         # RIGHT: Visualizations
         html.Div([
@@ -56,13 +68,13 @@ app.layout = html.Div([
             html.Div([
                 html.H4("Dataset Info"),
                 html.P(f"Train: {X_train.shape[0]} | Val: {X_val.shape[0]} | Test {X_test.shape[0]} | Features {X_train.shape[1]} | Classes: 3")
-            ], style={'marginBottom': 20, 'padding': '10px', 'backgroundColour': '#e8f4f8', 'borderRadius': '5px'}),
+            ], style={'marginBottom': 20, 'padding': '10px', 'backgroundColor': '#e8f4f8', 'borderRadius': '5px'}),
            
             # Training curves
             dcc.Graph(id='training-curves'),
 
             #accuracy metrics box
-            html.Div(id='accuracy-metrics', style={'margintop': 10, 'fontSize': 14})
+            html.Div(id='accuracy-metrics', style={'marginTop': 10, 'fontSize': 14})
            
            
         ], style={'width': '76%', 'display': 'inline-block', 'verticalAlign': 'top', 'marginLeft': '2%'}),
@@ -74,7 +86,7 @@ app.layout = html.Div([
  
 @app.callback(
     [Output('training-curves', 'figure'),
-     Output('test-accuracy', 'children'),
+     Output('accuracy-metrics', 'children'),
      Output('status-text', 'children'),
      Output('model-history-store', 'data')],
     Input('train-btn', 'n_clicks'),
@@ -117,7 +129,7 @@ def train_and_visualize(n_clicks, seed, hidden_size, learning_rate_log, epochs):
         val_preds = np.argmax(val_output, axis = 1)
         val_acc =np.mean(val_preds == y_val)
         val_history['loss'].append(val_loss)
-        val_history['accuracy'].append == (val_acc)
+        val_history['accuracy'].append(val_acc)
    
     # Test accuracy
     test_output = model.forward(X_test)
@@ -132,32 +144,32 @@ def train_and_visualize(n_clicks, seed, hidden_size, learning_rate_log, epochs):
         y=history['loss'],
         mode='lines',
         name='Trn Loss',
-        line=dict(colour='#FF6B6B', width=2)
+        line=dict(color='#FF6B6B', width=2)
     ))
 
     #Validation loss (will be with a dashed line)
     fig.add_trace(go.Scatter(
-        y=history['loss'],
+        y=val_history['loss'],
         mode='lines',
         name='Val Loss',
-        line=dict(colour='#F97316', width=2, dash='dash'),
+        line=dict(color='#F97316', width=2, dash='dash'),
     ))
 
     #Training accuracy
     fig.add_trace(go.Scatter(
-        y=history['loss'],
+        y=history['accuracy'],
         mode='lines',
-        name='Trn Loss',
-        line=dict(colour='#4ECDC4', width=2),
+        name='Trn Acc',
+        line=dict(color='#4ECDC4', width=2),
         yaxis='y2'
     ))
    
     #Validation accuracy (will be with a dashed line)
     fig.add_trace(go.Scatter(
-        y=history['accuracy'],
+        y=val_history['accuracy'],
         mode='lines',
         name='Val Acc',
-        line=dict(colour='#22C55E', width=2, dash='dash'),
+        line=dict(color='#22C55E', width=2, dash='dash'),
         yaxis='y2'
     ))
 
@@ -177,10 +189,10 @@ def train_and_visualize(n_clicks, seed, hidden_size, learning_rate_log, epochs):
     overfitting_gap = train_acc_final - val_acc_final
 
     accuracy_metrics = html.Div([
-        html.P(f"Train Accuracy: {train_acc_final:.2%}", style={'colour': '#4ECDC4', 'marginBottom': '5px'}),
-        html.P(f"Val Accuracy: {val_acc_final:.2%}", style={'colour': '#22C55E', 'marginBottom': '5px'}),
-        html.P(f"Test Accuracy: {test_acc:.2%}", style={'colour': '#FF6B6B', 'marginBottom': '5px', 'fontWeight': 'bold'}),
-        html.P(f"Overfitting Gap: {overfitting_gap:.2%}", style={'colour': '#FF6B6B' if overfitting_gap > 0.05 else 'green', 'fontSize': '12px'})
+        html.P(f"Train Accuracy: {train_acc_final:.2%}", style={'color': '#4ECDC4', 'marginBottom': '5px'}),
+        html.P(f"Val Accuracy: {val_acc_final:.2%}", style={'color': '#22C55E', 'marginBottom': '5px'}),
+        html.P(f"Test Accuracy: {test_acc:.2%}", style={'color': '#FF6B6B', 'marginBottom': '5px', 'fontWeight': 'bold'}),
+        html.P(f"Overfitting Gap: {overfitting_gap:.2%}", style={'color': '#FF6B6B' if overfitting_gap > 0.05 else 'green', 'fontSize': '12px'})
     ])
    
     status_msg = f"✓ Training complete! (Seed={seed}, {int(hidden_size)}-neuron, LR={learning_rate:.4f})"
@@ -196,3 +208,5 @@ def train_and_visualize(n_clicks, seed, hidden_size, learning_rate_log, epochs):
  
 if __name__ == '__main__':
     app.run(debug=False)   #changed debug to false because otherwise it resets the page every minute
+
+
