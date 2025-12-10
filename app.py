@@ -74,22 +74,24 @@ app.layout = html.Div([
             # Training curves
             dcc.Graph(id='training-curves', style={'width': '48%', 'display': 'inline-block', 'marginLeft': '2%'}),
 
-           #architecture graph
+            #architecture graph
             dcc.Graph(id='architecture-graph', style={'marginTop': 20, 'height': 350}),
 
-            #heatm map graph
-
+            #heat map graph
             dcc.Graph(id='confusion-matrix-heatmap', style={'marginTop': 20, 'height': 300}),
 
+            #per-class metrics
+            html.Div(id='per-class-metrics', style={'marginTop': 20, 'height': 400}),
+
             #accuracy metrics box
-            html.Div(id='accuracy-metrics', style={'marginTop': 20, 'height': 400})
+            html.Div(id='accuracy-metrics', style={'marginTop': 20, 'height': 400, 'width': '76%', 'display': 'inline-block', 'verticalAlign': 'top', 'marginLeft': '2%'}),
+        ]),
            
-           
-        ], style={'width': '76%', 'display': 'inline-block', 'verticalAlign': 'top', 'marginLeft': '2%'}),
     ]),
    
     # Hidden store for model history
     dcc.Store(id='model-history-store')
+
 ])
  
 @app.callback(
