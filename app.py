@@ -380,28 +380,31 @@ app.layout = html.Div(
                                             },
                                         ),
 
-                                    ]
-                                )
+                                    ],
+                                ),
 
 
-                            ]
-                        )
+                            ],
+                        ),
 
 
-                    ]
+                    ],
 
                     
 
-                )
+                ),
 
 
 
-            ]
+            ],
 
-        
-        )
-    ]
+        ),
+        dcc.Store(id="model-history-store"),
+    ],
 )
+
+app.layout.children.append(dcc.Store(id-"model-history-store"))
+
 
 #3.1 information box callback
 
