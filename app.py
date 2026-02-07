@@ -59,8 +59,35 @@ Placeholder text
 TASKS_TEXT = """
 Placeholder text
 """
- 
-# App layout
+
+
+#new layout - 4 box grid
+
+#2.1
+
+#2.1 Top left - Information box, 3 top buttons "Introduction", "Theory", "Tasks"
+
+app.layout = html.Div(
+    style={
+        "height": "100vh",
+        "padding": "10px",
+        "backgroundColor": "#f3f4f6",
+        "fontFamily": "Arial, sans-serif",
+        "boxSizing": "border-box",
+    },
+    children=[
+        html.H1(
+            "Interactive Neural Network Dashboard",
+            style={
+                "textAlign": "center",
+                "marginBottom": "10px",
+                "fontSize": "28px",
+            },
+        ),
+    ]
+)
+
+"""
 app.layout = html.Div([
     html.H1("Neural Network Visualizer", style={'textAlign': 'center', 'marginBottom': 30}),
    
@@ -124,6 +151,7 @@ app.layout = html.Div([
     dcc.Store(id='model-history-store')
 
 ])
+"""
  
 @app.callback(
     [Output('training-curves', 'figure'),
