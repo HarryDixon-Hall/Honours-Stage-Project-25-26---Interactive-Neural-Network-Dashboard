@@ -355,7 +355,7 @@ app.layout = html.Div(
                                         )
                                     ],
                                 ),
-                                # Metrics (scrollable if tall)
+                                # Metrics (can scroll them)
                                 html.Div(
                                     style={
                                         "flex": "1",
@@ -364,6 +364,21 @@ app.layout = html.Div(
                                         "flexDirection": "column",
                                     },
                                     children=[
+                                        html.Div(
+                                            id="accuracy-metrics",
+                                            style={
+                                                "fontSize": "12px",
+                                                "marginBottom": "6px",
+                                            },
+                                        ),
+                                        html.Div(
+                                            id="per-class-metrics",
+                                            style={
+                                                "flex": "1",
+                                                "overflowY": "auto",
+                                                "fontSize": "11px",
+                                            },
+                                        ),
 
                                     ]
                                 )
