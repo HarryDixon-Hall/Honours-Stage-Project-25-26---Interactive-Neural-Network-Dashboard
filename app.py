@@ -60,12 +60,7 @@ TASKS_TEXT = """
 Placeholder text
 """
 
-
 #new layout - 4 box grid
-
-#2.1
-
-#2.1 Top left - Information box, 3 top buttons "Introduction", "Theory", "Tasks"
 
 app.layout = html.Div(
     style={
@@ -93,6 +88,69 @@ app.layout = html.Div(
                 "gap": "10px",
                 "height": "calc(100% - 60px)",  #fill viewport minus title
             },
+            children=[ #the four containers are the children
+                #2.1 Top left - Information box, 3 top buttons "Introduction", "Theory", "Tasks"
+                html.Div(
+                    style={
+                        "backgroundColor": "white",
+                        "borderRadius": "8px",
+                        "boxShadow": "0 2px 6px rgba(0,0,0,0.08)",
+                        "padding": "12px 16px",
+                        "display": "flex",
+                        "flexDirection": "column",
+                        "minHeight": 0,
+                    },
+                    children=[
+                        html.Div(
+                            [
+                                html.Span(
+                                    "Information", #title for information box
+                                    style={
+                                        "fontSize": "18px",
+                                        "fontWeight": "600",
+                                        "marginRight": "12px",
+                                    },
+                                ),
+                                html.Button( #this will button open a page for users to understand the dashboard purpose
+                                    "Introduction",
+                                    id="info-intro-btn",
+                                    n_clicks=0,
+                                    style={"marginRight": "6px", "padding": "4px 8px"},
+                                ),
+                                html.Button( #this button will provide mathematical concepts and background reading for FNN
+                                    "Theory",
+                                    id="info-theory-btn",
+                                    n_clicks=0,
+                                    style={"marginRight": "6px", "padding": "4px 8px"},
+                                ),
+                                html.Button( #walkthrough tasks to guide the user to a higher conceptual understanding of FNN
+                                    "Tasks",
+                                    id="info-tasks-btn",
+                                    n_clicks=0,
+                                    style={"padding": "4px 8px"},
+                                ),
+                            ],
+                            style={
+                                "display": "flex",
+                                "alignItems": "center",
+                                "marginBottom": "8px",
+                            },
+                        ),
+                        html.Hr(style={"margin": "6px 0 10px 0"}),
+                        html.Div(
+                            id="info-content",
+                            style={
+                                "flex": "1",
+                                "overflowY": "auto",
+                                "fontSize": "13px",
+                                "lineHeight": "1.4",
+                                "whiteSpace": "pre-line",
+                            },
+                        ),
+                    ],
+                ),
+
+            ]
 
         
         )
