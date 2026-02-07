@@ -355,6 +355,19 @@ app.layout = html.Div(
                                         )
                                     ],
                                 ),
+                                # Metrics (scrollable if tall)
+                                html.Div(
+                                    style={
+                                        "flex": "1",
+                                        "minWidth": "0",
+                                        "display": "flex",
+                                        "flexDirection": "column",
+                                    },
+                                    children=[
+
+                                    ]
+                                )
+
 
                             ]
                         )
