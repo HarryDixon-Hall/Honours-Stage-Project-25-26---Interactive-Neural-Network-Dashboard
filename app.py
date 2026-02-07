@@ -84,6 +84,18 @@ app.layout = html.Div(
                 "fontSize": "28px",
             },
         ),
+        #2x2 grid layout as discussed in new layout plan
+        html.Div(
+            style={
+                "display": "grid",
+                "gridTemplateColumns": "1fr 1.5fr",
+                "gridTemplateRows": "1fr 1.2fr",
+                "gap": "10px",
+                "height": "calc(100% - 60px)",  #fill viewport minus title
+            },
+
+        
+        )
     ]
 )
 
