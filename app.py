@@ -343,6 +343,20 @@ app.layout = html.Div(
                                 "height": "60%",
                                 "gap": "8px",
                             },
+                            children=[
+                                #confusion matrices
+                                html.Div(
+                                    style={"flex": "1", "minWidth": "0"},
+                                    children=[
+                                        dcc.Graph(
+                                            id="confusion-matrix-heatmap",
+                                            style={"height": "100%"},
+                                            config={"displayModeBar": False},
+                                        )
+                                    ],
+                                ),
+
+                            ]
                         )
 
 
