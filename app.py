@@ -53,11 +53,11 @@ This dashboard provides an interactive walkthrough of a Feed-Forward Neural Netw
 """
 
 THEORY_TEXT = """
-Placeholder text
+Theory text
 """
 
 TASKS_TEXT = """
-Placeholder text
+Tasks text
 """
 
 #new layout - 4 box grid
@@ -402,6 +402,28 @@ app.layout = html.Div(
         )
     ]
 )
+
+#3.1 information box callback
+
+@app.callback(
+    Output("info-content", "children"),
+    Input("info-intro-btn", "n_clicks"),
+    Input("info-theory-btn", "n_clicks"),
+    Input("info-tasks-btn", "n_clicks"),
+)
+def update_info_content(n_intro, n_theory, n_tasks):
+    # Determine which button was pressed most recently
+    ctx = dash.callback_context
+    if not ctx.triggered:
+        # default view
+        return INTRODUCTION_TEXT
+    button_id = ctx.triggered[0]["prop_id"].split(".")[0]
+    if button_id == "info-theory-btn":
+        return THEORY_TEXT
+    elif button_id == "info-tasks-btn":
+        return TASKS_TEXT
+    else:
+        return INTRODUCTION_TEXT
 
 """
 app.layout = html.Div([
