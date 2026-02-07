@@ -250,7 +250,7 @@ app.layout = html.Div(
                                     "Model Hyperparameters",
                                     style={"fontSize": "14px", "marginBottom": "8px"},
                                 ),
-                                html.Label("Weight Initialization Seed:", style={"fontSize": "12px"}),
+                                html.Label("Weight Initialisation Seed:", style={"fontSize": "12px"}),
                                 dcc.Input(
                                     id="seed-input",
                                     type="number",
@@ -403,7 +403,7 @@ app.layout = html.Div(
     ],
 )
 
-app.layout.children.append(dcc.Store(id-"model-history-store"))
+#app.layout.children.append(dcc.Store(id="model-history-store"))
 
 
 #3.1 information box callback
