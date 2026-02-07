@@ -491,6 +491,7 @@ app.layout = html.Div([
 ])
 """
  
+#callback for training outcomes
 @app.callback(
     [Output('training-curves', 'figure'),
      Output('architecture-graph', 'figure'),
@@ -756,7 +757,7 @@ def train_and_visualize(n_clicks, seed, hidden_size, learning_rate_log, epochs):
         html.P(f"Overfitting Gap: {overfitting_gap:.2%}", style={'color': '#FF6B6B' if overfitting_gap > 0.05 else 'green', 'fontSize': '12px'})
     ])
    
-    status_msg = f"✓ Training complete! (Seed={seed}, {int(hidden_size)}-neuron, LR={learning_rate:.4f})"
+    status_msg = f"Training complete! Observe Outcomes (Seed={seed}, {int(hidden_size)}-neuron, LR={learning_rate:.4f})"
     #accuracy_msg = f"Test Accuracy: {test_acc:.2%}"
     return train_fig, arch_fig, cm_fig, per_class_metrics, accuracy_metrics, status_msg, {
         'train_loss': history['loss'],
@@ -766,7 +767,18 @@ def train_and_visualize(n_clicks, seed, hidden_size, learning_rate_log, epochs):
     }
    
 
+#callback to reset trained model
+@app.callback(
+    Output("model-history-store", "clear_data"),
+    Input("reset-btn", "n_clicks"),
+    prevent_initial_call=True,
+)
+def reset_history(n_clicks):
+    # Clears the dcc.Store; you can also extend to clear figures if desired
+    return True
+
  
+ #start app
 if __name__ == '__main__':
     app.run(debug=False)   #changed debug to false because otherwise it resets the page every minute
 
