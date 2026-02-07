@@ -28,6 +28,24 @@ app = dash.Dash(__name__)
 #    response.headers['Pragma'] = 'no-cache'
 #    response.headers['Expires'] = '0'
 #    return response
+
+
+#=======NEW PLAN=======
+
+
+#1. Info box content variables = "Introduction", "Theory", "Tasks"
+
+#2. Layout plan - 4 box grid dashboard
+#2.1 Top left - Information box, 3 top buttons "Introduction", "Theory", "Tasks"
+#2.2 Bottom left - Hyperparameter Control panel (FNN architecture config and Training setup config)
+#2.3 Top right - Feed forward neural network architecture
+#2.4 Bottom right - Training outcomes (loss graphs, confusion matrices, accuracy metrics etc)
+
+#3. Callbacks
+#3.1 Information box
+#3.2 Hyperparameter Control panel
+#3.3 Reset trained model
+ 
  
 # App layout
 app.layout = html.Div([
