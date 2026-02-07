@@ -37,8 +37,8 @@ app = dash.Dash(__name__)
 
 #2. Layout plan - 4 box grid dashboard
 #2.1 Top left - Information box, 3 top buttons "Introduction", "Theory", "Tasks"
-#2.2 Bottom left - Hyperparameter Control panel (FNN architecture config and Training setup config)
-#2.3 Top right - Feed forward neural network architecture
+#2.2 Top right - Feed forward neural network architecture
+#2.3 Bottom left - Hyperparameter Control panel (FNN architecture config and Training setup config)
 #2.4 Bottom right - Training outcomes (loss graphs, confusion matrices, accuracy metrics etc)
 
 #3. Callbacks
@@ -151,8 +151,46 @@ app.layout = html.Div(
                         ),
                     ],
                 ),
+
                 #=========
-                #2.2 Bottom left - Hyperparameter Control panel (FNN architecture config and Training setup config)
+                #2.2 Top right - Feed forward neural network architecture
+                #=========
+                html.Div(
+                    style={
+                        "backgroundColor": "white",
+                        "borderRadius": "8px",
+                        "boxShadow": "0 2px 6px rgba(0,0,0,0.08)",
+                        "padding": "12px",
+                        "display": "flex",
+                        "flexDirection": "column",
+                    },
+                    children=[
+                        html.Div(
+                            "Feed-Forward Neural Network Architecture",
+                            style={
+                                "fontSize": "16px",
+                                "fontWeight": "600",
+                                "marginBottom": "6px",
+                            },
+                        ),
+                        html.Div(
+                            f"Train: {X_train.shape[0]} | Val: {X_val.shape[0]} | "
+                            f"Test: {X_test.shape[0]} | Features: {X_train.shape[1]} | Classes: 3",
+                            style={"fontSize": "11px", "color": "#4b5563", "marginBottom": "4px"},
+                        ),
+                        dcc.Graph(
+                            id="architecture-graph",
+                            style={
+                                "flex": "1",
+                                "minHeight": "0",
+                            },
+                            config={"displayModeBar": False},
+                        ),
+                    ],
+                ),
+
+                #=========
+                #2.3 Bottom left - Hyperparameter Control panel (FNN architecture config and Training setup config)
                 #=========
                 html.Div(
                     style={
@@ -268,43 +306,6 @@ app.layout = html.Div(
                     ],
                 ),
 
-
-                #=========
-                #2.3 Top right - Feed forward neural network architecture
-                #=========
-                html.Div(
-                    style={
-                        "backgroundColor": "white",
-                        "borderRadius": "8px",
-                        "boxShadow": "0 2px 6px rgba(0,0,0,0.08)",
-                        "padding": "12px",
-                        "display": "flex",
-                        "flexDirection": "column",
-                    },
-                    children=[
-                        html.Div(
-                            "Feed-Forward Neural Network Architecture",
-                            style={
-                                "fontSize": "16px",
-                                "fontWeight": "600",
-                                "marginBottom": "6px",
-                            },
-                        ),
-                        html.Div(
-                            f"Train: {X_train.shape[0]} | Val: {X_val.shape[0]} | "
-                            f"Test: {X_test.shape[0]} | Features: {X_train.shape[1]} | Classes: 3",
-                            style={"fontSize": "11px", "color": "#4b5563", "marginBottom": "4px"},
-                        ),
-                        dcc.Graph(
-                            id="architecture-graph",
-                            style={
-                                "flex": "1",
-                                "minHeight": "0",
-                            },
-                            config={"displayModeBar": False},
-                        ),
-                    ],
-                ),
 
 
                 #=========
