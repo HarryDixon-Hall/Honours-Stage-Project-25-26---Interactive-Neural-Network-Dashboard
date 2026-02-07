@@ -45,7 +45,20 @@ app = dash.Dash(__name__)
 #3.1 Information box
 #3.2 Hyperparameter Control panel
 #3.3 Reset trained model
- 
+
+
+#Information that could be used in the callback of the information box
+INTRODUCTION_TEXT = """
+This dashboard provides an interactive walkthrough of a Feed-Forward Neural Network solving a classification problem with Iris dataset.
+"""
+
+THEORY_TEXT = """
+Placeholder text
+"""
+
+TASKS_TEXT = """
+Placeholder text
+"""
  
 # App layout
 app.layout = html.Div([
