@@ -1,5 +1,5 @@
-# Honours-Stage-Project-25-26---Optimisation-of-Distillation-Column
-A final year project to design a system that uses AI to improve the efficiency of crude oil distillation columns by predicting and adjusting operations based on real-world data.
+# Honours-Stage-Project-25-26---Interactive Neural Network Dashboard
+A final year project to design an Interactive Dashboard that will serve as a walkthrough in using Feed-Forward Neural Networks to solve a classification problem, the Iris Dataset
 
 # Important
 
