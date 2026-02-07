@@ -311,6 +311,48 @@ app.layout = html.Div(
                 #=========
                 #2.4 Bottom right - Training outcomes (loss graphs, confusion matrices, accuracy metrics etc)
                 #=========
+                html.Div(
+                    style={
+                        "backgroundColor": "white",
+                        "borderRadius": "8px",
+                        "boxShadow": "0 2px 6px rgba(0,0,0,0.08)",
+                        "padding": "12px",
+                        "display": "flex",
+                        "flexDirection": "column",
+                        "minHeight": 0,
+                    },
+                    children=[
+                        html.Div(
+                            "Training Outcomes",
+                            style={
+                                "fontSize": "16px",
+                                "fontWeight": "600",
+                                "marginBottom": "6px",
+                            },
+                        ),
+                        # Training curves
+                        dcc.Graph(
+                            id="training-curves",
+                            style={"height": "40%"},
+                            config={"displayModeBar": False},
+                        ),
+                        html.Div(
+                            style={
+                                "display": "flex",
+                                "marginTop": "8px",
+                                "height": "60%",
+                                "gap": "8px",
+                            },
+                        )
+
+
+                    ]
+
+                    
+
+                )
+
+
 
             ]
 
