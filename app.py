@@ -424,72 +424,6 @@ def update_info_content(n_intro, n_theory, n_tasks):
         return TASKS_TEXT
     else:
         return INTRODUCTION_TEXT
-
-"""
-app.layout = html.Div([
-    html.H1("Neural Network Visualizer", style={'textAlign': 'center', 'marginBottom': 30}),
-   
-    html.Div([
-        # LEFT: Controls
-        html.Div([
-            html.H3("Configuration"),
-
-            html.Label("Weight initalisation seed:"),
-            dcc.Input(id='seed-input', type='number', value=42,
-                      style={'width': '100%', 'padding': '8px', 'marginBottom': '20px'}),
-           
-            html.Label("Hidden Layer Size:"),
-            dcc.Slider(id='hidden-size', min=4, max=64, step=4, value=8,
-                      marks={4: '4', 16: '16', 32: '32', 64: '64'}),
-           
-            html.Label("Learning Rate:", style={'marginTop': 20}),
-            dcc.Slider(id='learning-rate', min=-3, max=-1, step=0.1, value=-2,
-                      marks={-3: '0.001', -2: '0.01', -1: '0.1'},
-                      tooltip={'placement': 'bottom', 'always_visible': True}),
-           
-            html.Label("Epochs:", style={'marginTop': 20}),
-            dcc.Slider(id='epochs', min=10, max=100, step=10, value=50,
-                      marks={10: '10', 50: '50', 100: '100'}),
-           
-            html.Button('Train Model', id='train-btn', n_clicks=0,
-                       style={'marginTop': 30, 'padding': '10px 20px', 'width': '100%'}),
-           
-            html.Div(id='status-text', style={'marginTop': 10, 'color': 'green'}),
-           
-        ], style={'width': '22%', 'display': 'inline-block', 'verticalAlign': 'top',
-                 'padding': '20px', 'backgroundColor': '#f9f9f9', 'borderRadius': '5px'}),
-       
-        # RIGHT: Visualizations
-        html.Div([
-            # Dataset info
-            html.Div([
-                html.H4("Dataset Info"),
-                html.P(f"Train: {X_train.shape[0]} | Val: {X_val.shape[0]} | Test {X_test.shape[0]} | Features {X_train.shape[1]} | Classes: 3")
-            ], style={'marginBottom': 20, 'padding': '10px', 'backgroundColor': '#e8f4f8', 'borderRadius': '5px'}),
-           
-            # Training curves
-            dcc.Graph(id='training-curves', style={'width': '48%', 'display': 'inline-block', 'marginLeft': '2%'}),
-
-            #architecture graph
-            dcc.Graph(id='architecture-graph', style={'marginTop': 20, 'height': 350}),
-
-            #heat map graph
-            dcc.Graph(id='confusion-matrix-heatmap', style={'marginTop': 20, 'height': 300}),
-
-            #per-class metrics
-            html.Div(id='per-class-metrics', style={'marginTop': 20, 'height': 400}),
-
-            #accuracy metrics box
-            html.Div(id='accuracy-metrics', style={'marginTop': 20, 'height': 400, 'width': '76%', 'display': 'inline-block', 'verticalAlign': 'top', 'marginLeft': '2%'}),
-        ]),
-           
-    ]),
-   
-    # Hidden store for model history
-    dcc.Store(id='model-history-store')
-
-])
-"""
  
 #callback for training outcomes
 @app.callback(
@@ -774,7 +708,7 @@ def train_and_visualize(n_clicks, seed, hidden_size, learning_rate_log, epochs):
     prevent_initial_call=True,
 )
 def reset_history(n_clicks):
-    # Clears the dcc.Store; you can also extend to clear figures if desired
+    # Clears the dcc.Store, clearing individual figures if desired
     return True
 
  
