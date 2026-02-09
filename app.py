@@ -247,7 +247,7 @@ app.layout = html.Div(
                             },
                             children=[
                                 html.H4(
-                                    "Model Hyperparameters",
+                                    "Feed Forward Model Hyperparameters",
                                     style={"fontSize": "14px", "marginBottom": "8px"},
                                 ),
                                 html.Label("Weight Initialisation Seed:", style={"fontSize": "12px"}),
@@ -261,16 +261,57 @@ app.layout = html.Div(
                                         "marginBottom": "12px",
                                     },
                                 ),
-                                html.Label("Hidden Layer Size:", style={"fontSize": "12px"}),
+                                html.Label("Hidden Layers Count:", style={"fontSize": "12px"}),
                                 dcc.Slider(
-                                    id="hidden-size",
+                                    id="hidden-layer-count",
                                     min=4,
                                     max=64,
                                     step=4,
                                     value=8,
                                     marks={4: "4", 16: "16", 32: "32", 64: "64"},
                                 ),
-                                html.Div(style={"height": "10px"}),
+
+                                html.Label("Input Layer Unit Count:", style={"fontSize": "12px"}),
+                                dcc.Slider(
+                                    id="input-count",
+                                    min=4,
+                                    max=64,
+                                    step=4,
+                                    value=8,
+                                    marks={4: "4", 16: "16", 32: "32", 64: "64"},
+                                ),
+                                html.Label("Hidden Layer Unit Count:", style={"fontSize": "12px"}),
+                                dcc.Slider(
+                                    id="hidden-count",
+                                    min=4,
+                                    max=64,
+                                    step=4,
+                                    value=8,
+                                    marks={4: "4", 16: "16", 32: "32", 64: "64"},
+                                ),
+                                html.Label("Output Layer Unit Count:", style={"fontSize": "12px"}),
+                                dcc.Slider(
+                                    id="output-count",
+                                    min=4,
+                                    max=64,
+                                    step=4,
+                                    value=8,
+                                    marks={4: "4", 16: "16", 32: "32", 64: "64"},
+                                ),
+
+                                html.Label("Activation Functions:", style={"fontSize": "12px"}),
+                                dcc.Dropdown(['Sigmoid', 'Tanh', 'Relu'], 'Sigmoid', id='act-dropdown'),
+
+                                html.Div(style={"height": "16px"}),
+
+                                #separate section for training setup inputs
+                                html.H4(
+                                    "Training Setup Hyperparameters",
+                                    style={"fontSize": "14px", "marginBottom": "4px"},
+                                ),
+                                html.Label("Optimiser Algorithm:", style={"fontSize": "12px"}),
+                                dcc.Dropdown(['Gradient Descent', 'Adam', 'RMSprop'], 'Gradient Descent', id='optimiser-dropdown'),
+
                                 html.Label("Learning Rate (log10):", style={"fontSize": "12px"}),
                                 dcc.Slider(
                                     id="learning-rate",
@@ -281,7 +322,7 @@ app.layout = html.Div(
                                     marks={-3: "0.001", -2: "0.01", -1: "0.1"},
                                     tooltip={"placement": "bottom", "always_visible": True},
                                 ),
-                                html.Div(style={"height": "10px"}),
+
                                 html.Label("Epochs:", style={"fontSize": "12px"}),
                                 dcc.Slider(
                                     id="epochs",
@@ -291,15 +332,35 @@ app.layout = html.Div(
                                     value=50,
                                     marks={10: "10", 50: "50", 100: "100"},
                                 ),
-                                html.Div(style={"height": "16px"}),
-                                html.H4(
-                                    "Training Setup Notes",
-                                    style={"fontSize": "14px", "marginBottom": "4px"},
+
+                                html.Label("Batch-size:", style={"fontSize": "12px"}),
+                                dcc.Slider(
+                                    id="batch-size",
+                                    min=10,
+                                    max=100,
+                                    step=10,
+                                    value=50,
+                                    marks={10: "10", 50: "50", 100: "100"},
                                 ),
-                                html.P(
-                                    "Iterative re-training with different hyperparameters. "
-                                    "Use Reset to clear stored history if you choose to start over.",
-                                    style={"fontSize": "12px", "color": "#4b5563"},
+
+                                html.Label("Regularisation Strength (λ) :", style={"fontSize": "12px"}),
+                                dcc.Slider(
+                                    id="reg-strength",
+                                    min=10,
+                                    max=100,
+                                    step=10,
+                                    value=50,
+                                    marks={10: "10", 50: "50", 100: "100"},
+                                ),
+
+                                html.Label("Early stopping criteria:", style={"fontSize": "12px"}),
+                                dcc.Slider(
+                                    id="early-stopping",
+                                    min=10,
+                                    max=100,
+                                    step=10,
+                                    value=50,
+                                    marks={10: "10", 50: "50", 100: "100"},
                                 ),
                             ],
                         ),
