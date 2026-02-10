@@ -43,22 +43,50 @@ app = dash.Dash(__name__)
 
 #3. Callbacks
 #3.1 Information box
-#3.2 Hyperparameter Control panel
+#3.2 Hyperparameter Control 
 #3.3 Reset trained model
 
 
 #Information that could be used in the callback of the information box
-INTRODUCTION_TEXT = """
-This dashboard provides an interactive walkthrough of a Feed-Forward Neural Network solving a classification problem with Iris dataset.
-"""
+INTRODUCTION_TEXT = html.Div([
+    html.P("This dashboard provides an interactive walkthrough of a Feed-Forward Neural Network solving a classification problem with Iris dataset. \n"
+    "It will provide a complementary experience of theory and tasks intended to improve conceptual understanding of Neural Network concepts."),
+    html.Img(
+        src="/assets/nn_diagram.png",
+        style={
+            "maxWidth": "100%",
+            "height": "auto",
+            "marginTop": "8px",
+            "borderRadius": "4px"
+        }
+    ),
+])
 
-THEORY_TEXT = """
-Theory text
-"""
+THEORY_TEXT = html.Div([
+    html.P("Theory Text"),
+    html.Img(
+        src="/assets/conveyor_belt.png",
+        style={
+            "maxWidth": "100%",
+            "height": "auto",
+            "marginTop": "8px",
+            "borderRadius": "4px"
+        }
+    ),
+])
 
-TASKS_TEXT = """
-Tasks text
-"""
+TASKS_TEXT = html.Div([
+    html.P("Tasks Text"),
+    html.Img(
+        src="/assets/activation_functions.png",
+        style={
+            "maxWidth": "100%",
+            "height": "auto",
+            "marginTop": "8px",
+            "borderRadius": "4px"
+        }
+    ),
+])
 
 #new layout - 4 box grid
 
@@ -498,7 +526,7 @@ def update_info_content(n_intro, n_theory, n_tasks):
      State('epochs', 'value')],
     prevent_initial_call=True
 )
-def train_and_visualize(n_clicks, seed, hidden_size, learning_rate_log, epochs):
+def train_and_visualise(n_clicks, seed, hidden_size, learning_rate_log, epochs):
     """Train model and update visualizations"""
 
     #Seed weight validation
