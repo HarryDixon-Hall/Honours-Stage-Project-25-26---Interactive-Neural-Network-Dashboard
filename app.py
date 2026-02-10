@@ -528,14 +528,37 @@ def update_info_content(n_intro, n_theory, n_tasks):
     ],
 
     [
+        # follows the order of the UI
+        
+        #FNN architecture inputs
         State('seed-input', 'value'),
-        State('hidden-size', 'value'),
-        State('learning-rate', 'value'),
-        State('epochs', 'value')
+        State('hidden-layer-count', 'value'),
+        State('hidden-size', 'value'), 
+        State('act-dropdown', 'value'),
+
+        #Training setup inputs
+        State('optimiser-dropdown', 'value'), #gradient descent
+        State('learning-rate', 'value'), 
+        State('epochs', 'value'),
+        State('batch-size', 'value'),
+        State('reg-strength', 'value'),
+        State('es-dropdown', 'value') #early stopping strategy
+
     ],
     prevent_initial_call=True
 )
-def train_visualise_or_reset(train_clicks, reset_clicks, seed, hidden_size, learning_rate_log, epochs):
+def train_visualise_or_reset(train_clicks, 
+                             reset_clicks, 
+                             seed, 
+                             hidden_layer_count, 
+                             hidden_size, 
+                             activation, 
+                             optimiser, 
+                             learning_rate_log, 
+                             epochs, 
+                             batch_size, 
+                             reg_strength, 
+                             early_stopping):
     #train model or reset trained model
     
     ctx = callback_context
@@ -546,7 +569,7 @@ def train_visualise_or_reset(train_clicks, reset_clicks, seed, hidden_size, lear
     #this added section is intended to provide the reset function
     button_id = ctx.triggered[0]['prod_id'].split('.')[0]
 
-    #RESET method branch
+    #RESET method branch ==========================================
     if button_id == 'reset-btn':
         empty_fig = go.Figure()
         return (
@@ -558,16 +581,72 @@ def train_visualise_or_reset(train_clicks, reset_clicks, seed, hidden_size, lear
             "",        #status metrics
             None,      #model history
         )
+    
+    #TRAIN method branch ==========================================
+
+    #use default values for inputs as a safeguard in the callback
 
 
+    #=== FNN ARCHITECTURE CONFIGS ===
 
-    #Seed weight validation
+    #weight inialisation
     if seed is None:
         seed = 42
     seed = int(seed)
-   
-    # Convert log scale back to linear
+
+    #hidden layers count
+    if hidden_layer_count is None:
+        hidden_layer_count = 1
+    hidden_layer_count = int(hidden_layer_count)
+
+    #input layer size - match the number of features in the dataset
+    if input_size is None:
+        input_size = X_train.shape[1] #the iris dataset would make this 4 
+
+    #hidden layer size - this is the value the user would change the most
+    if hidden_size is None:
+        hidden_size = 5
+    hidden_size = int(hidden_size)
+
+    #output layer size - match the number of classes in the dataset
+    if output_size is None:
+        output_size = 5
+    output_size = int(output_size)
+
+    #activation function
+    if activation is None:
+        activation = 'Sigmoid'
+
+    #=== TRAINING SETUP CONFIGS ===
+
+    #optimiser algorithm (gradient descent types)
+    if optimiser is None:
+        optimiser = 'Batch'
+
+    #learning rate
     learning_rate = 10 ** learning_rate_log
+
+    if learning_rate_log is None:
+        learning_rate_log = -2
+
+    #epochs
+    if epochs is None:
+        epochs = 50
+    epochs = int(epochs)
+
+    #batch size
+    if batch_size is None:
+        batch_size = 32
+    batch_size = int(batch_size)
+
+    #regularisation strength
+    if reg_strength is None:
+        reg_strength = 0.0
+    reg_strength = int(reg_strength)
+
+    #early stopping criteria
+    if early_stopping is None:
+        early_stopping = 'Validation Loss Plateu (Generalisation)'
    
     # Train
     model, history = train_model(X_train, y_train,
