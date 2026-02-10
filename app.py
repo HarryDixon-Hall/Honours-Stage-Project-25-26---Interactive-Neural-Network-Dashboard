@@ -1,5 +1,5 @@
 import dash
-from dash import dcc, html, Input, Output, State
+from dash import dcc, html, Input, Output, State, callback_context
 import plotly.graph_objects as go
 import numpy as np
 from dataload import load_dataset_iris, get_dataset_stats
@@ -512,22 +512,40 @@ def update_info_content(n_intro, n_theory, n_tasks):
  
 #callback for training outcomes
 @app.callback(
-    [Output('training-curves', 'figure'),
-     Output('architecture-graph', 'figure'),
-     Output('confusion-matrix-heatmap', 'figure'),
-     Output('accuracy-metrics', 'children'),
-     Output('per-class-metrics', 'children'),
-     Output('status-text', 'children'),
-     Output('model-history-store', 'data')],
-    Input('train-btn', 'n_clicks'),
-    [State('seed-input', 'value'),
-     State('hidden-size', 'value'),
-     State('learning-rate', 'value'),
-     State('epochs', 'value')],
+    [
+        Output('training-curves', 'figure'),
+        Output('architecture-graph', 'figure'),
+        Output('confusion-matrix-heatmap', 'figure'),
+        Output('accuracy-metrics', 'children'),
+        Output('per-class-metrics', 'children'),
+        Output('status-text', 'children'),
+        Output('model-history-store', 'data')
+    ],
+
+    [
+        Input('train-btn', 'n_clicks'),
+        Input('reset-btn', 'n-clicks') #added new reset button function in the callback
+    ],
+
+    [
+        State('seed-input', 'value'),
+        State('hidden-size', 'value'),
+        State('learning-rate', 'value'),
+        State('epochs', 'value')
+    ],
     prevent_initial_call=True
 )
-def train_and_visualise(n_clicks, seed, hidden_size, learning_rate_log, epochs):
-    """Train model and update visualizations"""
+def train_and_visualise(train_clicks, reset_clicks, seed, hidden_size, learning_rate_log, epochs):
+    #train model or reset trained model
+    
+    ctx = callback_context
+    if not ctx.triggered:
+        #nothing triggered so nothing happens
+        raise dash.exceptions.PreventUpdate
+    
+    #this added section is intended to provide the reset function
+    button_id = ctx.triggered[0]['prod_id'].split('.')[0]
+
 
     #Seed weight validation
     if seed is None:
@@ -786,15 +804,6 @@ def train_and_visualise(n_clicks, seed, hidden_size, learning_rate_log, epochs):
     }
    
 
-#callback to reset trained model
-@app.callback(
-    Output("model-history-store", "clear_data"),
-    Input("reset-btn", "n_clicks"),
-    prevent_initial_call=True,
-)
-def reset_history(n_clicks):
-    # Clears the dcc.Store, clearing individual figures if desired
-    return True
 
  
  #start app
