@@ -535,7 +535,7 @@ def update_info_content(n_intro, n_theory, n_tasks):
     ],
     prevent_initial_call=True
 )
-def train_and_visualise(train_clicks, reset_clicks, seed, hidden_size, learning_rate_log, epochs):
+def train_visualise_or_reset(train_clicks, reset_clicks, seed, hidden_size, learning_rate_log, epochs):
     #train model or reset trained model
     
     ctx = callback_context
@@ -545,6 +545,20 @@ def train_and_visualise(train_clicks, reset_clicks, seed, hidden_size, learning_
     
     #this added section is intended to provide the reset function
     button_id = ctx.triggered[0]['prod_id'].split('.')[0]
+
+    #RESET method branch
+    if button_id == 'reset-btn':
+        empty_fig = go.Figure()
+        return (
+            empty_fig, #training curves
+            empty_fig, #FNN architecture 
+            empty_fig, #confusion matrix
+            "",        #accuracy metrics
+            "",        #per class metrics
+            "",        #status metrics
+            None,      #model history
+        )
+
 
 
     #Seed weight validation
