@@ -274,10 +274,18 @@ app.layout = html.Div(
                                 "fontSize": "13px",
                             },
                             children=[
+                                html.H4("Dataset Selection", style={"fontSize": "14px", "marginBottom": "8px"}),
+                                dcc.Dropdown(["Iris (Flowers)",
+                                             "Wine (Chemistry)",
+                                             "Seeds"],
+                                             "Iris (Flower)",
+                                             id="ds_dropdown"),
+                                
                                 html.H4(
                                     "Feed Forward Model Hyperparameters",
                                     style={"fontSize": "14px", "marginBottom": "8px"},
                                 ),
+
                                 html.Label("Weight Initialisation Seed:", style={"fontSize": "12px"}),
                                 dcc.Input(
                                     id="seed-input",
@@ -299,15 +307,6 @@ app.layout = html.Div(
                                     marks={1: "1", 5: "5", 10: "10", 15: "15"},
                                 ),
 
-                                html.Label("Input Layer Size:", style={"fontSize": "12px"}),
-                                dcc.Slider(
-                                    id="input-size",
-                                    min=1,
-                                    max=15,
-                                    step=1,
-                                    value=4,
-                                    marks={1: "1", 5: "5", 10: "10", 15: "15"},
-                                ),
                                 html.Label("Hidden Layer Size:", style={"fontSize": "12px"}),
                                 dcc.Slider(
                                     id="hidden-size",
@@ -317,18 +316,13 @@ app.layout = html.Div(
                                     value=5,
                                     marks={1: "1", 5: "5", 10: "10", 15: "15"},
                                 ),
-                                html.Label("Output Layer Size:", style={"fontSize": "12px"}),
-                                dcc.Slider(
-                                    id="output-size",
-                                    min=1,
-                                    max=15,
-                                    step=1,
-                                    value=3,
-                                    marks={1: "1", 5: "5", 10: "10", 15: "15"},
-                                ),
 
                                 html.Label("Activation Functions:", style={"fontSize": "12px"}),
-                                dcc.Dropdown(['Sigmoid', 'Tanh', 'Relu'], 'Sigmoid', id='act-dropdown'),
+                                dcc.Dropdown(['Sigmoid', 
+                                              'Tanh', 
+                                              'Relu'], 
+                                              'Sigmoid', 
+                                              id='act-dropdown'),
 
                                 html.Div(style={"height": "16px"}),
 
@@ -338,7 +332,11 @@ app.layout = html.Div(
                                     style={"fontSize": "14px", "marginBottom": "4px"},
                                 ),
                                 html.Label("Gradient Descent Optimiser Algorithm:", style={"fontSize": "12px"}),
-                                dcc.Dropdown(['Batch', 'Mini-Batch', 'Stochastic'], 'Batch', id='optimiser-dropdown'),
+                                dcc.Dropdown(['Batch', 
+                                              'Mini-Batch', 
+                                              'Stochastic'], 
+                                              'Batch', 
+                                              id='optimiser-dropdown'),
 
                                 html.Label("Learning Rate (log10):", style={"fontSize": "12px"}),
                                 dcc.Slider(
@@ -382,7 +380,10 @@ app.layout = html.Div(
                                 ),
 
                                 html.Label("Early Stopping Criteria:", style={"fontSize": "12px"}),
-                                dcc.Dropdown(['Validation Loss Plateu (Generalisation)', 'Validation Accuracy Plateu (Generalisation)'], 'Validation Loss Plateu (Generalisation)', id='es-dropdown'),
+                                dcc.Dropdown(['Validation Loss Plateu (Generalisation)', 
+                                              'Validation Accuracy Plateu (Generalisation)'], 
+                                              'Validation Loss Plateu (Generalisation)', 
+                                              id='es-dropdown'),
                             ],
                         ),
                     ],
@@ -524,7 +525,7 @@ def update_info_content(n_intro, n_theory, n_tasks):
 
     [
         Input('train-btn', 'n_clicks'),
-        Input('reset-btn', 'n-clicks') #added new reset button function in the callback
+        Input('reset-btn', 'n_clicks') #added new reset button function in the callback
     ],
 
     [
@@ -567,7 +568,7 @@ def train_visualise_or_reset(train_clicks,
         raise dash.exceptions.PreventUpdate
     
     #this added section is intended to provide the reset function
-    button_id = ctx.triggered[0]['prod_id'].split('.')[0]
+    button_id = ctx.triggered[0]['prop_id'].split('.')[0] 
 
     #RESET method branch ==========================================
     if button_id == 'reset-btn':
@@ -598,20 +599,24 @@ def train_visualise_or_reset(train_clicks,
     if hidden_layer_count is None:
         hidden_layer_count = 1
     hidden_layer_count = int(hidden_layer_count)
-
+    
+    """
     #input layer size - match the number of features in the dataset
     if input_size is None:
         input_size = X_train.shape[1] #the iris dataset would make this 4 
-
+    """
+    
     #hidden layer size - this is the value the user would change the most
     if hidden_size is None:
         hidden_size = 5
     hidden_size = int(hidden_size)
 
+    """
     #output layer size - match the number of classes in the dataset
     if output_size is None:
         output_size = 5
-    output_size = int(output_size)
+    output_size = int(output_size) 
+    """
 
     #activation function
     if activation is None:
@@ -624,10 +629,10 @@ def train_visualise_or_reset(train_clicks,
         optimiser = 'Batch'
 
     #learning rate
-    learning_rate = 10 ** learning_rate_log
-
     if learning_rate_log is None:
         learning_rate_log = -2
+
+    learning_rate = 10 ** float(learning_rate_log)
 
     #epochs
     if epochs is None:
