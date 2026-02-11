@@ -417,7 +417,7 @@ app.layout = html.Div(
                         html.Div(
                             style={
                                 "height": "50%",
-                                "display": "flex"
+                                "display": "flex",
                                 "flexDirection": "column",
                                 "gap": "8px",
                             },
@@ -491,14 +491,9 @@ app.layout = html.Div(
                             ],
                         ),
 
-
                     ],
 
-                    
-
                 ),
-
-
 
             ],
 
@@ -732,7 +727,6 @@ def train_visualise_or_reset(train_clicks,
 
    
     #loss convergence curves figure=============================
-
     def build_loss_fig(history, val_history):
         fig = go.Figure()
 
@@ -758,12 +752,43 @@ def train_visualise_or_reset(train_clicks,
             xaxis_title='Epoch',
             yaxis_title='Cross Loss', #entropy?
             hovermode='x unified',
-            height=250,
+            height=2000,
             showlegend=True,
             legend=dict(x=0, y=1)
         )
         return fig
     #accuracy generalisation curves figure======================
+    def build_accuracy_fig(history, val_history):
+        fig = go.Figure()
+
+        #training accuracy to show generalisation
+        fig.add_trace(go.Scatter(
+            y=history['accuracy'],
+            mode='lines',
+            name='Training Accuracy',
+            line=dict(color='#4ECDC4', width=3),
+            hovertemplate='Epoch: %{x}<br>Acc: %{y: .1%}<extra></extra>'
+        ))
+
+        fig.add_trace(go.Scatter(
+            y=val_history['accuracy'],
+            mode='lines',
+            name='Validation Accuracy',
+            line=dict(color='#F97316', width=3, dash='dash'),
+            hovertemplate='Epoch: %{x}<br>Acc: %{y: .1%}<extra></extra>'
+        ))
+
+        fig.update_layout(
+            title='Generalisation Gap (Training vs Validation)',
+            xaxis_title='Epoch',
+            yaxis_title='Accuracy', 
+            hovermode='x unified',
+            height=2000,
+            showlegend=True,
+            legend=dict(x=0, y=1)
+        )
+        return fig
+
 
 
     """
@@ -949,10 +974,13 @@ def train_visualise_or_reset(train_clicks,
         html.P(f"Test Accuracy: {test_acc:.2%}", style={'color': '#FF6B6B', 'marginBottom': '5px', 'fontWeight': 'bold'}),
         html.P(f"Overfitting Gap: {overfitting_gap:.2%}", style={'color': '#FF6B6B' if overfitting_gap > 0.05 else 'green', 'fontSize': '12px'})
     ])
+
+    loss_fig = build_loss_fig(history, val_history)
+    accuracy_fig = build_accuracy_fig(history, val_history)
    
     status_msg = f"Training complete! Observe Outcomes (Seed={seed}, {int(hidden_size)}-neuron, LR={learning_rate:.4f})"
     #accuracy_msg = f"Test Accuracy: {test_acc:.2%}"
-    return train_fig, arch_fig, cm_fig, per_class_metrics, accuracy_metrics, status_msg, {
+    return loss_fig, accuracy_fig, arch_fig, cm_fig, per_class_metrics, accuracy_metrics, status_msg, {
         'train_loss': history['loss'],
         'train_acc': history['accuracy'],
         'val_loss': val_history['loss'],
