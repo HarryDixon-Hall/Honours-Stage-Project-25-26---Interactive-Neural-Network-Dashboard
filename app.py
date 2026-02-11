@@ -413,12 +413,33 @@ app.layout = html.Div(
                                 "marginBottom": "6px",
                             },
                         ),
-                        # Training curves
-                        dcc.Graph(
-                            id="training-curves",
-                            style={"height": "40%"},
-                            config={"displayModeBar": False},
+                        # Training curves validation and accuracy
+                        html.Div(
+                            style={
+                                "height": "50%",
+                                "display": "flex"
+                                "flexDirection": "column",
+                                "gap": "8px",
+                            },
+                            children=[
+                                #loss curves (validation)
+                                dcc.Graph(
+                                    id="loss-curves",
+                                    style={"flex": "1"},
+                                    config={"displayModeBar": False},
+                                ),
+
+                                #accuracy curves (training)
+                                dcc.Graph(
+                                    id="accuracy-curves",
+                                    style={"flex": "1"},
+                                    config={"displayModeBar": False},
+                                ),
+
+                            ],
                         ),
+
+
                         html.Div(
                             style={
                                 "display": "flex",
@@ -514,7 +535,8 @@ def update_info_content(n_intro, n_theory, n_tasks):
 #callback for training outcomes
 @app.callback(
     [
-        Output('training-curves', 'figure'),
+        Output('loss-curves', 'figure'),
+        Output('accuracy-curves', 'figure'),
         Output('architecture-graph', 'figure'),
         Output('confusion-matrix-heatmap', 'figure'),
         Output('accuracy-metrics', 'children'),
@@ -709,7 +731,42 @@ def train_visualise_or_reset(train_clicks,
     )
 
    
-    # Create training curves figure============================
+    #loss convergence curves figure=============================
+
+    def build_loss_fig(history, val_history):
+        fig = go.Figure()
+
+        #training loss to show convergence over epochs
+        fig.add_trace(go.Scatter(
+            y=history['loss'],
+            mode='lines',
+            name='Training Loss',
+            line=dict(color='#FF6B6B', width=3),
+            hovertemplate='Epoch: %{x}<br>Loss: %{y: .4f}<extra></extra>'
+        ))
+
+        fig.add_trace(go.Scatter(
+            y=val_history['loss'],
+            mode='lines',
+            name='Validation Loss',
+            line=dict(color='#F97316', width=3, dash='dash'),
+            hovertemplate='Epoch: %{x}<br>Loss: %{y: .4f}<extra></extra>'
+        ))
+
+        fig.update_layout(
+            title='Loss Convergence (Training vs Validation)',
+            xaxis_title='Epoch',
+            yaxis_title='Cross Loss', #entropy?
+            hovermode='x unified',
+            height=250,
+            showlegend=True,
+            legend=dict(x=0, y=1)
+        )
+        return fig
+    #accuracy generalisation curves figure======================
+
+
+    """
     train_fig= go.Figure()
    
     #Training loss
@@ -755,8 +812,9 @@ def train_visualise_or_reset(train_clicks,
         hovermode='x unified',
         height=400
     )
+    """
 
-    #Architecture diagram figure
+    #Architecture diagram figure =============================
 
     input_size = X_train.shape[1]
     hidden_size_int = int(hidden_size)
