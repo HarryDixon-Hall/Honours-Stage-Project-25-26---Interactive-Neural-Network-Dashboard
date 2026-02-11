@@ -48,6 +48,8 @@ app = dash.Dash(__name__)
 
 
 #Information that could be used in the callback of the information box
+
+"""
 INTRODUCTION_TEXT = html.Div([
     html.P("This dashboard provides an interactive walkthrough of a Feed-Forward Neural Network solving a classification problem with Iris dataset. \n"
     "It will provide a complementary experience of theory and tasks intended to improve conceptual understanding of Neural Network concepts."),
@@ -87,6 +89,8 @@ TASKS_TEXT = html.Div([
         }
     ),
 ])
+"""
+
 
 #new layout - 4 box grid
 
@@ -401,8 +405,10 @@ app.layout = html.Div(
                         "boxShadow": "0 2px 6px rgba(0,0,0,0.08)",
                         "padding": "12px",
                         "display": "flex",
+                        "overflow": "hidden",
                         "flexDirection": "column",
                         "minHeight": 0,
+                        "height": "100%",
                     },
                     children=[
                         html.Div(
@@ -420,6 +426,8 @@ app.layout = html.Div(
                                 "display": "flex",
                                 "flexDirection": "column",
                                 "gap": "8px",
+                                "overflowY": "auto",
+                                "overflowX": "hidden",
                             },
                             children=[
                                 #loss curves (validation)
