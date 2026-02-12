@@ -49,20 +49,27 @@ app = dash.Dash(__name__)
 
 #Information that could be used in the callback of the information box
 
-"""
+
 INTRODUCTION_TEXT = html.Div([
-    html.P("This dashboard provides an interactive walkthrough of a Feed-Forward Neural Network solving a classification problem with Iris dataset. \n"
+    html.H3("Predition mechanism of Feed-Forward Neural Networks (FNNs)", 
+    style={"color": "#1f2937", "marginBottom": "16px"}),
+    
+    html.P("This dashboard provides an interactive walkthrough of a FNN solving a classification problem with the Iris dataset. \n"
     "It will provide a complementary experience of theory and tasks intended to improve conceptual understanding of Neural Network concepts."),
-    html.Img(
-        src="/assets/nn_diagram.png",
-        style={
-            "maxWidth": "100%",
-            "height": "auto",
-            "marginTop": "8px",
-            "borderRadius": "4px"
-        }
-    ),
+
+    html.Ul([
+            html.Li("4 flower measurements × weights = hidden neuron values"),
+            html.Li("Hidden neurons → activation function → class probabilities"), 
+            html.Li("Live math tracing + training curves + confusion matrix")
+        ], style={"fontSize": "13px", "lineHeight": "1.6", "marginBottom": "24px"}),
+    
+    html.Div([
+        html.Span("Dataset: ", style={"fontWeight": "600"}),
+        html.Span("Iris flowers (150 samples × 4 features → 3 species)"),
+    ], style={"background": "#f0f9ff", "padding": "12px", "borderRadius": "6px"}),
+    
 ])
+
 
 THEORY_TEXT = html.Div([
     html.P("Theory Text"),
@@ -89,7 +96,7 @@ TASKS_TEXT = html.Div([
         }
     ),
 ])
-"""
+
 
 
 #new layout - 4 box grid
