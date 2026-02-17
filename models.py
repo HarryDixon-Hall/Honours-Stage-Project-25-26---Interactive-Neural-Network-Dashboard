@@ -159,6 +159,25 @@ class ComplexNN:
    #backward pass of data
     def backward(self, X, y, learning_rate):
         m = y.shape[0]
+
+        dz3 = self.a3.copy()       #start from the output probabilities given by forward pass
+        dz3[np.arrange(m), y] -= 1 #subtract 1 at the true class index  
+        dz3 /= m                   #new average over batch
+
+
+        #backprop path: output => HL2 => HL1
+
+        #output layer gradients
+        dW3 = np.dot(self.a2.T, X) 
+        db3 = np.sum(dz3, axis=0, keepdims=True)
+
+        #backprop for hidden layer 2
+        da2 = np.dot(dz3, self.W3.T)
+        dz2 = da2 * self.relu_derivative(self.z2)
+        dW2 = np.dot(self.a1.T, dz2)
+        db2 = np.sum(dz1, axis = 0, keepdim=True)
+
+        #backprop for hidden layer 1
        
         # Output layer gradient
         dz2 = self.a2.copy()
