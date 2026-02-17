@@ -27,7 +27,20 @@ def teacher_layout():
         html.Label("Epochs"),
         dcc.Slider(0, 50, 100, value=50, id="teacher-epochs")
 
+        html.Label("Student Control Permissive"),
+        dcc.Checklist(
+            options=[
+                {"label": "Hidden size", "value": "hidden_size"},
+                {"label": "Learning rate", "value": "lr"},
+                {"label": "Epochs", "value": "epochs"},
+            ],
+            value=["hidden_size", "lr"],
+            id="teacher-controls"
+        ),
+
     ])
+
+
 
 def student_layout():
     return html.Div([
