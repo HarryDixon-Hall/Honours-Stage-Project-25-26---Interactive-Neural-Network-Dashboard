@@ -178,29 +178,28 @@ class ComplexNN:
         db2 = np.sum(dz1, axis = 0, keepdim=True)
 
         #backprop for hidden layer 1
-       
-        # Output layer gradient
-        dz2 = self.a2.copy()
-        dz2[np.arange(m), y] -= 1
-        dz2 /= m
-       
-        # Backprop
-        self.W2 -= learning_rate * np.dot(self.a1.T, dz2)
-        self.b2 -= learning_rate * np.sum(dz2, axis=0, keepdims=True)
-       
         da1 = np.dot(dz2, self.W2.T)
         dz1 = da1 * self.relu_derivative(self.z1)
+        dW1 = np.dot(self.a1.T, dz1)
+        db1 = np.sum(dz1, axis = 0, keepdim=True)
+
+        #gradient descent updates after backpropagation
+        self.W3 -= learning_rate * dW3 #output weights
+        self.b3 -= learning_rate * dW3 #output biases
+        self.W2 -= learning_rate * dW2 #hidden layer 2 weights
+        self.b2 -= learning_rate * db2 #hidden layer 2 biases
+        self.W1 -= learning_rate * dW1 #hidden layer 1 weights
+        self.b1 -= learning_rate * dW1 #hidden layer 1 weights
        
-        self.W1 -= learning_rate * np.dot(X.T, dz1)
-        self.b1 -= learning_rate * np.sum(dz1, axis=0, keepdims=True)
-   
+
+    #method for training a single epoch   
     def train_epoch(self, X, y, learning_rate):
-        output = self.forward(X)
-        loss = self.compute_loss(output, y)
-        self.backward(X, y, learning_rate)
+        output = self.forward(X) #forward pass
+        loss = self.compute_loss(output, y) #cross-entrpy loss
+        self.backward(X, y, learning_rate)  #backprop then updates weights and biases
        
         # Accuracy
-        predictions = np.argmax(output, axis=1)
+        predictions = np.argmax(output, axis=1) 
         accuracy = np.mean(predictions == y)
         return loss, accuracy
 
