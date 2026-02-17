@@ -34,6 +34,14 @@ def load_dataset_iris():
     #3.
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
 
+    meta = { #new meta data structure to expose readable values to UI dashboard, there will be different datasets to read
+        "name": "Iris",
+        "feature_names": iris_dataset.feature_names,
+        "class_names": iris_dataset.target_names,
+        "n_features": X.shape[1],
+        "n_classes": len(np.unique(y)),
+    }
+
     return X_train, X_test, y_train, y_test, iris_dataset.feature_names, iris_dataset.target_names
 
 X_train, X_test, y_train, y_test, feature_names, target_names = load_dataset_iris()
