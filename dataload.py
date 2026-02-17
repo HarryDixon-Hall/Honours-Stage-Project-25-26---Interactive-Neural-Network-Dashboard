@@ -1,5 +1,7 @@
 import numpy as np
 from sklearn.datasets import load_iris
+from sklearn.datasets import load_digits
+from sklearn.datasets import load_wine
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
@@ -44,8 +46,19 @@ def load_dataset_iris():
 
     return X_train, X_test, y_train, y_test, iris_dataset.feature_names, iris_dataset.target_names
 
-X_train, X_test, y_train, y_test, feature_names, target_names = load_dataset_iris()
+def load_dataset_wine(): #wine dataset to be implemented
+    return
 
+def load_dataset_seeds(): #seeds dataset to be implemented
+    return
+
+#X_train, X_test, y_train, y_test, feature_names, target_names = load_dataset_iris() #removed to generalise dataset loading
+
+DATASETS = {
+    "iris": load_dataset_iris,
+    "wine": load_dataset_wine,
+    "seeds": load_dataset_seeds,
+}
 
 #This method will need to be expanded as the project expands with architectural control i imagine
 
