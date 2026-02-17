@@ -96,6 +96,11 @@ DATASETS = {
     "digits": load_dataset_digits,
 }
 
+def load_dataset(name: str):
+    if name not in DATASETS:
+        raise ValueError(f"Unknown dataset {name}")
+    return DATASETS[name]() #will return the train and test from X and Y with meta data
+
 #This method will need to be expanded as the project expands with architectural control i imagine
 
 def get_dataset_stats(X, y):

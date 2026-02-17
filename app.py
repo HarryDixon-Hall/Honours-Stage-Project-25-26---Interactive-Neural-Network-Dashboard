@@ -2,14 +2,14 @@ import dash
 from dash import dcc, html, Input, Output, State, callback_context
 import plotly.graph_objects as go
 import numpy as np
-from dataload import load_dataset_iris, get_dataset_stats
+from dataload import load_dataset, get_dataset_stats
 from trainer import train_model
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
  
 # Load data once at startup
-X_train_full, X_test, y_train_full, y_test, feature_names, class_names = load_dataset_iris()
-#dataset_stats = get_dataset_stats(X_train, y_train)
+X_train_full, X_test, y_train_full, y_test, meta = load_dataset() #feature/class names removed because meta fulfills those variables
+dataset_stats = get_dataset_stats(X_train_full, y_train_full) #can now make use of this with metadata
 
 X_train, X_val, y_train, y_val = train_test_split(
     X_train_full, y_train_full, test_size=0.2, random_state=42, stratify=y_train_full
@@ -803,56 +803,6 @@ def train_visualise_or_reset(train_clicks,
             legend=dict(x=0, y=1)
         )
         return fig
-
-
-
-    """
-    train_fig= go.Figure()
-   
-    #Training loss
-    train_fig.add_trace(go.Scatter(
-        y=history['loss'],
-        mode='lines',
-        name='Trn Loss',
-        line=dict(color='#FF6B6B', width=2)
-    ))
-
-    #Validation loss (will be with a dashed line)
-    train_fig.add_trace(go.Scatter(
-        y=val_history['loss'],
-        mode='lines',
-        name='Val Loss',
-        line=dict(color='#F97316', width=2, dash='dash'),
-    ))
-
-    #Training accuracy
-    train_fig.add_trace(go.Scatter(
-        y=history['accuracy'],
-        mode='lines',
-        name='Trn Acc',
-        line=dict(color='#4ECDC4', width=2),
-        yaxis='y2'
-    ))
-   
-    #Validation accuracy (will be with a dashed line)
-    train_fig.add_trace(go.Scatter(
-        y=val_history['accuracy'],
-        mode='lines',
-        name='Val Acc',
-        line=dict(color='#22C55E', width=2, dash='dash'),
-        yaxis='y2'
-    ))
-
-   
-    train_fig.update_layout(
-        title='Training Progress (Solid: Training, Dashed: Validation)',
-        xaxis_title='Epoch',
-        yaxis_title='Loss',
-        yaxis2=dict(title='Accuracy', overlaying='y', side='right'),
-        hovermode='x unified',
-        height=400
-    )
-    """
 
     #Architecture diagram figure =============================
 
