@@ -4,6 +4,7 @@ import plotly.graph_objects as go
 import numpy as np
 from dataload import load_dataset, get_dataset_stats
 from trainer import train_model
+from trainer import build_model
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
  
@@ -285,12 +286,19 @@ app.layout = html.Div(
                                 "fontSize": "13px",
                             },
                             children=[
+                                html.H4("FNN Model Selection"),
+                                dcc.Dropdown(["Logistic Regression", "NN-1-Layer", "NN-2-Layer"],
+                                             "NN-1-Layer",
+                                             id="model_dropdown"
+                                             ),
+
                                 html.H4("Dataset Selection", style={"fontSize": "14px", "marginBottom": "8px"}),
                                 dcc.Dropdown(["Iris (Flowers)",
                                              "Wine (Chemistry)",
                                              "Seeds"],
                                              "Iris (Flower)",
-                                             id="ds_dropdown"),
+                                             id="ds_dropdown"
+                                             ),
                                 
                                 html.H4(
                                     "Feed Forward Model Hyperparameters",
@@ -562,6 +570,9 @@ def update_info_content(n_intro, n_theory, n_tasks):
 
     [
         # follows the order of the UI
+
+        #teacher inputs
+        State('model_dropdown', 'value'),
         
         #FNN architecture inputs
         State('seed-input', 'value'),
@@ -685,12 +696,27 @@ def train_visualise_or_reset(train_clicks,
     if early_stopping is None:
         early_stopping = 'Validation Loss Plateu (Generalisation)'
    
-    # Train
-    model, history = train_model(X_train, y_train,
+    #1. Build model
+
+    input_size = X_train.shape[1]
+    output_size = len(np.unique(y_train))
+
+    model = build_model(
+        model_name=model_name,
+        input_size=input_size,
+        output_size=output_size,
+        hidden_size=hidden_size,
+        seed=seed,
+    )
+
+    #2. train model
+
+    model, history = train_model(model, 
+                                 X_train, 
+                                 y_train,
                                 epochs=int(epochs),
                                 learning_rate=learning_rate,
-                                hidden_size=int(hidden_size),
-                                seed=seed)
+                                )
     
     from models import SimpleNN
     np.random.seed(seed)

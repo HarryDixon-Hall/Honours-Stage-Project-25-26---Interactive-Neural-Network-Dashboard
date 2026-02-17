@@ -36,7 +36,7 @@ def build_model(model_name, input_size, output_size, hidden_size=8, seed=42): #b
     
 
 
-def train_model(model, X_train, y_train, epochs=50, learning_rate=0.01,):
+def train_model(model, X_train, y_train, epochs=50, learning_rate=0.01,): #build functionality pulled out of this method to "build_model"
     
     history = {'loss': [], 'accuracy': []}
    
