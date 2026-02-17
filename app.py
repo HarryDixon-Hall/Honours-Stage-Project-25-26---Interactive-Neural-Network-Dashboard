@@ -18,6 +18,12 @@ X_train, X_val, y_train, y_val = train_test_split(
  
 app = dash.Dash(__name__)
 
+app.layout = html.Div([
+    dcc.Location(id="url", refresh=False), #url watchdog
+    dcc.Store(id="lesson-config-store"),   #sharing between teacher/student of lesson config
+    html.Div(id="page-content")            #student/teacher pa
+])
+
 # Disable caching for development
 #app.contrain_fig.suppress_callback_exceptions = False
 #app.contrain_fig.assets_folder = 'assets'
@@ -982,6 +988,19 @@ def train_visualise_or_reset(train_clicks,
 
  
  #start app
+
+#callback for display decision: student or teacher page
+@app.callback(
+   Output("page-content", "children"),
+   Input("url", "pathname"), 
+)
+def display_decision(pathname):
+    if pathname == "/teacher":
+        return teacher_layout()
+    else:
+        return student_layout()
+
+
 if __name__ == '__main__':
     app.run(debug=False)   #changed debug to false because otherwise it resets the page every minute
 
