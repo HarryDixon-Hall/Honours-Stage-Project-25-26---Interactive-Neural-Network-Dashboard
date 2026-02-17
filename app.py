@@ -692,7 +692,7 @@ def train_visualise_or_reset(train_clicks,
                                 hidden_size=int(hidden_size),
                                 seed=seed)
     
-    from nn_model import SimpleNN
+    from models import SimpleNN
     np.random.seed(seed)
     val_tracking_model = SimpleNN(input_size=X_train.shape[1],
                          hidden_size=int(hidden_size),

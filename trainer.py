@@ -1,4 +1,4 @@
-from nn_model import SimpleNN
+from models import SimpleNN
 import numpy as np
 
 def train_model(X_train, y_train, epochs=50, learning_rate=0.01, hidden_size=8, seed = 42):
