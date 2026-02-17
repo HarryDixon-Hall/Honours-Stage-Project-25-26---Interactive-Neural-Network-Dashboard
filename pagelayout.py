@@ -38,6 +38,21 @@ def teacher_layout():
             id="teacher-controls"
         ),
 
+        #area to write and save a lesson for the student
+
+        html.Label("Lesson instructions")
+        dcc.Textarea(
+            id="tasks-text",
+            style={"width": "100%", "height": 120},
+            placeholder="1) Look at overfitting"
+        ),
+
+        html.Button("Save lesson preset",
+                    id="save-lesson-btn",
+                    n_clicks=0),
+        html.Div(id="teacher-status",
+                 style={"marginTop": "10px,", "color": "green"}),
+
     ])
 
 
