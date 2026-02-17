@@ -47,17 +47,53 @@ def load_dataset_iris():
     return X_train, X_test, y_train, y_test, iris_dataset.feature_names, iris_dataset.target_names
 
 def load_dataset_wine(): #wine dataset to be implemented
-    return
+    #1. 
+    wine_dataset = load_digits()
+    X, y = wine_dataset.data, wine_dataset.target
 
-def load_dataset_seeds(): #seeds dataset to be implemented
-    return
+    #2. 
+    wine_scaler = StandardScaler()
+    X = wine_scaler.fit_transform(X)
+
+    #3.
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+
+    meta = { #new meta data structure to expose readable values to UI dashboard, there will be different datasets to read
+        "name": "Wine",
+        "feature_names": wine_dataset.feature_names,
+        "class_names": wine_dataset.target_names,
+        "n_features": X.shape[1],
+        "n_classes": len(np.unique(y)),
+    }
+    return X_train, X_test, y_train, y_test, wine_dataset.feature_names, wine_dataset.target_names
+
+def load_dataset_digits(): #seeds dataset to be implemented
+    #1. 
+    digits_dataset = load_wine()
+    X, y = digits_dataset.data, digits_dataset.target
+
+    #2. 
+    digits_scaler = StandardScaler()
+    X = digits_scaler.fit_transform(X)
+
+    #3.
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+
+    meta = { #new meta data structure to expose readable values to UI dashboard, there will be different datasets to read
+        "name": "Digits",
+        "feature_names": digits_dataset.feature_names,
+        "class_names": digits_dataset.target_names,
+        "n_features": X.shape[1],
+        "n_classes": len(np.unique(y)),
+    }
+    return X_train, X_test, y_train, y_test, digits_dataset.feature_names, digits_dataset.target_names
 
 #X_train, X_test, y_train, y_test, feature_names, target_names = load_dataset_iris() #removed to generalise dataset loading
 
 DATASETS = {
     "iris": load_dataset_iris,
     "wine": load_dataset_wine,
-    "seeds": load_dataset_seeds,
+    "digits": load_dataset_digits,
 }
 
 #This method will need to be expanded as the project expands with architectural control i imagine
@@ -68,6 +104,6 @@ def get_dataset_stats(X, y):
     return {
         'samples': X.shape[0],
         'features': X.shape[1],
-        'classes': unique_classes,
+        'classes': len(unique_classes), #to generalise to the different lengths of the datasets
         'class_names': [f'Class {i}' for i in range(unique_classes)]
     }
