@@ -103,7 +103,7 @@ class SimpleNN: #1 hidden layer (shallow NN)
         accuracy = np.mean(predictions == y)
         return loss, accuracy
 
-class ComplexNN:
+class ComplexNN: #2 hidden layers (deep NN)
     def __init__(self, input_size=4, hidden1_size=8, hidden2_size = 8, output_size=3, seed = None):
         #Reproducible weight initalisation
         np.random.seed(seed)
