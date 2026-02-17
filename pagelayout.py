@@ -18,6 +18,15 @@ def teacher_layout():
             id="teacher-model-type"
         ),
 
+        html.Label("Hidden size (for NN)"),
+        dcc.Slider(1, 32, 1, value=8, id="teacher-hidden-size")
+
+        html.Label("Learning rate (log10)"),
+        dcc.Slider(-3, -1, 0.1, value=2, id="teacher-learning-rate")
+
+        html.Label("Epochs"),
+        dcc.Slider(0, 50, 100, value=50, id="teacher-epochs")
+
     ])
 
 def student_layout():
