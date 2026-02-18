@@ -1,31 +1,31 @@
 import dash
 from dash import dcc, html, Input, Output, State, callback_context
-
+import numpy as np
 def teacher_layout():
     return html.Div([
-        html.H2("Teacher Page - Lesson setup")
-        html.Label("Dataset")
+        html.H2("Teacher Page - Lesson setup"),
+        html.Label("Dataset"),
         dcc.Dropdown(
             ["Iris", "Wine", "Seeds"],
             "Iris",
-            id="teacher-dataset-dropdown"
+            id="teacher-dataset-dropdown",
         ),
 
         html.Label("Model Type"),
         dcc.Dropdown(
             ["Logistic Regression", "NN-1-Layer", "NN-2-Layer"],
             "NN-1-Layer",
-            id="teacher-model-type"
+            id="teacher-model-type",
         ),
 
         html.Label("Hidden size (for NN)"),
-        dcc.Slider(1, 32, 1, value=8, id="teacher-hidden-size")
+        dcc.Slider(1, 32, 1, value=8, id="teacher-hidden-size"),
 
         html.Label("Learning rate (log10)"),
-        dcc.Slider(-3, -1, 0.1, value=2, id="teacher-learning-rate")
+        dcc.Slider(-3, -1, 0.1, value=2, id="teacher-learning-rate"),
 
         html.Label("Epochs"),
-        dcc.Slider(0, 50, 100, value=50, id="teacher-epochs")
+        dcc.Slider(0, 50, 100, value=50, id="teacher-epochs"),
 
         html.Label("Student Control Permissive"),
         dcc.Checklist(
@@ -35,16 +35,16 @@ def teacher_layout():
                 {"label": "Epochs", "value": "epochs"},
             ],
             value=["hidden_size", "lr"],
-            id="teacher-controls"
+            id="teacher-controls",
         ),
 
         #area to write and save a lesson for the student
 
-        html.Label("Lesson instructions")
+        html.Label("Lesson instructions"),
         dcc.Textarea(
             id="tasks-text",
             style={"width": "100%", "height": 120},
-            placeholder="1) Look at overfitting"
+            placeholder="1) Look at overfitting",
         ),
 
         html.Button("Save lesson preset",
@@ -53,13 +53,10 @@ def teacher_layout():
         html.Div(id="teacher-status",
                  style={"marginTop": "10px,", "color": "green"}),
 
-    ])
-
-
+    ]),
 
 def student_layout():
-    return html.Div([
-        app.layout = html.Div(
+    return html.Div(
     style={
         "height": "100vh",
         "padding": "10px",
@@ -171,8 +168,8 @@ def student_layout():
                             },
                         ),
                         html.Div(
-                            f"Train: {X_train.shape[0]} | Val: {X_val.shape[0]} | "
-                            f"Test: {X_test.shape[0]} | Features: {X_train.shape[1]} | Classes: 3",
+                            f"Train: 120 | Val: 30 | "
+                            f"Test: 30 | Features: 4 | Classes: 3",
                             style={"fontSize": "11px", "color": "#4b5563", "marginBottom": "4px"},
                         ),
                         dcc.Graph(
@@ -482,4 +479,3 @@ def student_layout():
     ],
 )
 
-    ])

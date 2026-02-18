@@ -44,11 +44,11 @@ def load_dataset_iris():
         "n_classes": len(np.unique(y)),
     }
 
-    return X_train, X_test, y_train, y_test, iris_dataset.feature_names, iris_dataset.target_names
+    return X_train, X_test, y_train, y_test, meta
 
 def load_dataset_wine(): #wine dataset to be implemented
     #1. 
-    wine_dataset = load_digits()
+    wine_dataset = load_wine()
     X, y = wine_dataset.data, wine_dataset.target
 
     #2. 
@@ -65,7 +65,7 @@ def load_dataset_wine(): #wine dataset to be implemented
         "n_features": X.shape[1],
         "n_classes": len(np.unique(y)),
     }
-    return X_train, X_test, y_train, y_test, wine_dataset.feature_names, wine_dataset.target_names
+    return X_train, X_test, y_train, y_test, meta
 
 def load_dataset_digits(): #seeds dataset to be implemented
     #1. 
@@ -86,7 +86,7 @@ def load_dataset_digits(): #seeds dataset to be implemented
         "n_features": X.shape[1],
         "n_classes": len(np.unique(y)),
     }
-    return X_train, X_test, y_train, y_test, digits_dataset.feature_names, digits_dataset.target_names
+    return X_train, X_test, y_train, y_test, meta
 
 #X_train, X_test, y_train, y_test, feature_names, target_names = load_dataset_iris() #removed to generalise dataset loading
 
@@ -109,6 +109,6 @@ def get_dataset_stats(X, y):
     return {
         'samples': X.shape[0],
         'features': X.shape[1],
-        'classes': len(unique_classes), #to generalise to the different lengths of the datasets
+        'classes': unique_classes, #to generalise to the different lengths of the datasets
         'class_names': [f'Class {i}' for i in range(unique_classes)]
     }
