@@ -23,6 +23,8 @@ X_train, X_val, y_train, y_val = train_test_split(
  
 app = dash.Dash(__name__)
 
+app.config.suppress_callback_exceptions = True #to prevent callback errors from the teacher page for the dataset/model selection
+
 app.layout = html.Div([
     # Fixed top navigation bar
     html.Div([
@@ -184,8 +186,9 @@ def update_info_content(n_intro, n_theory, n_tasks):
     [
         # follows the order of the UI
 
-        #teacher inputs
+        #teacher inputs to be moved (TESTING)
         State('model_dropdown', 'value'),
+        State('ds_dropdown', 'value'),
         
         #FNN architecture inputs
         State('seed-input', 'value'),
@@ -205,7 +208,9 @@ def update_info_content(n_intro, n_theory, n_tasks):
     prevent_initial_call=True
 )
 def train_visualise_or_reset(train_clicks, 
-                             reset_clicks, 
+                             reset_clicks,
+                             dataset_name,
+                             model_name, 
                              seed, 
                              hidden_layer_count, 
                              hidden_size, 

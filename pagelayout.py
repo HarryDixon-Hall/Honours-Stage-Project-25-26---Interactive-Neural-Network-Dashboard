@@ -489,6 +489,9 @@ def home_layout(): #removed the type error by splitting it out
             
             html.H2("Use the navigation above to access Student or Teacher views.", 
                    style={'textAlign': 'center', 'fontSize': '18px'}),
-                   #INTRODUCTION_TEXT  # Reuse existing intro content
-            
+                   #INTRODUCTION_TEXT  # Reuse existing intro content (maybe)
+            html.H2("Student = Lesson experience",
+                    style={'textAlign': 'center', 'fontSize': '18px'}),
+            html.H2("Teacher = Lesson Configuration",
+                    style={'textAlign': 'center', 'fontSize': '18px'}),
     ])
