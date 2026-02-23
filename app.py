@@ -23,6 +23,31 @@ X_train, X_val, y_train, y_val = train_test_split(
 app = dash.Dash(__name__)
 
 app.layout = html.Div([
+    # Fixed top navigation bar
+    html.Div([
+        html.H3("Neural Network Dashboard", 
+                style={'margin': '0 20px', 'display': 'inline-block'}),
+        html.Div([
+            dcc.Link("Home", href="/", 
+                    style={'padding': '10px 15px', 'display': 'inline-block', 
+                          'color': '#333', 'textDecoration': 'none'}),
+            dcc.Link("Student", href="/student", 
+                    style={'padding': '10px 15px', 'display': 'inline-block', 
+                          'color': '#333', 'textDecoration': 'none'}),
+            dcc.Link("Teacher", href="/teacher", 
+                    style={'padding': '10px 15px', 'display': 'inline-block', 
+                          'color': '#333', 'textDecoration': 'none'}),
+        ], style={'float': 'right'})
+    ], style={
+        'backgroundColor': '#f8f9fa', 
+        'borderBottom': '1px solid #dee2e6',
+        'padding': '15px 0',
+        'position': 'sticky',
+        'top': '0',
+        'zIndex': '1000'
+    }),
+
+
     dcc.Location(id="url", refresh=False), #url watchdog
     dcc.Store(id="lesson-config-store"),   #sharing between teacher/student of lesson config
     html.Div(id="page-content")            #student/teacher pa
@@ -578,8 +603,18 @@ def train_visualise_or_reset(train_clicks,
 def display_decision(pathname):
     if pathname == "/teacher":
         return teacher_layout()
-    else:
+    elif pathname == "/student":
         return student_layout()
+    else:
+        return html.Div([
+            html.H2("HOME PAGE: WELCOME TO NEURAL NETWORKS",
+                    html.H2("Welcome to Neural Network Dashboard", 
+                   style={'textAlign': 'center', 'marginBottom': '30px'}),
+                   html.P("Use the navigation above to access Student or Teacher views.", 
+                   style={'textAlign': 'center', 'fontSize': '18px'}),
+                   #INTRODUCTION_TEXT  # Reuse existing intro content
+            ),
+        ])
 
 
 if __name__ == '__main__':
