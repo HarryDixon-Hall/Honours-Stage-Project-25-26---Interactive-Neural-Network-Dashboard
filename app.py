@@ -7,6 +7,7 @@ from trainer import train_model
 from trainer import build_model
 from pagelayout import teacher_layout
 from pagelayout import student_layout
+from pagelayout import home_layout
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
  
@@ -28,7 +29,7 @@ app.layout = html.Div([
         html.H3("Neural Network Dashboard", 
                 style={'margin': '0 20px', 'display': 'inline-block'}),
         html.Div([
-            dcc.Link("Home", href="/", 
+            dcc.Link("Home", href="/home", 
                     style={'padding': '10px 15px', 'display': 'inline-block', 
                           'color': '#333', 'textDecoration': 'none'}),
             dcc.Link("Student", href="/student", 
@@ -596,6 +597,7 @@ def train_visualise_or_reset(train_clicks,
  #start app
 
 #callback for display decision: student or teacher page
+#now the callback to get to the homepage actually works, can navigate all pages
 @app.callback(
    Output("page-content", "children"),
    Input("url", "pathname"), 
@@ -605,16 +607,10 @@ def display_decision(pathname):
         return teacher_layout()
     elif pathname == "/student":
         return student_layout()
+    elif pathname == "/home":
+        return home_layout()
     else:
-        return html.Div([
-            html.H2("HOME PAGE: WELCOME TO NEURAL NETWORKS",
-                    html.H2("Welcome to Neural Network Dashboard", 
-                   style={'textAlign': 'center', 'marginBottom': '30px'}),
-                   html.P("Use the navigation above to access Student or Teacher views.", 
-                   style={'textAlign': 'center', 'fontSize': '18px'}),
-                   #INTRODUCTION_TEXT  # Reuse existing intro content
-            ),
-        ])
+        return home_layout()
 
 
 if __name__ == '__main__':
