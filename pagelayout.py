@@ -503,11 +503,54 @@ def sandbox_layout():
                     style={'textAlign': 'center', 'marginBottom': '20px'}),
     ])
 
+
+#skill tree data as a placeholder to showcase clicing on different levels at different points
+
+SKILL_TREE_DATA = {
+    "nodes": [
+        {"id": "level1", "name": "Hyperparams", "x": 0, "y": 0, "unlocked": True, "completed": False},
+        {"id": "level2", "name": "Templates", "x": 1, "y": 0, "unlocked": False, "completed": False},
+        {"id": "level3", "name": "Functions", "x": 2, "y": 0, "unlocked": False, "completed": False},
+        {"id": "level4", "name": "Classes", "x": 1, "y": 1, "unlocked": False, "completed": False},
+        {"id": "level5", "name": "Optimizers", "x": 2, "y": 1, "unlocked": False, "completed": False},
+    ],
+    "prereqs": {
+        "level2": ["level1"],
+        "level3": ["level2"], 
+        "level4": ["level2"],
+        "level5": ["level3", "level4"]
+    }
+}
 def skilltree_layout():
     return html.Div([
-        html.H2("SKILL TREE",
+        html.H1("SKILL TREE",
                     style={'textAlign': 'center', 'marginBottom': '20px'}),
-    ])
+
+        html.Div([
+            skill_box("Level 5", "Optimisers", 5, "level5"), # row 1
+
+            skill_box("Level 4", "Optimisers", 4, "level4"), # row 2
+
+            skill_box("Level 3", "Optimisers", 3, "level3"), # row 3
+
+            skill_box("Level 2", "Optimisers", 2, "level2"), # row 4
+
+            skill_box("Level 1", "Optimisers", 1, "level1"), # row 5
+        ])            
+    ], style={
+            "display": "grid",
+            "gridTemplateColumns": "repeat(1, 1fr)",
+            "gap": "20px",
+            "maxWidth": "900px",
+            "margin": "0 auto",
+            "padding": "20px"
+    }
+    )
+
+def skill_box(title, substitle, level_num, href):
+    return html.Div(
+
+    )
 
 def level2_layout():
     return html.Div([
