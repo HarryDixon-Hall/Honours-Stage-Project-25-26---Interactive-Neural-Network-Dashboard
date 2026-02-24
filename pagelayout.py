@@ -1,6 +1,8 @@
 import dash
 from dash import dcc, html, Input, Output, State, callback_context
 import numpy as np
+
+"""
 def teacher_layout():
     return html.Div([
         html.H2("Teacher Page - Lesson setup"),
@@ -54,8 +56,8 @@ def teacher_layout():
                  style={"marginTop": "10px,", "color": "green"}),
 
     ]),
-
-def student_layout():
+"""
+def level1_layout():
     return html.Div(
     style={
         "height": "100vh",
@@ -490,8 +492,44 @@ def home_layout(): #removed the type error by splitting it out
             html.H2("Use the navigation above to access Student or Teacher views.", 
                    style={'textAlign': 'center', 'fontSize': '18px'}),
                    #INTRODUCTION_TEXT  # Reuse existing intro content (maybe)
-            html.H2("Student = Lesson experience",
-                    style={'textAlign': 'center', 'fontSize': '18px'}),
-            html.H2("Teacher = Lesson Configuration",
-                    style={'textAlign': 'center', 'fontSize': '18px'}),
+            
+    ])
+
+#new levels
+
+def sandbox_layout():
+    return html.Div([
+        html.H2("SANDBOX",
+                    style={'textAlign': 'center', 'marginBottom': '20px'}),
+    ])
+
+def skilltree_layout():
+    return html.Div([
+        html.H2("SKILL TREE",
+                    style={'textAlign': 'center', 'marginBottom': '20px'}),
+    ])
+
+def level2_layout():
+    return html.Div([
+        html.H2("LEVEL 2",
+                    style={'textAlign': 'center', 'marginBottom': '20px'}),
+    ])
+
+def level3_layout():
+    return html.Div([
+        html.H2("LEVEL 3",
+                    style={'textAlign': 'center', 'marginBottom': '20px'}),
+    ])
+
+
+def level4_layout():
+    return html.Div([
+        html.H2("LEVEL 4",
+                    style={'textAlign': 'center', 'marginBottom': '20px'}),
+    ])
+
+def level5_layout():
+    return html.Div([
+        html.H2("LEVEL 5",
+                    style={'textAlign': 'center', 'marginBottom': '20px'}),
     ])

@@ -5,9 +5,17 @@ import numpy as np
 from dataload import load_dataset, get_dataset_stats
 from trainer import train_model
 from trainer import build_model
-from pagelayout import teacher_layout
-from pagelayout import student_layout
+
+#page layout imports
 from pagelayout import home_layout
+from pagelayout import skilltree_layout
+from pagelayout import sandbox_layout
+from pagelayout import level1_layout
+from pagelayout import level2_layout
+from pagelayout import level3_layout
+from pagelayout import level4_layout
+from pagelayout import level5_layout
+
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
  
@@ -28,18 +36,44 @@ app.config.suppress_callback_exceptions = True #to prevent callback errors from 
 app.layout = html.Div([
     # Fixed top navigation bar
     html.Div([
-        html.H3("Neural Network Dashboard", 
+        html.H3("Neural Network Dashboard (WORK IN PROGRESS)", 
                 style={'margin': '0 20px', 'display': 'inline-block'}),
+        html.Img(
+        src="/assets/construction_man.gif",
+        style={
+            "width": "100px", 
+            "height": "100px",
+            "display": "block",
+            "margin": "0 20px",
+            "borderRadius": "50%"
+        }
+    ),
         html.Div([
             dcc.Link("Home", href="/home", 
                     style={'padding': '10px 15px', 'display': 'inline-block', 
                           'color': '#333', 'textDecoration': 'none'}),
-            dcc.Link("Student", href="/student", 
+            dcc.Link("Skill tree", href="/skilltree", 
                     style={'padding': '10px 15px', 'display': 'inline-block', 
                           'color': '#333', 'textDecoration': 'none'}),
-            dcc.Link("Teacher", href="/teacher", 
+            dcc.Link("Sandbox", href="/sandbox", 
                     style={'padding': '10px 15px', 'display': 'inline-block', 
                           'color': '#333', 'textDecoration': 'none'}),
+            dcc.Link("Level 1", href="/level1", 
+                    style={'padding': '10px 15px', 'display': 'inline-block', 
+                          'color': '#333', 'textDecoration': 'none'}),
+            dcc.Link("Level 2", href="/level2", 
+                    style={'padding': '10px 15px', 'display': 'inline-block', 
+                          'color': '#333', 'textDecoration': 'none'}),
+            dcc.Link("Level 3", href="/level3", 
+                    style={'padding': '10px 15px', 'display': 'inline-block', 
+                          'color': '#333', 'textDecoration': 'none'}),
+            dcc.Link("Level 4", href="/level4", 
+                    style={'padding': '10px 15px', 'display': 'inline-block', 
+                          'color': '#333', 'textDecoration': 'none'}),
+            dcc.Link("Level 5", href="/level5", 
+                    style={'padding': '10px 15px', 'display': 'inline-block', 
+                          'color': '#333', 'textDecoration': 'none'}),
+            
         ], style={'float': 'right'})
     ], style={
         'backgroundColor': '#f8f9fa', 
@@ -186,9 +220,9 @@ def update_info_content(n_intro, n_theory, n_tasks):
     [
         # follows the order of the UI
 
-        #teacher inputs to be moved (TESTING)
-        State('model_dropdown', 'value'),
+        #teacher inputs to be moved (TESTING),
         State('ds_dropdown', 'value'),
+        State('model_dropdown', 'value'),
         
         #FNN architecture inputs
         State('seed-input', 'value'),
@@ -236,7 +270,8 @@ def train_visualise_or_reset(train_clicks,
         empty_fig = go.Figure()
         return (
             empty_fig, #training curves
-            empty_fig, #FNN architecture 
+            empty_fig, #FNN architecture
+            empty_fig, #architecture graph #new to get the reset working because it expects 8 values 
             empty_fig, #confusion matrix
             "",        #accuracy metrics
             "",        #per class metrics
@@ -322,7 +357,7 @@ def train_visualise_or_reset(train_clicks,
     model_map = { #this is to check that the dropdown labels selected go to internal keys in order to build the actual model
         "Logistic Regression": "log_reg",
         "NN-1-Layer": "simple_nn",
-        "NN-2-Layer": "two-layer_nn"
+        "NN-2-Layer": "two_layer_nn"
     }
 
     model_key = model_map.get(model_name)
@@ -335,10 +370,13 @@ def train_visualise_or_reset(train_clicks,
             empty_fig, empty_fig, empty_fig, empty_fig,
             "", "", status_msg, None
         )
+    
+    #print("model_name from dropdown:", model_name)
+    #print("model_key for build_model:", model_key)
 
 
     model = build_model(
-        model_name=model_name,
+        model_name=model_key, #will pass the interal key ("simple_nn") instead of the UI label
         input_size=input_size,
         output_size=output_size,
         hidden_size=hidden_size,
@@ -625,13 +663,23 @@ def train_visualise_or_reset(train_clicks,
    Output("page-content", "children"),
    Input("url", "pathname"), 
 )
-def display_decision(pathname):
-    if pathname == "/teacher":
-        return teacher_layout()
-    elif pathname == "/student":
-        return student_layout()
-    elif pathname == "/home":
+def display_decision(pathname): #this is a basic page selector before it gets transferred to the skill tree
+    if pathname == "/home":
         return home_layout()
+    elif pathname == "/skilltree":
+        return skilltree_layout()
+    elif pathname == "/sandbox":
+        return sandbox_layout()
+    elif pathname == "/level1":
+        return level1_layout()
+    elif pathname == "/level2":
+        return level2_layout()
+    elif pathname == "/level3":
+        return level3_layout()
+    elif pathname == "/level4":
+        return level4_layout()
+    elif pathname == "/level5":
+        return level5_layout()
     else:
         return home_layout()
 

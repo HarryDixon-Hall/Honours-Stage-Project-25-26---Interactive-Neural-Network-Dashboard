@@ -7,14 +7,14 @@ import numpy as np
 def build_model(model_name, input_size, output_size, hidden_size=8, seed=42): #build a model using the parameter values onto its layer map
     np.random.seed(seed)
 
-    if model_name == "Logistic Regression":
+    if model_name == "Logistic Regression": #Logistic Regression
         return LogisticRegression(
             input_size=input_size,
             output_size=output_size, 
             seed=seed,
         )
     
-    if model_name == "NN-1-Layer":
+    if model_name == "simple_nn": #NN-1-Layer
         return SimpleNN(
             input_size=input_size,
             hidden_size=hidden_size,
@@ -22,7 +22,7 @@ def build_model(model_name, input_size, output_size, hidden_size=8, seed=42): #b
             seed=seed,
         )
     
-    if model_name == "NN-2-Layer":
+    if model_name == "NN-2-Layer": #NN-2-Layer
         return ComplexNN(
             input_size=input_size,
             hidden1_size=hidden_size,
@@ -32,7 +32,7 @@ def build_model(model_name, input_size, output_size, hidden_size=8, seed=42): #b
         )
     
     else:
-        raise ValueError("Unknown model: {model_name}")
+        raise ValueError(f"Unknown model: {model_name}") #the value error should now be interpolated
     
 
 
