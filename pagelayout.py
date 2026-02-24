@@ -489,7 +489,7 @@ def home_layout(): #removed the type error by splitting it out
             html.H2("Welcome to Neural Network Dashboard", 
                    style={'textAlign': 'center', 'marginBottom': '30px'}),
             
-            html.H2("Use the navigation above to access Student or Teacher views.", 
+            html.H2("Skill tree to access levels, sandbox to see python coding enviroment.", 
                    style={'textAlign': 'center', 'fontSize': '18px'}),
                    #INTRODUCTION_TEXT  # Reuse existing intro content (maybe)
             
@@ -527,15 +527,15 @@ def skilltree_layout():
                     style={'textAlign': 'center', 'marginBottom': '20px'}),
 
         html.Div([
-            skill_box("Level 5", "Optimisers", 5, "level5"), # row 1
+            dcc.Link([skill_box("Level 5", "Optimisers")], href="/level5"),      # row 1
 
-            skill_box("Level 4", "Optimisers", 4, "level4"), # row 2
+            dcc.Link([skill_box("Level 4", "Classes")], href="/level4"),         # row 2
 
-            skill_box("Level 3", "Optimisers", 3, "level3"), # row 3
+            dcc.Link([skill_box("Level 3", "Functions")], href="/level3"),       # row 3
 
-            skill_box("Level 2", "Optimisers", 2, "level2"), # row 4
+            dcc.Link([skill_box("Level 2", "Templates")], href="/level2"),       # row 4
 
-            skill_box("Level 1", "Optimisers", 1, "level1"), # row 5
+            dcc.Link([skill_box("Level 1", "Hyperparameters")], href="/level1"), # row 5
         ])            
     ], style={
             "display": "grid",
@@ -544,13 +544,13 @@ def skilltree_layout():
             "maxWidth": "900px",
             "margin": "0 auto",
             "padding": "20px"
-    }
-    )
+    })
 
-def skill_box(title, substitle, level_num, href):
-    return html.Div(
-
-    )
+def skill_box(title, subtitle):
+    return html.Div([
+        html.H3(title),
+        html.P(subtitle)
+    ], className = "skill-box")
 
 def level2_layout():
     return html.Div([

@@ -44,7 +44,6 @@ app.layout = html.Div([
             "width": "100px", 
             "height": "100px",
             "display": "block",
-            "margin": "0 20px",
             "borderRadius": "50%"
         }
     ),
@@ -56,21 +55,6 @@ app.layout = html.Div([
                     style={'padding': '10px 15px', 'display': 'inline-block', 
                           'color': '#333', 'textDecoration': 'none'}),
             dcc.Link("Sandbox", href="/sandbox", 
-                    style={'padding': '10px 15px', 'display': 'inline-block', 
-                          'color': '#333', 'textDecoration': 'none'}),
-            dcc.Link("Level 1", href="/level1", 
-                    style={'padding': '10px 15px', 'display': 'inline-block', 
-                          'color': '#333', 'textDecoration': 'none'}),
-            dcc.Link("Level 2", href="/level2", 
-                    style={'padding': '10px 15px', 'display': 'inline-block', 
-                          'color': '#333', 'textDecoration': 'none'}),
-            dcc.Link("Level 3", href="/level3", 
-                    style={'padding': '10px 15px', 'display': 'inline-block', 
-                          'color': '#333', 'textDecoration': 'none'}),
-            dcc.Link("Level 4", href="/level4", 
-                    style={'padding': '10px 15px', 'display': 'inline-block', 
-                          'color': '#333', 'textDecoration': 'none'}),
-            dcc.Link("Level 5", href="/level5", 
                     style={'padding': '10px 15px', 'display': 'inline-block', 
                           'color': '#333', 'textDecoration': 'none'}),
             
@@ -85,7 +69,7 @@ app.layout = html.Div([
     }),
 
 
-    dcc.Location(id="url", refresh=False), #url watchdog
+    dcc.Location(id="url", refresh=True), #url watchdog
     dcc.Store(id="lesson-config-store"),   #sharing between teacher/student of lesson config
     html.Div(id="page-content")            #student/teacher pa
 ])
