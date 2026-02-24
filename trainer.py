@@ -32,7 +32,7 @@ def build_model(model_name, input_size, output_size, hidden_size=8, seed=42): #b
         )
     
     else:
-        raise ValueError("Unknown model: {model}")
+        raise ValueError("Unknown model: {model_name}")
     
 
 

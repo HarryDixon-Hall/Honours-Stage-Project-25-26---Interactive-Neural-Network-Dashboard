@@ -319,6 +319,14 @@ def train_visualise_or_reset(train_clicks,
     input_size = X_train.shape[1]
     output_size = len(np.unique(y_train))
 
+    model_map = { #this is to check that the dropdown labels selected go to internal keys in order to build the actual model
+        "Logistic Regression": "log_reg",
+        "NN-1-Layer": "simple_nn",
+        "NN-2-Layer": "two-layer_nn"
+    }
+    
+
+
     model = build_model(
         model_name=model_name,
         input_size=input_size,
@@ -485,13 +493,13 @@ def train_visualise_or_reset(train_clicks,
     edge_x = []
     edge_y = []
 
-    # Input → Hidden connections
+    # Input => Hidden connections
     for i in range(input_size):
         for j in range(hidden_size_int):
             edge_x += [x_input, x_hidden, None]
             edge_y += [i, j, None]
 
-    # Hidden → Output connections
+    # Hidden => Output connections
     for j in range(hidden_size_int):
         for k in range(output_size):
             edge_x += [x_hidden, x_output, None]

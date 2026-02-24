@@ -250,7 +250,7 @@ def student_layout():
                                 dcc.Dropdown(["Iris (Flowers)",
                                              "Wine (Chemistry)",
                                              "Seeds"],
-                                             "Iris (Flower)",
+                                             "Iris (Flowers)", #added s, might fix the lack of text initally
                                              id="ds_dropdown"
                                              ),
                                 
