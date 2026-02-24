@@ -324,7 +324,17 @@ def train_visualise_or_reset(train_clicks,
         "NN-1-Layer": "simple_nn",
         "NN-2-Layer": "two-layer_nn"
     }
-    
+
+    model_key = model_map.get(model_name)
+
+    if model_key is None: #will display unknown model with actual bad model name
+        #to fail elegantly if there's no model
+        status_msg = f"Unknown model selection: {model_name}"
+        empty_fig = go.Figure()
+        return(
+            empty_fig, empty_fig, empty_fig, empty_fig,
+            "", "", status_msg, None
+        )
 
 
     model = build_model(
