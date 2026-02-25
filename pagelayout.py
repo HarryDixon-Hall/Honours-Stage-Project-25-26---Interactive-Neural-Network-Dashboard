@@ -516,7 +516,7 @@ def sandbox_layout():
             #code editor container
             html.Div(
                 dcc.Textarea(
-                    id="code-editor",
+                    id="code-input",
                     value="Code",
                     style={
                         "width": "100%",
