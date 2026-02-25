@@ -60,9 +60,9 @@ app.layout = html.Div([
             
         ], style={'float': 'right'})
     ], style={
-        'backgroundColor': '#f8f9fa', 
+        'backgroundColor': "#29c08e", 
         'borderBottom': '1px solid #dee2e6',
-        'padding': '15px 0',
+        'padding': '30px 0', 
         'position': 'sticky',
         'top': '0',
         'zIndex': '1000'
