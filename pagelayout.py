@@ -500,8 +500,57 @@ def home_layout(): #removed the type error by splitting it out
 def sandbox_layout():
     return html.Div([
         html.H2("SANDBOX",
-                    style={'textAlign': 'center', 'marginBottom': '20px'}),
+                style={'textAlign': 'center', 'marginBottom': '20px'}),
+        #instructions for ML pipeline
+        html.Div([
+            html.H3("Build your own ML pipeline from scratch."),
+            html.H2("1. Load data"),
+            html.H2("2. Feature engineering"),
+            html.H2("3. Train Model"),
+            html.H2("4. Evaluate"),
+        ]),
+        
+        html.Div([
+            html.Label("Python Code Editor:", style={"fontWeight": "bold"}),
+            
+            #code editor container
+            html.Div(
+                dcc.Textarea(
+                    id="code-editor",
+                    value="Code",
+                    style={
+                        "width": "100%",
+                        "height": "400px",
+                        "fontFamily": "Consolas, Monaco, monospace",
+                        "fontSize": "14px", 
+                        "lineHeight": "1.4"
+                        }
+                ),
+            ),
+
+            #controls html frontend
+
+            html.Div([
+                html.Button("Run Code", id="code-run", #to run the python code
+                       style={"width": "100%", "padding": "12px", 
+                              "fontSize": "16px", "marginTop": "10px"}),
+                
+                html.Button("Export Code", id="code-export", #to export the python code
+                        style={"width": "100%", "padding": "12px", 
+                              "fontSize": "16px", "marginTop": "10px"}),
+
+                dcc.Download(id="download-editor")
+            ], style={"marginBottom": "20px"}),
+           
+           #output html panels
+
+           html.Div(id="editor-output"),
+           html.Div(id="editor-error", style={"color": "#dc3545"}),
+           dcc.Graph(id="editor-plot")], style={"maxWidth": "1400px", "margin": "0 auto"})
+
+
     ])
+
 
 
 #skill tree data as a placeholder to showcase clicing on different levels at different points
