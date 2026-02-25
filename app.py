@@ -71,7 +71,22 @@ app.layout = html.Div([
 
     dcc.Location(id="url", refresh=True), #url watchdog
     dcc.Store(id="lesson-config-store"),   #sharing between teacher/student of lesson config
-    html.Div(id="page-content")            #student/teacher pa
+    html.Div(id="page-content"),           #student/teacher pa
+
+    #syntax highlighting for Python code editor in sandbox and tasks
+
+    html.Style("""
+               /* Pure CSS Python Syntax Highlighting */
+                 .pure-editor::-webkit-input-placeholder { color: #666; }
+                 .pure-editor { background: #1e1e1e !important; color: #d4d4d4 !important; }
+    
+                /* Keywords */
+                 .pure-editor:focus { caret-color: #d4d4d4; }
+    
+                /* Output styling */
+                 .pure-success { background: #d4edda; color: #155724; padding: 15px; border-radius: 6px; }
+                 .pure-error { background: #f8d7da; color: #721c24; padding: 15px; border-radius: 6px; }
+               """),  
 ])
 
 # Disable caching for development
@@ -666,6 +681,31 @@ def display_decision(pathname): #this is a basic page selector before it gets tr
         return level5_layout()
     else:
         return home_layout()
+
+#callback to say syntactically perfect so the code can be compiled?
+#how will i get the error message if there's a compile fail?
+
+#callback for compiling (interpreter) python code from an external input
+#this will be simpler because this app is already using a python interpreter
+#just need to figure how this works for external python code?
+@app.callback(
+
+
+)
+
+#callback for a custom syntax highlighter/validator to read python code from the user
+#how will i get the error message if there's a compile fail?
+@app.callback(
+    Output("code-highlighted", "children"),
+    Input("code-input"))
+
+def syntax_highlighter(pythonCode):
+    if not pythonCode: #if there's no code in the text area it must be returned as an empty value
+        return ""
+    
+    #the following highlighter needs to be inline and using regex principles
+    #it will go character by character, no need to look at blank spaces unless necessary
+    #will this method include validation??
 
 
 if __name__ == '__main__':
