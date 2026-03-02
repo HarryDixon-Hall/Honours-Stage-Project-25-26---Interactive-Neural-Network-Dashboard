@@ -19,6 +19,16 @@ from pagelayout import level5_layout
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
 
+# Load data once at startup
+X_train_full, X_test, y_train_full, y_test, meta = load_dataset("iris") #feature/class names removed because meta fulfills those variables
+
+class_names = meta['class_names']
+dataset_stats = get_dataset_stats(X_train_full, y_train_full) #can now make use of this with metadata
+
+X_train, X_val, y_train, y_val = train_test_split(
+    X_train_full, y_train_full, test_size=0.2, random_state=42, stratify=y_train_full
+)
+
 #safe python environment for user input
 SAFE_PYTHON_ENV = {
     'print': print,
@@ -32,16 +42,6 @@ SAFE_PYTHON_ENV.update({ #make data global from py environment
     'load_dataset': load_dataset,
     'class_names': class_names
 })
-
-# Load data once at startup
-X_train_full, X_test, y_train_full, y_test, meta = load_dataset("iris") #feature/class names removed because meta fulfills those variables
-
-class_names = meta['class_names']
-dataset_stats = get_dataset_stats(X_train_full, y_train_full) #can now make use of this with metadata
-
-X_train, X_val, y_train, y_val = train_test_split(
-    X_train_full, y_train_full, test_size=0.2, random_state=42, stratify=y_train_full
-)
  
 app = dash.Dash(__name__)
 
@@ -695,6 +695,58 @@ def display_decision(pathname): #this is a basic page selector before it gets tr
      State("code-input", "value"),
     prevent_initial_call=True    
 )
+
+def execute_python_code(run_clicks, export_clicks, user_code):
+    # EXPORT BUTTON
+    if export_clicks:
+        return "", "", go.Figure(), dict(content=user_code, filename="script.py")
+    
+    # EXECUTE BUTTON
+    import io
+    output_capture = io.StringIO()
+    
+    try:
+        # CAPTURE PRINT OUTPUT
+        import sys
+        old_stdout = sys.stdout
+        sys.stdout = output_capture
+        
+        # SAFE EXECUTION (no dangerous builtins!)
+        exec(user_code, SAFE_PYTHON_ENV)
+        
+        sys.stdout = old_stdout
+        result = output_capture.getvalue()
+        
+        return (
+            html.Div([
+                html.H3("Compile Success", style={"color": "green"}),
+                html.Pre(result or "No output (code ran successfully!)")
+            ]),
+            "",
+            go.Figure(),  # Add ML plots later
+            dash.no_update
+        )
+        
+    except SyntaxError as e:
+        return (
+            "",
+            html.Div([
+                html.H3(f"Syntax Error (Line {e.lineno})", style={"color": "red"}),
+                html.Pre(str(e))
+            ]),
+            go.Figure(),
+            dash.no_update
+        )
+    except Exception as e:
+        return (
+            "",
+            html.Div([
+                html.H3("Compile Error", style={"color": "red"}),
+                html.Pre(str(e))
+            ]),
+            go.Figure(),
+            dash.no_update
+        )
 
 
 
