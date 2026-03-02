@@ -18,7 +18,21 @@ from pagelayout import level5_layout
 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
- 
+
+#safe python environment for user input
+SAFE_PYTHON_ENV = {
+    'print': print,
+    'np': np,
+    '__builtins__': {} #safe functions for no inteference
+}
+
+SAFE_PYTHON_ENV.update({ #make data global from py environment
+    'X_train': X_train, 'X_test': X_test,
+    'y_train': y_train, 'y_test': y_test,
+    'load_dataset': load_dataset,
+    'class_names': class_names
+})
+
 # Load data once at startup
 X_train_full, X_test, y_train_full, y_test, meta = load_dataset("iris") #feature/class names removed because meta fulfills those variables
 

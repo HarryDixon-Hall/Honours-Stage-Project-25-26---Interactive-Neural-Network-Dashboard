@@ -517,7 +517,7 @@ def sandbox_layout():
             html.Div(
                 dcc.Textarea(
                     id="code-input",
-                    value="Code",
+                    value="Print('Hello World')",
                     style={
                         "width": "100%",
                         "height": "400px",

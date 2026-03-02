@@ -77,8 +77,6 @@ def test_display_decision_unknown_path_defaults_home():
 
 # callback of info box
 
-
-
 # callback of building/training FNN models
 
 # call back of syntax highlighter
@@ -86,3 +84,5 @@ def test_display_decision_unknown_path_defaults_home():
 # call back of syntax validator
 
 # call back of ring-fenced python code execution from user input
+
+# pure function of train/test 
