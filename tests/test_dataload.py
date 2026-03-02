@@ -51,3 +51,16 @@ def assert_common_dataset(X_train, X_test, y_train, y_test, meta, expected_name)
         X_train, X_test, y_train, y_test, meta = load_dataset_digits()
         assert_common_dataset(X_train, X_test, y_train, y_test, meta, "Digits")
 
+    
+    def test_valid_datasetnames():
+        for name in ["iris", "wine", "digits"]:
+            X_train, X_test, y_train, y_test, meta = load_dataset(name) # this will check if the common load dataset is retrieving a valid name
+            assert_common_dataset(X_train, X_test, y_train, y_test, meta, meta["name"])
+
+    def test_invalid_datasetnames():
+        with pytest.raises(ValueError):
+            load_dataset("unknown_dataset") # if the the value is wrong 
+
+    #need to add a test for dataset stats?
+    #how to do it since each dataset will have different features, classes etc
+
