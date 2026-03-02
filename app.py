@@ -685,7 +685,16 @@ def display_decision(pathname): #this is a basic page selector before it gets tr
 #callback for INTERPRETER CONTROL
 #this will be simpler because this app is already using a python interpreter
 #just need to figure how this works for external python code?
-
+@app.callback(
+    [Output("editor-output", "children"),
+     Output("editor-error", "children"),
+     Output("editor-plot", "figure"),
+     Output("download-editor", "data")],
+    [Input("code-run", "n_clicks"),
+     Input("code-export", "n_clicks")],
+     State("code-input", "value"),
+    prevent_initial_call=True    
+)
 
 
 
