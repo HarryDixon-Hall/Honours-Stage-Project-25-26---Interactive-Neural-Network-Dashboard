@@ -31,7 +31,7 @@ X_train, X_val, y_train, y_val = train_test_split(
 
 #safe python environment for user input
 SAFE_PYTHON_ENV = {
-    'print': print,
+    'print': print, 
     'np': np,
     '__builtins__': {} #safe functions for no inteference
 }
@@ -140,7 +140,6 @@ INTRODUCTION_TEXT = html.Div([
     ], style={"background": "#f0f9ff", "padding": "12px", "borderRadius": "6px"}),
     
 ])
-
 
 THEORY_TEXT = html.Div([
     html.P("Theory Text"),
