@@ -772,7 +772,8 @@ def execute_python_code(run_clicks, export_clicks, user_code):
         sys.stdout = old_stdout
         result = output_capture.getvalue()
 
-        # Grab last figure => PNG => base64
+        outputs = []
+
         if plt.get_fignums():
             fig = plt.gcf()
             buf = io.BytesIO()
@@ -780,22 +781,24 @@ def execute_python_code(run_clicks, export_clicks, user_code):
             buf.seek(0)
             img_str = base64.b64encode(buf.read()).decode()
             plt.close('all')
-            
-            html_img = html.Img(
+            outputs.append(html.Img(
                 src=f"data:image/png;base64,{img_str}",
-                style={'max-width': '100%', 'height': 'auto'}
-            )
-            return html_img, "", go.Figure(), dash.no_update
+                style={'max-width': '100%', 'height': 'auto', 'display': 'block', 'margin-bottom': '10px'}
+            ))
+
+        # Print output immediately follows
+        if result.strip():
+            outputs.append(html.Pre(
+                result,
+                style={'margin': '0', 'white-space': 'pre-wrap', 'font-family': 'monospace', 'font-size': '14px'}
+            ))
+
+        # Empty result → "success"
+        if not outputs:
+            outputs.append(html.Pre("Code executed successfully (no output)"))
         
-        return (
-            html.Div([
-                html.H3("Compile Success", style={"color": "green"}),
-                html.Pre(result or "No output (code ran successfully!)")
-            ]),
-            "",
-            go.Figure(),  # Add ML plots later
-            dash.no_update
-        )
+        return html.Div(outputs), "", go.Figure(), dash.no_update
+
         
     except SyntaxError as e:
         return (
