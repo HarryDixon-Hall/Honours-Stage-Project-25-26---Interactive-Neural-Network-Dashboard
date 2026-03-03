@@ -1,10 +1,29 @@
 import dash
 from dash import dcc, html, Input, Output, State, callback_context
 import plotly.graph_objects as go
+import matplotlib
+matplotlib.use('Agg')  # Dash-safe
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
+
+import plotly.tools as tls
 import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
 from dataload import load_dataset, get_dataset_stats
 from trainer import train_model
 from trainer import build_model
+
+
+import io
+import base64
+import matplotlib
+matplotlib.use('Agg') #for the png whic dash plotly can display
+
+#models for code sandbox
+#from models import SimpleNN
+#from models import LogisticRegression
+#from models import ComplexNN
 
 #page layout imports
 from pagelayout import home_layout
@@ -31,17 +50,53 @@ X_train, X_val, y_train, y_val = train_test_split(
 
 #safe python environment for user input
 SAFE_PYTHON_ENV = {
+    '__builtins__': {
     'print': print, 
-    'np': np,
-    '__builtins__': {} #safe functions for no inteference
+    'int': int,
+    'float': float, 
+    'str': str,
+    'list': list,
+    'dict': dict, 
+    'set': set,
+    'range': range,
+    'len': len,
+    'sum': sum,
+    'max': max,
+    'min': min,
+    '__import__': __import__ 
+    },
+    'pd': pd, #panda
+    'np': np, #numpy library
+    'plt': plt if 'plt' in globals() else None, #Matplotlib
+    'from sklearn.model_selection import train_test_split': None,  # Already global
+    'from sklearn.linear_model import LogisticRegression': None,
+    'from sklearn.metrics import accuracy_score': None,
+    'from sklearn.metrics import confusion_matrix': None,
+
+    #x train
+    'X_train': X_train, 
+    'X_test': X_test, 
+    'y_train': y_train, 
+    'y_test': y_test,
+
+    #full train
+    'X_train_full': X_train_full, 
+    'X_val': X_val, 
+    'y_train_full': y_train_full, 
+    'y_val': y_val,
+
+    'load_dataset': load_dataset,
+    'class_names': class_names,
+    'train_model': train_model,
+    #'SimpleNN': SimpleNN,
+    'LogisticRegression': LogisticRegression,
+    #'ComplexNN': ComplexNN,
+    'accuracy_score': accuracy_score,
+
+    'train_test_split': train_test_split,
+    'confusion_matrix': confusion_matrix
 }
 
-SAFE_PYTHON_ENV.update({ #make data global from py environment
-    'X_train': X_train, 'X_test': X_test,
-    'y_train': y_train, 'y_test': y_test,
-    'load_dataset': load_dataset,
-    'class_names': class_names
-})
  
 app = dash.Dash(__name__)
 
@@ -692,6 +747,7 @@ def display_decision(pathname): #this is a basic page selector before it gets tr
     [Input("code-run", "n_clicks"),
      Input("code-export", "n_clicks")],
      State("code-input", "value"),
+
     prevent_initial_call=True    
 )
 
@@ -715,6 +771,21 @@ def execute_python_code(run_clicks, export_clicks, user_code):
         
         sys.stdout = old_stdout
         result = output_capture.getvalue()
+
+        # Grab last figure => PNG => base64
+        if plt.get_fignums():
+            fig = plt.gcf()
+            buf = io.BytesIO()
+            fig.savefig(buf, format='png', dpi=150, bbox_inches='tight')
+            buf.seek(0)
+            img_str = base64.b64encode(buf.read()).decode()
+            plt.close('all')
+            
+            html_img = html.Img(
+                src=f"data:image/png;base64,{img_str}",
+                style={'max-width': '100%', 'height': 'auto'}
+            )
+            return html_img, "", go.Figure(), dash.no_update
         
         return (
             html.Div([
