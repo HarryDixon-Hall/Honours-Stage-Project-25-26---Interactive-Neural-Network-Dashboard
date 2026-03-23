@@ -59,6 +59,7 @@ def teacher_layout():
 """
 def level1_layout():
     return html.Div(
+    #html.H1("Level 1 - Hyperparameter Playground")
     style={
         "height": "100vh",
         "padding": "10px",
@@ -517,7 +518,7 @@ def sandbox_layout():
             html.Div(
                 dcc.Textarea(
                     id="code-input",
-                    value="Print('Hello World')",
+                    value="print('Hello World')",
                     style={
                         "width": "100%",
                         "height": "400px",
@@ -551,8 +552,6 @@ def sandbox_layout():
 
     ])
 
-
-
 #skill tree data as a placeholder to showcase clicing on different levels at different points
 
 SKILL_TREE_DATA = {
@@ -576,15 +575,15 @@ def skilltree_layout():
                     style={'textAlign': 'center', 'marginBottom': '20px'}),
 
         html.Div([
-            dcc.Link([skill_box("Level 5", "Optimisers")], href="/level5"),      # row 1
+            dcc.Link([skill_box("Level 5", "The ML Pipeline")], href="/level5"),      # row 1
 
-            dcc.Link([skill_box("Level 4", "Classes")], href="/level4"),         # row 2
+            dcc.Link([skill_box("Level 4", "Model Architecture Coding")], href="/level4"),         # row 2
 
-            dcc.Link([skill_box("Level 3", "Functions")], href="/level3"),       # row 3
+            dcc.Link([skill_box("Level 3", "Function Coding")], href="/level3"),       # row 3
 
-            dcc.Link([skill_box("Level 2", "Templates")], href="/level2"),       # row 4
+            dcc.Link([skill_box("Level 2", "Architecture Impact")], href="/level2"),       # row 4
 
-            dcc.Link([skill_box("Level 1", "Hyperparameters")], href="/level1"), # row 5
+            dcc.Link([skill_box("Level 1", "Hyperparameter Playground")], href="/level1"), # row 5
         ])            
     ], style={
             "display": "grid",
@@ -603,25 +602,58 @@ def skill_box(title, subtitle):
 
 def level2_layout():
     return html.Div([
-        html.H2("LEVEL 2",
-                    style={'textAlign': 'center', 'marginBottom': '20px'}),
+        html.H2("Architecture Impact", style={'textAlign': 'center', 'marginBottom': '20px'}),
+
+        html.H3("Observe the impact of model architecture on test-prediction accuracy"),
+
+        dcc.Dropdown(
+            id='level2-model-dropdown',
+            options=[
+                {'label': 'Logistic Regression', 'value': 'logreg'},
+                {'label': 'NN-1-Layer', 'value': 'simplenn'},
+                {'label': 'NN-2-Layer', 'value': 'complexnn'}
+            ],
+            value='simplenn'
+        ),
+        
+        # Dataset selection
+        html.H4("Dataset"),
+        dcc.Dropdown(
+            id='level2-dataset-dropdown',
+            options=[
+                {'label': 'Iris Flowers', 'value': 'iris'},
+                {'label': 'Wine Chemistry', 'value': 'wine'}
+            ],
+            value='iris'
+        ),
+
+        # Control buttons
+        html.Button('Train Model', id='level2-train-btn', n_clicks=0),
+        html.Button('Reset', id='level2-reset-btn', n_clicks=0),
+        
+        # Visualizations (reuse your existing components)
+        dcc.Graph(id='level2-architecture'),
+        dcc.Graph(id='level2-loss-curves'),
+        dcc.Graph(id='level2-confusion-matrix'),
+        html.Div(id='level2-metrics'),
+        
+        dcc.Store(id='level2-model-store'),
     ])
 
 def level3_layout():
     return html.Div([
-        html.H2("LEVEL 3",
+        html.H2("Function Coding",
                     style={'textAlign': 'center', 'marginBottom': '20px'}),
     ])
 
-
 def level4_layout():
     return html.Div([
-        html.H2("LEVEL 4",
+        html.H2("Model Architecture Coding",
                     style={'textAlign': 'center', 'marginBottom': '20px'}),
     ])
 
 def level5_layout():
     return html.Div([
-        html.H2("LEVEL 5",
+        html.H2("The ML Pipeline",
                     style={'textAlign': 'center', 'marginBottom': '20px'}),
     ])
