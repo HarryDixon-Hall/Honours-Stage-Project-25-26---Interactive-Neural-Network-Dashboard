@@ -583,7 +583,7 @@ def skilltree_layout():
 
             dcc.Link([skill_box("Level 2", "Architecture Impact")], href="/level2"),       # row 4
 
-            dcc.Link([skill_box("Level 1", "Hyperparameter Playground")], href="/level1"), # row 5
+            dcc.Link([skill_box("Level 1", "Linear Decision Boundary Explorer")], href="/level1"), # row 5
         ])            
     ], style={
             "display": "grid",
@@ -600,6 +600,7 @@ def skill_box(title, subtitle):
         html.P(subtitle)
     ], className = "skill-box")
 
+"""
 def level1_layout():
     return html.Div([
         html.H1("Level 1: Hyperparameter Playground", style={'textAlign': 'center'}),
@@ -628,45 +629,213 @@ def level1_layout():
             dcc.Graph(id='live-decision-boundary')  # Classification viz
         ], style={'width': '55%', 'float': 'right'})
     ])
+"""
+def level1_layout():
+    return html.Div(
+        [
+            html.H1(
+                "Level 1: Linear Decision Boundary Explorer",
+                style={'textAlign': 'center'}
+            ),
+
+            # Parent flex container
+            html.Div(
+                [
+                    # Left side: controls
+                    html.Div(
+                        [
+                            html.H3("Data & Linear Model Controls"),
+
+                            html.Label("Dataset:"),
+                            dcc.Dropdown(
+                                id='l1-dataset',
+                                options=[
+                                    {'label': 'Linearly Separable', 'value': 'linear'},
+                                    {'label': 'Not Linearly Separable (Moons)', 'value': 'moons'},
+                                    {'label': 'Not Linearly Separable (Circles)', 'value': 'circles'}
+                                ],
+                                value='linear',
+                                clearable=False
+                            ),
+
+                            html.Hr(),
+
+                            html.Label("Weight w₁ (x-axis):"),
+                            dcc.Slider(
+                                id='l1-w1',
+                                min=-5, max=5, step=0.1, value=1.0,
+                                marks={i: str(i) for i in range(-5, 6, 2)}
+                            ),
+
+                            html.Label("Weight w₂ (y-axis):"),
+                            dcc.Slider(
+                                id='l1-w2',
+                                min=-5, max=5, step=0.1, value=1.0,
+                                marks={i: str(i) for i in range(-5, 6, 2)}
+                            ),
+
+                            html.Label("Bias b:"),
+                            dcc.Slider(
+                                id='l1-bias',
+                                min=-5, max=5, step=0.1, value=0.0,
+                                marks={i: str(i) for i in range(-5, 6, 2)}
+                            ),
+
+                            html.Hr(),
+
+                            html.Label("Learning Rate (for training step):"),
+                            dcc.Slider(
+                                id='l1-lr',
+                                min=0.001, max=1.0, step=0.001, value=0.1,
+                                marks={0.001: '0.001', 0.01: '0.01', 0.1: '0.1', 1.0: '1.0'}
+                            ),
+
+                            html.Div(
+                                [
+                                    html.Button("Train One Step", id='l1-train-step', n_clicks=0),
+                                    html.Button(
+                                        "Reset Weights",
+                                        id='l1-reset',
+                                        n_clicks=0,
+                                        style={'marginLeft': '10px'}
+                                    )
+                                ],
+                                style={'marginTop': '10px'}
+                            ),
+
+                            html.Hr(),
+
+                            html.Label("Current Linear Model:"),
+                            dcc.Textarea(
+                                id='l1-model-equation',
+                                value="sign(w1 * x + w2 * y + b)",
+                                style={
+                                    'width': '100%',
+                                    'height': 60,
+                                    'fontFamily': 'monospace'
+                                }
+                            ),
+                        ],
+                        style={
+                            'flex': '0 0 35%',
+                            'padding': '0 20px',
+                            'boxSizing': 'border-box'
+                        }
+                    ),
+
+                    # Right side: visualisations
+                    html.Div(
+                        [
+                            html.H3("Decision Boundary & Loss"),
+
+                            dcc.Graph(
+                                id='l1-decision-boundary',
+                                style={'height': '55vh'}
+                            ),
+
+                            dcc.Graph(
+                                id='l1-loss-curve',
+                                style={'height': '30vh', 'marginTop': '10px'}
+                            ),
+                        ],
+                        style={
+                            'flex': '0 0 65%',
+                            'padding': '0 20px',
+                            'boxSizing': 'border-box'
+                        }
+                    ),
+                ],
+                style={
+                    'display': 'flex',
+                    'flexDirection': 'row',
+                    'alignItems': 'flex-start'
+                }
+            ),
+        ]
+    )
+
 
 def level2_layout():
     return html.Div([
-        html.H2("Architecture Impact", style={'textAlign': 'center', 'marginBottom': '20px'}),
-
-        html.H3("Observe the impact of model architecture on test-prediction accuracy"),
-
-        dcc.Dropdown(
-            id='level2-model-dropdown',
-            options=[
-                {'label': 'Logistic Regression', 'value': 'logreg'},
-                {'label': 'NN-1-Layer', 'value': 'simplenn'},
-                {'label': 'NN-2-Layer', 'value': 'complexnn'}
-            ],
-            value='simplenn'
-        ),
-        
-        # Dataset selection
-        html.H4("Dataset"),
-        dcc.Dropdown(
-            id='level2-dataset-dropdown',
-            options=[
-                {'label': 'Iris Flowers', 'value': 'iris'},
-                {'label': 'Wine Chemistry', 'value': 'wine'}
-            ],
-            value='iris'
+        html.H2(
+            "Level 2 – Single Hidden Layer as Function Composition",
+            style={'textAlign': 'center', 'marginBottom': '20px'}
         ),
 
-        # Control buttons
-        html.Button('Train Model', id='level2-train-btn', n_clicks=0),
-        html.Button('Reset', id='level2-reset-btn', n_clicks=0),
-        
-        # Visualizations (reuse your existing components)
-        dcc.Graph(id='level2-architecture'),
-        dcc.Graph(id='level2-loss-curves'),
-        dcc.Graph(id='level2-confusion-matrix'),
-        html.Div(id='level2-metrics'),
-        
-        dcc.Store(id='level2-model-store'),
+        html.P(
+            "Explore how a single hidden layer applies a linear transformation "
+            "followed by a nonlinearity to bend the decision boundary.",
+            style={'textAlign': 'center', 'marginBottom': '20px'}
+        ),
+
+        # Controls row
+        html.Div([
+            html.Div([
+                html.H4("Hidden layer width"),
+                dcc.Slider(
+                    id='level2-width-slider',
+                    min=1,
+                    max=10,
+                    step=1,
+                    value=4,
+                    marks={i: str(i) for i in range(1, 11)}
+                ),
+
+                html.H4("Activation function"),
+                dcc.Dropdown(
+                    id='level2-activation-dropdown',
+                    options=[
+                        {'label': 'ReLU', 'value': 'relu'},
+                        {'label': 'Tanh', 'value': 'tanh'},
+                        {'label': 'Sigmoid', 'value': 'sigmoid'},
+                    ],
+                    value='tanh',
+                    clearable=False
+                ),
+
+                html.H4("Toy dataset"),
+                dcc.Dropdown(
+                    id='level2-dataset-dropdown',
+                    options=[
+                        {'label': 'Moons', 'value': 'moons'},
+                        {'label': 'Circles', 'value': 'circles'},
+                        {'label': 'Linear', 'value': 'linear'},
+                    ],
+                    value='moons',
+                    clearable=False
+                ),
+
+                html.Button('Randomize Weights', id='level2-randomize-btn', n_clicks=0),
+                html.Button('Train Few Steps', id='level2-trainstep-btn', n_clicks=0),
+            ], style={'width': '30%', 'display': 'inline-block', 'verticalAlign': 'top', 'padding': '0 20px'}),
+
+            html.Div([
+                dcc.Graph(id='level2-decision-boundary-graph'),
+            ], style={'width': '70%', 'display': 'inline-block'}),
+        ]),
+
+        html.Hr(),
+
+        # Second row: activation + network diagram + math explanation
+        html.Div([
+            html.Div([
+                html.H4("Activation function ρ(z)"),
+                dcc.Graph(id='level2-activation-graph'),
+            ], style={'width': '33%', 'display': 'inline-block'}),
+
+            html.Div([
+                html.H4("Network diagram"),
+                dcc.Graph(id='level2-network-diagram-graph'),
+            ], style={'width': '33%', 'display': 'inline-block'}),
+
+            html.Div([
+                html.H4("Layer formula & parameters"),
+                html.Div(id='level2-math-explanation'),
+            ], style={'width': '33%', 'display': 'inline-block', 'padding': '0 20px'}),
+        ]),
+
+        # Store for model parameters (weights, biases)
+        dcc.Store(id='level2-params-store'),
     ])
 
 def level3_layout():

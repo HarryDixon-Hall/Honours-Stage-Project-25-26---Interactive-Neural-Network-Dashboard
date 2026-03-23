@@ -39,6 +39,10 @@ from pagelayout import level5_layout
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
 
+from sklearn.datasets import make_blobs, make_moons, make_circles, make_classification #for level 2
+import plotly.graph_objects as go
+
+
 # Load data once at startup
 X_train_full, X_test, y_train_full, y_test, meta = load_dataset("iris") #feature/class names removed because meta fulfills those variables
 
@@ -847,7 +851,7 @@ def syntax_highlighter(pythonCode):
      Output('code-preview', 'children')],
     [Input('live-hidden-size', 'value'), Input('live-seed', 'value')]
 )
-def update_live_visualizations(hidden_size, seed):
+def update_live_visualisations(hidden_size, seed):
     # FIX 1: Load Iris data locally (no global dependency)
     from dataload import loaddataset
     Xtrain, _, ytrain, _, meta = loaddataset('iris')
@@ -938,8 +942,467 @@ def plot_decision_boundary(model, Xtrain_sample):
                       xaxis_title="PC1", yaxis_title="PC2", height=350)
     return fig
 
+#callback for 2d decision boundary of level 1
+def generate_data(dataset: str):
+    """
+    Return (X, y) for a 2D toy dataset.
 
+    X: (n_samples, 2), y: (n_samples,)
+    """
+    if dataset == 'linear':
+        # Two linearly separable blobs
+        X, y = make_blobs(
+            n_samples=300,
+            centers=[(-2, -2), (2, 2)],
+            cluster_std=0.8,
+            random_state=42
+        )
+    elif dataset == 'moons':
+        X, y = make_moons(
+            n_samples=300,
+            noise=0.2,
+            random_state=42
+        )  # two interleaving half-circles[web:55][web:59]
+    elif dataset == 'circles':
+        X, y = make_circles(
+            n_samples=300,
+            noise=0.1,
+            factor=0.4,
+            random_state=42
+        )  # concentric circles[web:53][web:59]
+    else:
+        # Fallback: simple blobs
+        X, y = make_blobs(
+            n_samples=300,
+            centers=[(-2, -2), (2, 2)],
+            cluster_std=0.8,
+            random_state=42
+        )
 
+    return X, y
+
+@app.callback(
+    Output('l1-decision-boundary', 'figure'),
+    [
+        Input('l1-dataset', 'value'),
+        Input('l1-w1', 'value'),
+        Input('l1-w2', 'value'),
+        Input('l1-bias', 'value'),
+    ]
+)
+def update_decision_boundary(dataset, w1, w2, b):
+    # 1. Get data
+    X, y = generate_data(dataset)  # X: (n, 2), y: (n,)
+    x1 = X[:, 0]
+    x2 = X[:, 1]
+
+    # 2. Base scatter plot
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Scatter(
+            x=x1[y == 0],
+            y=x2[y == 0],
+            mode='markers',
+            name='Class 0',
+            marker=dict(color='blue', size=8, opacity=0.7),
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=x1[y == 1],
+            y=x2[y == 1],
+            mode='markers',
+            name='Class 1',
+            marker=dict(color='red', size=8, opacity=0.7),
+        )
+    )
+
+    # 3. Decision boundary line (if w2 != 0)
+    x_min, x_max = x1.min() - 0.5, x1.max() + 0.5
+
+    if abs(w2) > 1e-6:
+        xs = np.linspace(x_min, x_max, 100)
+        ys = -(w1 * xs + b) / w2
+
+        fig.add_trace(
+            go.Scatter(
+                x=xs,
+                y=ys,
+                mode='lines',
+                name='Decision boundary',
+                line=dict(color='black', width=2),
+            )
+        )
+
+    fig.update_layout(
+        xaxis_title='x₁',
+        yaxis_title='x₂',
+        xaxis=dict(range=[x_min, x_max]),
+        yaxis=dict(scaleanchor='x', scaleratio=1),  # keep aspect ratio square
+        legend=dict(x=0.02, y=0.98),
+        margin=dict(l=40, r=10, t=40, b=40),
+    )
+
+    return fig
+
+#level 2 callback
+
+#toy datasets 
+def load_toy_dataset(name, n_samples=300, noise=0.2, random_state=0):
+    if name == 'moons':
+        X, y = make_moons(n_samples=n_samples, noise=noise, random_state=random_state)
+    elif name == 'circles':
+        X, y = make_circles(n_samples=n_samples, factor=0.5,
+                            noise=noise, random_state=random_state)
+    elif name == 'linear':
+        # simple linearly separable classification
+        X, y = make_classification(
+            n_samples=n_samples,
+            n_features=2,
+            n_redundant=0,
+            n_informative=2,
+            n_clusters_per_class=1,
+            class_sep=1.5,
+            random_state=random_state
+        )
+    else:
+        raise ValueError(f"Unknown dataset: {name}")
+
+    # Ensure shapes (N, 2) and (N,)
+    return X.astype(np.float32), y.astype(np.int32)
+
+def init_single_hidden_mlp(input_dim=2, hidden_dim=4, output_dim=1, rng=None):
+    if rng is None:
+        rng = np.random.default_rng()
+
+    # Xavier / Glorot-like scaling for stability
+    W1 = rng.normal(0.0, 1.0 / np.sqrt(input_dim), size=(hidden_dim, input_dim))
+    b1 = np.zeros((hidden_dim, 1))
+    W2 = rng.normal(0.0, 1.0 / np.sqrt(hidden_dim), size=(output_dim, hidden_dim))
+    b2 = np.zeros((output_dim, 1))
+
+    return {
+        'W1': W1,
+        'b1': b1,
+        'W2': W2,
+        'b2': b2,
+    }
+
+def activation_forward(Z, activation):
+    if activation == 'relu':
+        A = np.maximum(0, Z)
+    elif activation == 'tanh':
+        A = np.tanh(Z)
+    elif activation == 'sigmoid':
+        A = 1.0 / (1.0 + np.exp(-Z))
+    else:
+        raise ValueError(f"Unknown activation: {activation}")
+    return A
+
+def activation_backward(dA, Z, activation):
+    if activation == 'relu':
+        dZ = dA * (Z > 0)
+    elif activation == 'tanh':
+        A = np.tanh(Z)
+        dZ = dA * (1 - A**2)
+    elif activation == 'sigmoid':
+        A = 1.0 / (1.0 + np.exp(-Z))
+        dZ = dA * A * (1 - A)
+    else:
+        raise ValueError(f"Unknown activation: {activation}")
+    return dZ
+
+def forward_pass(X, params, activation):
+    """
+    X: (N, 2)
+    returns dict with intermediate values for backprop
+    """
+    W1, b1 = params['W1'], params['b1']  # (H,2), (H,1)
+    W2, b2 = params['W2'], params['b2']  # (1,H), (1,1)
+
+    X_t = X.T  # (2, N)
+
+    Z1 = W1 @ X_t + b1          # (H, N)
+    A1 = activation_forward(Z1, activation)  # (H, N)
+
+    Z2 = W2 @ A1 + b2           # (1, N)
+    A2 = 1.0 / (1.0 + np.exp(-Z2))  # sigmoid output (1, N)
+
+    cache = {
+        'X_t': X_t,
+        'Z1': Z1,
+        'A1': A1,
+        'Z2': Z2,
+        'A2': A2,
+    }
+    return A2, cache
+
+def train_single_hidden_step(X, y, params, activation='tanh',
+                             steps=50, lr=0.1, l2=0.0):
+    """
+    Run a few GD steps to make the boundary visibly change.
+    X: (N, 2), y: (N,)
+    """
+    W1, b1 = params['W1'], params['b1']
+    W2, b2 = params['W2'], params['b2']
+
+    y_row = y.reshape(1, -1)  # (1, N)
+
+    for _ in range(steps):
+        # Forward
+        A2, cache = forward_pass(X, params, activation)
+        A1, X_t = cache['A1'], cache['X_t']
+
+        # Binary cross-entropy derivative wrt A2
+        eps = 1e-8
+        dA2 = -(y_row / (A2 + eps) - (1 - y_row) / (1 - A2 + eps))  # (1, N)
+
+        # dZ2 = dL/dA2 * dA2/dZ2
+        dZ2 = dA2 * A2 * (1 - A2)  # sigmoid prime
+
+        # Gradients for W2, b2
+        dW2 = (dZ2 @ A1.T) / X.shape[0]  # (1, H)
+        db2 = np.mean(dZ2, axis=1, keepdims=True)  # (1,1)
+
+        # Backprop into hidden layer
+        dA1 = W2.T @ dZ2  # (H, N)
+        dZ1 = activation_backward(dA1, cache['Z1'], activation)  # (H, N)
+
+        dW1 = (dZ1 @ X_t.T) / X.shape[0]  # (H, 2)
+        db1 = np.mean(dZ1, axis=1, keepdims=True)  # (H,1)
+
+        # Optional L2 regularization
+        if l2 > 0:
+            dW2 += l2 * W2
+            dW1 += l2 * W1
+
+        # Gradient descent update
+        W2 -= lr * dW2
+        b2 -= lr * db2
+        W1 -= lr * dW1
+        b1 -= lr * db1
+
+        params.update({'W1': W1, 'b1': b1, 'W2': W2, 'b2': b2})
+
+    return params
+
+def make_decision_boundary_figure(X, y, params, activation, grid_step=0.03):
+    # Bounds
+    x_min, x_max = X[:, 0].min() - 0.5, X[:, 0].max() + 0.5
+    y_min, y_max = X[:, 1].min() - 0.5, X[:, 1].max() + 0.5
+
+    xx, yy = np.meshgrid(
+        np.arange(x_min, x_max, grid_step),
+        np.arange(y_min, y_max, grid_step)
+    )
+    grid_points = np.c_[xx.ravel(), yy.ravel()]
+
+    # Forward pass on grid
+    A2_grid, _ = forward_pass(grid_points, params, activation)
+    Z = A2_grid.reshape(xx.shape)  # predicted probability
+
+    contour = go.Contour(
+        x=xx[0, :],
+        y=yy[:, 0],
+        z=Z,
+        showscale=False,
+        contours=dict(showlines=False),
+        colorscale='RdBu',
+        opacity=0.6
+    )
+
+    scatter = go.Scatter(
+        x=X[:, 0],
+        y=X[:, 1],
+        mode='markers',
+        marker=dict(
+            color=y,
+            colorscale='Viridis',
+            line=dict(width=1, color='black'),
+            size=7
+        ),
+        name='Data'
+    )
+
+    fig = go.Figure(data=[contour, scatter])
+    fig.update_layout(
+        title="Decision boundary in input space",
+        xaxis_title="x₁",
+        yaxis_title="x₂",
+        margin=dict(l=0, r=0, t=40, b=0)
+    )
+    return fig
+
+def make_activation_figure(activation):
+    z = np.linspace(-5, 5, 400)
+    if activation == 'relu':
+        a = np.maximum(0, z)
+        title = "ReLU activation ρ(z) = max(0, z)"
+    elif activation == 'tanh':
+        a = np.tanh(z)
+        title = "Tanh activation ρ(z) = tanh(z)"
+    elif activation == 'sigmoid':
+        a = 1.0 / (1.0 + np.exp(-z))
+        title = "Sigmoid activation ρ(z) = 1 / (1 + e^{-z})"
+    else:
+        a = z
+        title = f"Unknown activation: {activation}"
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=z, y=a, mode='lines'))
+    fig.update_layout(
+        title=title,
+        xaxis_title="z",
+        yaxis_title="ρ(z)",
+        margin=dict(l=0, r=0, t=40, b=0)
+    )
+    return fig
+
+def make_network_diagram_figure(input_dim=2, hidden_dim=4, output_dim=1):
+    # x positions for 3 layers
+    x_in, x_hid, x_out = 0, 1, 2
+
+    # y positions: spread nodes vertically
+    y_in = np.linspace(0, 1, input_dim)
+    y_hid = np.linspace(0, 1, hidden_dim)
+    y_out = np.linspace(0, 1, output_dim)
+
+    nodes_x = []
+    nodes_y = []
+    text = []
+    layer_colors = []
+
+    # Input nodes
+    for i in range(input_dim):
+        nodes_x.append(x_in)
+        nodes_y.append(y_in[i])
+        text.append(f"x{i+1}")
+        layer_colors.append("lightblue")
+
+    # Hidden nodes
+    for j in range(hidden_dim):
+        nodes_x.append(x_hid)
+        nodes_y.append(y_hid[j])
+        text.append(f"h{j+1}")
+        layer_colors.append("lightgreen")
+
+    # Output nodes
+    for k in range(output_dim):
+        nodes_x.append(x_out)
+        nodes_y.append(y_out[k])
+        text.append(f"ŷ")
+        layer_colors.append("salmon")
+
+    node_trace = go.Scatter(
+        x=nodes_x,
+        y=nodes_y,
+        mode='markers+text',
+        text=text,
+        textposition='middle right',
+        marker=dict(size=18, color=layer_colors, line=dict(width=1, color='black'))
+    )
+
+    # Edges as separate Scatter traces (lines)
+    edge_traces = []
+
+    # Input -> Hidden
+    for i in range(input_dim):
+        for j in range(hidden_dim):
+            edge_traces.append(go.Scatter(
+                x=[x_in, x_hid],
+                y=[y_in[i], y_hid[j]],
+                mode='lines',
+                line=dict(color='grey', width=1),
+                hoverinfo='skip',
+                showlegend=False
+            ))
+
+    # Hidden -> Output
+    for j in range(hidden_dim):
+        for k in range(output_dim):
+            edge_traces.append(go.Scatter(
+                x=[x_hid, x_out],
+                y=[y_hid[j], y_out[k]],
+                mode='lines',
+                line=dict(color='grey', width=1),
+                hoverinfo='skip',
+                showlegend=False
+            ))
+
+    fig = go.Figure(data=edge_traces + [node_trace])
+    fig.update_layout(
+        title="Single hidden layer network",
+        xaxis=dict(showgrid=False, zeroline=False, visible=False),
+        yaxis=dict(showgrid=False, zeroline=False, visible=False),
+        margin=dict(l=0, r=0, t=40, b=0),
+        showlegend=False
+    )
+    return fig
+
+@app.callback(
+    Output('level2-params-store', 'data'),
+    Input('level2-randomize-btn', 'n_clicks'),
+    Input('level2-trainstep-btn', 'n_clicks'),
+    State('level2-width-slider', 'value'),
+    State('level2-activation-dropdown', 'value'),
+    State('level2-dataset-dropdown', 'value'),
+    State('level2-params-store', 'data'),
+)
+def update_level2_params(n_rand, n_step, width, activation, dataset, params):
+    ctx = dash.callback_context
+    trigger = ctx.triggered[0]['prop_id'].split('.')[0] if ctx.triggered else None
+
+    # 1) On first use or randomize: initialize weights/biases for 2D->width->1 MLP
+    if params is None or trigger == 'level2-randomize-btn':
+        params = init_single_hidden_mlp(input_dim=2, hidden_dim=width, output_dim=1)
+
+    # 2) On train step: run a few gradient steps on the chosen toy dataset
+    if trigger == 'level2-trainstep-btn':
+        X, y = load_toy_dataset(dataset)  # e.g. moons/circles/linear
+        params = train_single_hidden_step(X, y, params, activation=activation, steps=50)
+
+    # Also store meta: width, activation, dataset for the view callback
+    params['meta'] = {'width': width, 'activation': activation, 'dataset': dataset}
+    return params
+
+@app.callback(
+    Output('level2-decision-boundary-graph', 'figure'),
+    Output('level2-activation-graph', 'figure'),
+    Output('level2-network-diagram-graph', 'figure'),
+    Output('level2-math-explanation', 'children'),
+    Input('level2-params-store', 'data')
+)
+def update_level2_views(params):
+    if params is None:
+        raise dash.exceptions.PreventUpdate
+
+    meta = params.get('meta', {})
+    width = meta.get('width', 4)
+    activation = meta.get('activation', 'tanh')
+    dataset = meta.get('dataset', 'moons')
+
+    # 1) Decision boundary figure
+    X, y = load_toy_dataset(dataset)          # same helper as above
+    fig_boundary = make_decision_boundary_figure(X, y, params, activation)
+
+    # 2) Activation function figure
+    fig_activation = make_activation_figure(activation)
+
+    # 3) Network diagram – e.g. nodes arranged in 3 columns (input, hidden, output)
+    fig_network = make_network_diagram_figure(input_dim=2, hidden_dim=width, output_dim=1)
+
+    # 4) Math explanation – show Wx + b and ρ(Wx + b), with parameter count
+    n_in, n_h, n_out = 2, width, 1
+    num_params = (n_in + 1) * n_h + (n_h + 1) * n_out
+    explanation = html.Div([
+        html.P(f"Layer 1 (hidden): z¹ = W¹ x + b¹, a¹ = ρ(z¹) with W¹ ∈ ℝ^{n_h}×{n_in}, b¹ ∈ ℝ^{n_h}."),
+        html.P(f"Layer 2 (output): z² = W² a¹ + b² with W² ∈ ℝ^{n_out}×{n_h}, b² ∈ ℝ^{n_out}."),
+        html.P(f"Total trainable parameters: {num_params}."),
+        html.P(f"Current activation: ρ(z) = {activation}."),
+    ])
+
+    return fig_boundary, fig_activation, fig_network, explanation
 
 
 
