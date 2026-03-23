@@ -14,6 +14,7 @@ from dataload import load_dataset, get_dataset_stats
 from trainer import train_model
 from trainer import build_model
 
+from models import SimpleNN
 
 import io
 import base64
@@ -837,6 +838,109 @@ def syntax_highlighter(pythonCode):
     #the following highlighter needs to be inline and using regex principles
     #it will go character by character, no need to look at blank spaces unless necessary
     #will this method include validation??
+
+#callback for visualisation of UI sliders in real-time - to see the FNN architecture for the page layouts
+
+# REPLACE your callback with this (app.py)
+@app.callback(
+    [Output('live-architecture', 'figure'), Output('live-weights-heatmap', 'figure'),
+     Output('code-preview', 'children')],
+    [Input('live-hidden-size', 'value'), Input('live-seed', 'value')]
+)
+def update_live_visualizations(hidden_size, seed):
+    # FIX 1: Load Iris data locally (no global dependency)
+    from dataload import loaddataset
+    Xtrain, _, ytrain, _, meta = loaddataset('iris')
+    
+    # FIX 2: Build model (no Xtrain needed for architecture viz)
+    import numpy as np
+    np.random.seed(seed or 42)
+    model = SimpleNN(4, hidden_size, 3)  # Iris: 4 features → 3 classes
+    
+    # 3. ARCHITECTURE DIAGRAM (works without training)
+    arch_fig = build_architecture_diagram(model, hidden_size)
+    
+    # 4. WEIGHT HEATMAPS 
+    weight_fig = go.Figure()
+    weight_fig.add_trace(go.Heatmap(z=model.W1, colorscale='RdBu', zmid=0))
+    weight_fig.update_layout(title=f"W1 Weights (4×{hidden_size})")
+    
+    # 5. CODE PREVIEW
+    code_preview = html.Textarea(
+        value=f"model = SimpleNN(4, {hidden_size}, 3, seed={seed})",
+        style={'width': '100%', 'height': 100}
+    )
+    
+    return arch_fig, weight_fig, code_preview
+
+
+def build_architecture_diagram(model, hidden_size):
+    fig = go.Figure()
+    
+    # Nodes: Input(4) → Hidden(N) → Output(3)
+    x_nodes = [0, 1, 2]  # Layers
+    input_nodes = [i/5 for i in range(4)]
+    hidden_nodes = [i/16 for i in range(hidden_size)]  
+    output_nodes = [i/3 for i in range(3)]
+    
+    # Add nodes
+    fig.add_trace(go.Scatter(x=[0]*4, y=input_nodes, mode='markers+text',
+                           marker=dict(size=20, color='blue'), 
+                           text=[f'I{i+1}' for i in range(4)],
+                           name='Input'))
+    fig.add_trace(go.Scatter(x=[1]*hidden_size, y=hidden_nodes, mode='markers+text',
+                           marker=dict(size=15, color='orange'),
+                           text=[f'H{i+1}' for i in range(hidden_size)],
+                           name='Hidden'))
+    fig.add_trace(go.Scatter(x=[2]*3, y=output_nodes, mode='markers+text',
+                           marker=dict(size=20, color='green'),
+                           text=['O1','O2','O3'], name='Output'))
+    
+    # Edges (all connections)
+    for i in range(4):
+        for j in range(hidden_size):
+            fig.add_trace(go.Scatter(x=[0,1], y=[input_nodes[i], hidden_nodes[j]], 
+                                   mode='lines', line=dict(width=1, color='gray'),
+                                   showlegend=False, hoverinfo='skip'))
+    
+    fig.update_layout(title=f"Live Architecture: 4 → {hidden_size} → 3",
+                     xaxis=dict(showgrid=False, range=[-0.2, 2.2]),
+                     yaxis=dict(showgrid=False, range=[-0.2, 1.2]),
+                     height=400, showlegend=False)
+    return fig
+
+# NEW: Self-contained decision boundary (app.py)
+from sklearn.decomposition import PCA
+
+def plot_decision_boundary(model, Xtrain_sample):
+    """Req 3.1.5: Live decision boundary from current model params"""
+    # PCA to 2D for visualization (Iris: 4→2 dims)
+    pca = PCA(n_components=2)
+    X_2d = pca.fit_transform(Xtrain_sample[:100])  # Sample for speed
+    
+    # Predict on 2D grid
+    h = 0.02
+    x_min, x_max = X_2d[:, 0].min() - 0.5, X_2d[:, 0].max() + 0.5
+    y_min, y_max = X_2d[:, 1].min() - 0.5, X_2d[:, 1].max() + 0.5
+    xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
+                         np.arange(y_min, y_max, h))
+    
+    # Predict on grid (model expects 4D input → pad with zeros)
+    grid_input = np.c_[xx.ravel(), yy.ravel(), np.zeros((xx.ravel().shape[0], 2))]
+    Z = model.forward(grid_input)  # Your SimpleNN.forward()
+    Z = np.argmax(Z, axis=1).reshape(xx.shape)
+    
+    # Plot
+    fig = go.Figure(data=go.Heatmap(
+        z=Z, x=xx[0], y=yy[:,0], colorscale='RdYlBu', hoverongaps=False
+    ))
+    fig.update_layout(title="Live Decision Boundary (PCA Projection)",
+                      xaxis_title="PC1", yaxis_title="PC2", height=350)
+    return fig
+
+
+
+
 
 
 if __name__ == '__main__':

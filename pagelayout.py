@@ -57,7 +57,7 @@ def teacher_layout():
 
     ]),
 """
-def level1_layout():
+def level0_layout():
     return html.Div(
     #html.H1("Level 1 - Hyperparameter Playground")
     style={
@@ -600,6 +600,35 @@ def skill_box(title, subtitle):
         html.P(subtitle)
     ], className = "skill-box")
 
+def level1_layout():
+    return html.Div([
+        html.H1("Level 1: Hyperparameter Playground", style={'textAlign': 'center'}),
+        
+        # Right side of screen  = Controls + Code Preview
+        html.Div([
+            html.H3("Change Architecture Live"),
+            # sliders (Req 1.1.3)
+            html.Label("Hidden Layer Size:"), dcc.Slider(id='live-hidden-size', min=2, max=16, value=8,
+                                                        marks={i: str(i) for i in [2,4,8,12,16]}),
+            html.Label("Random Seed:"), dcc.Input(id='live-seed', type='number', value=42),
+            
+            # code preview (Req 3.1.6)
+            html.Label("Live Code Preview:"), 
+            html.Div(id='code-preview', children=[
+                dcc.Textarea(value="model = SimpleNN(4, 8, 3, seed=42)", 
+                           style={'width': '100%', 'height': 100, 'fontFamily': 'monospace'})
+            ]),
+            html.Button("Test Architecture", id='test-arch-btn')
+        ], style={'width': '45%', 'float': 'left'}),
+        
+        # right side of screen: this will be live visualisation from ui sliders (Req 3.1.5)
+        html.Div([
+            dcc.Graph(id='live-architecture'),      # Nodes + edges
+            dcc.Graph(id='live-weights-heatmap'),   # Parameter matrices
+            dcc.Graph(id='live-decision-boundary')  # Classification viz
+        ], style={'width': '55%', 'float': 'right'})
+    ])
+
 def level2_layout():
     return html.Div([
         html.H2("Architecture Impact", style={'textAlign': 'center', 'marginBottom': '20px'}),
@@ -644,16 +673,140 @@ def level3_layout():
     return html.Div([
         html.H2("Function Coding",
                     style={'textAlign': 'center', 'marginBottom': '20px'}),
+        # Instructions panel
+        html.Div([
+            html.H3("Task: Implement ReLU & Softmax"),
+            html.Ul([
+                html.Li("Copy the reference signature below"),
+                html.Li("Test with sample inputs"),
+                html.Li("Match the expected outputs"),
+                html.Li("Visualize your activations!")
+            ]),
+            html.Hr()
+        ], style={'width': '40%', 'float': 'left'}),
+
+        # Code editor (reuse sandbox style)
+        html.Div([
+            html.Label("Code Editor", style={'fontWeight': 'bold'}),
+            dcc.Textarea(
+                id='level3-code-input',
+                value="""# Task 1: ReLU activation""",
+                style={'width': '100%', 'height': '300px', 'fontFamily': 'Consolas'}
+            ),
+            html.Div(id='level3-output'),
+            dcc.Graph(id='level3-activation-plot'),
+
+            html.Hr(),
+
+            html.Div(id='level3-progress', style={'color': 'green'})
+
+        ])
     ])
 
 def level4_layout():
     return html.Div([
-        html.H2("Model Architecture Coding",
+        html.H2("Full Architecture Coding",
                     style={'textAlign': 'center', 'marginBottom': '20px'}),
+        
+        html.Div([
+            html.H3("Build SimpleNN Class"),
+            html.P("Your ReLU & Softmax from Level 3 must match models-4.py exactly"),
+            html.Ul([
+                html.Li("Copy SimpleNN signature below"),
+                html.Li("Implement __init__, forward, backward, train_epoch"),
+                html.Li("Match Level 2 training curves")
+            ]),
+            
+            html.H4("Reference Template"),
+            html.Pre("""class SimpleNN:"""),
+        ], style={'width': '45%', 'float': 'left'}),
+
+        html.Div([
+            html.Label("Custom SimpleNN Implementation"),
+            dcc.Textarea(id='level4-code-input', value="Level3 functions here",
+            style = {'width': '100%', 'height': '400px'}),
+
+            html.Button('Test Class', id='level4-test-btn', n_clicks=0),
+            html.Button('Train & Compare', id='level4-train-btn', n_clicks=0),
+            html.Div(id='level4-status')
+            ], style={'width': '55%', 'float': 'right'}),
+
+        html.Div(id='level4-output', style={'clear': 'both'}),
+        html.Div([
+            dcc.Graph(id='level4-loss-compare'),
+            dcc.Graph(id='level4-weight-compare')
+        ], style={'display': 'flex'})
+            
     ])
 
 def level5_layout():
     return html.Div([
-        html.H2("The ML Pipeline",
-                    style={'textAlign': 'center', 'marginBottom': '20px'}),
+        html.H1("LEVEL 5: Complete ML Pipeline", style={'textAlign': 'center'}),
+        
+        html.Div([
+            html.H3("✅ Build Production Pipeline"),
+            html.P("Integrate your SimpleNN + create optimizers"),
+            html.Ul([
+                html.Li("Load data: loaddataset('iris')"),
+                html.Li("Custom SGD/Mini-batch optimizer"),
+                html.Li("Early stopping + L2 regularization"),
+                html.Li("Beat sklearn LogisticRegression (95%+ accuracy)")
+            ])
+        ], style={'width': '35%', 'float': 'left'}),
+        
+        # Full pipeline code editor
+        html.Div([
+            html.Label("Complete Pipeline"),
+            dcc.Textarea(id='level5-code-input', value="""# YOUR SimpleNN FROM LEVEL 4 HERE
+class SimpleNN:
+    # Paste your working class
+
+# Task 1: Custom Optimizer Class  
+class CustomOptimizer:
+    def __init__(self, lr=0.01, batch_size=32, momentum=0.9):
+        self.lr = lr
+        self.batch_size = batch_size  
+        self.momentum = momentum
+        self.v_w1 = self.v_b1 = self.v_w2 = self.v_b2 = 0
+        
+    def step(self, model, X_batch, y_batch):
+        # Implement SGD + momentum updates
+        pass
+
+# Task 2: Training Pipeline
+def train_pipeline(dataset='iris', epochs=100):
+    # 1. Load data
+    X_train, X_test, y_train, y_test, meta = loaddataset(dataset)
+    
+    # 2. Build model  
+    model = SimpleNN(4, 8, 3, seed=42)
+    optimizer = CustomOptimizer(lr=0.01, batch_size=32)
+    
+    # 3. Training loop with early stopping
+    history = {'loss': [], 'val_loss': []}
+    best_val_loss = float('inf')
+    
+    for epoch in range(epochs):
+        # Your training code here
+        pass
+    
+    return model, history
+
+# RUN PIPELINE
+model, history = train_pipeline()
+print(f"Test Accuracy: {np.mean(np.argmax(model.forward(X_test), 1) == y_test):.3f}")
+""", style={'width': '100%', 'height': '500px'}),
+            
+            html.Button('Run Pipeline', id='level5-run-btn', n_clicks=0),
+            html.Button('Compare vs Sklearn', id='level5-compare-btn', n_clicks=0)
+        ], style={'width': '65%', 'float': 'right'}),
+        
+        html.Div(id='level5-output', style={'clear': 'both', 'marginTop': '20px'}),
+        
+        # Full dashboard visuals
+        html.Div([
+            dcc.Graph(id='level5-loss-curves'),
+            dcc.Graph(id='level5-confusion-matrix'),
+            dcc.Graph(id='level5-accuracy-metrics')
+        ], style={'display': 'flex', 'gap': '20px'})
     ])
