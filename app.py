@@ -1259,7 +1259,8 @@ def make_activation_figure(activation):
     )
     return fig
 
-def make_network_diagram_figure(input_dim=2, hidden_dim=4, output_dim=1):
+def make_network_diagram_figure(input_dim=2, hidden_dim=4, output_dim=1,
+                                params=None, activation='tanh'):
     # x positions for 3 layers
     x_in, x_hid, x_out = 0, 1, 2
 
@@ -1268,9 +1269,16 @@ def make_network_diagram_figure(input_dim=2, hidden_dim=4, output_dim=1):
     y_hid = np.linspace(0, 1, hidden_dim)
     y_out = np.linspace(0, 1, output_dim)
 
+    # Extract weight matrices if available
+    W1 = np.array(params['W1']) if params else None  # (H, 2)
+    b1 = np.array(params['b1']) if params else None  # (H, 1)
+    W2 = np.array(params['W2']) if params else None  # (1, H)
+    b2 = np.array(params['b2']) if params else None  # (1, 1)
+
     nodes_x = []
     nodes_y = []
     text = []
+    hover_text = []
     layer_colors = []
 
     # Input nodes
@@ -1278,13 +1286,23 @@ def make_network_diagram_figure(input_dim=2, hidden_dim=4, output_dim=1):
         nodes_x.append(x_in)
         nodes_y.append(y_in[i])
         text.append(f"x{i+1}")
+        hover_text.append(f"Input x{i+1}")
         layer_colors.append("lightblue")
 
-    # Hidden nodes
+    # Hidden nodes - show neuron equation on hover
     for j in range(hidden_dim):
         nodes_x.append(x_hid)
         nodes_y.append(y_hid[j])
         text.append(f"h{j+1}")
+        if W1 is not None and b1 is not None:
+            w_str = ' + '.join(f'{W1[j, i]:+.2f}·x{i+1}' for i in range(input_dim))
+            b_val = b1[j, 0]
+            hover_text.append(
+                f"z{j+1} = {w_str} {b_val:+.2f}<br>"
+                f"a{j+1} = {activation}(z{j+1})"
+            )
+        else:
+            hover_text.append(f"h{j+1} = {activation}(w⊤x + b)")
         layer_colors.append("lightgreen")
 
     # Output nodes
@@ -1292,6 +1310,15 @@ def make_network_diagram_figure(input_dim=2, hidden_dim=4, output_dim=1):
         nodes_x.append(x_out)
         nodes_y.append(y_out[k])
         text.append(f"ŷ")
+        if W2 is not None and b2 is not None:
+            w_str = ' + '.join(f'{W2[k, j]:+.2f}·a{j+1}' for j in range(hidden_dim))
+            b_val = b2[k, 0]
+            hover_text.append(
+                f"z_out = {w_str} {b_val:+.2f}<br>"
+                f"ŷ = σ(z_out)"
+            )
+        else:
+            hover_text.append("ŷ = σ(w⊤a + b)")
         layer_colors.append("salmon")
 
     node_trace = go.Scatter(
@@ -1300,39 +1327,66 @@ def make_network_diagram_figure(input_dim=2, hidden_dim=4, output_dim=1):
         mode='markers+text',
         text=text,
         textposition='middle right',
+        hovertext=hover_text,
+        hoverinfo='text',
         marker=dict(size=18, color=layer_colors, line=dict(width=1, color='black'))
     )
 
-    # Edges as separate Scatter traces (lines)
+    # Edges as separate Scatter traces (lines) with hover showing weight value
     edge_traces = []
 
-    # Input -> Hidden
+    # Input -> Hidden edges
     for i in range(input_dim):
         for j in range(hidden_dim):
+            if W1 is not None:
+                w_val = W1[j, i]
+                edge_hover = f"w¹[{j+1},{i+1}] = {w_val:.3f}<br>x{i+1} → h{j+1}"
+                edge_width = max(0.5, min(4, abs(w_val) * 3))
+                edge_color = 'steelblue' if w_val >= 0 else 'crimson'
+            else:
+                edge_hover = f"w¹[{j+1},{i+1}]"
+                edge_width = 1
+                edge_color = 'grey'
+            # Midpoint for hover target
+            mx = (x_in + x_hid) / 2
+            my = (y_in[i] + y_hid[j]) / 2
             edge_traces.append(go.Scatter(
-                x=[x_in, x_hid],
-                y=[y_in[i], y_hid[j]],
+                x=[x_in, mx, x_hid],
+                y=[y_in[i], my, y_hid[j]],
                 mode='lines',
-                line=dict(color='grey', width=1),
-                hoverinfo='skip',
+                line=dict(color=edge_color, width=edge_width),
+                hovertext=[None, edge_hover, None],
+                hoverinfo='text',
                 showlegend=False
             ))
 
-    # Hidden -> Output
+    # Hidden -> Output edges
     for j in range(hidden_dim):
         for k in range(output_dim):
+            if W2 is not None:
+                w_val = W2[k, j]
+                edge_hover = f"w²[{k+1},{j+1}] = {w_val:.3f}<br>h{j+1} → ŷ"
+                edge_width = max(0.5, min(4, abs(w_val) * 3))
+                edge_color = 'steelblue' if w_val >= 0 else 'crimson'
+            else:
+                edge_hover = f"w²[{k+1},{j+1}]"
+                edge_width = 1
+                edge_color = 'grey'
+            mx = (x_hid + x_out) / 2
+            my = (y_hid[j] + y_out[k]) / 2
             edge_traces.append(go.Scatter(
-                x=[x_hid, x_out],
-                y=[y_hid[j], y_out[k]],
+                x=[x_hid, mx, x_out],
+                y=[y_hid[j], my, y_out[k]],
                 mode='lines',
-                line=dict(color='grey', width=1),
-                hoverinfo='skip',
+                line=dict(color=edge_color, width=edge_width),
+                hovertext=[None, edge_hover, None],
+                hoverinfo='text',
                 showlegend=False
             ))
 
     fig = go.Figure(data=edge_traces + [node_trace])
     fig.update_layout(
-        title="Single hidden layer network",
+        title="Single hidden layer network (hover for w⊤x + b)",
         xaxis=dict(showgrid=False, zeroline=False, visible=False),
         yaxis=dict(showgrid=False, zeroline=False, visible=False),
         margin=dict(l=0, r=0, t=40, b=0),
@@ -1385,25 +1439,356 @@ def update_level2_views(params):
     # 1) Decision boundary figure
     X, y = load_toy_dataset(dataset)          # same helper as above
     fig_boundary = make_decision_boundary_figure(X, y, params, activation)
+    # Update title to highlight linear→curve bending
+    if dataset == 'linear':
+        fig_boundary.update_layout(title="Decision boundary (hidden layer can separate linear data)")
+    else:
+        fig_boundary.update_layout(title=f"Decision boundary on '{dataset}' (hidden layer bends line → curves)")
 
     # 2) Activation function figure
     fig_activation = make_activation_figure(activation)
 
-    # 3) Network diagram – e.g. nodes arranged in 3 columns (input, hidden, output)
-    fig_network = make_network_diagram_figure(input_dim=2, hidden_dim=width, output_dim=1)
+    # 3) Network diagram with actual weights for hover
+    fig_network = make_network_diagram_figure(
+        input_dim=2, hidden_dim=width, output_dim=1,
+        params=params, activation=activation
+    )
 
-    # 4) Math explanation – show Wx + b and ρ(Wx + b), with parameter count
+    # 4) Math explanation – neuron equation, per-neuron detail, parameter counting
     n_in, n_h, n_out = 2, width, 1
-    num_params = (n_in + 1) * n_h + (n_h + 1) * n_out
+    num_params_W1 = n_in * n_h
+    num_params_b1 = n_h
+    num_params_W2 = n_h * n_out
+    num_params_b2 = n_out
+    total_params = num_params_W1 + num_params_b1 + num_params_W2 + num_params_b2
+
+    W1 = np.array(params['W1'])  # (H, 2)
+    b1 = np.array(params['b1'])  # (H, 1)
+    W2 = np.array(params['W2'])  # (1, H)
+    b2 = np.array(params['b2'])  # (1, 1)
+
+    # Per-neuron equations for the hidden layer
+    neuron_items = []
+    for j in range(n_h):
+        w_terms = ' + '.join(f'{W1[j, i]:+.2f}·x{i+1}' for i in range(n_in))
+        b_val = b1[j, 0]
+        neuron_items.append(
+            html.Li(f"h{j+1}: z = {w_terms} {b_val:+.2f},  a = {activation}(z)")
+        )
+
     explanation = html.Div([
-        html.P(f"Layer 1 (hidden): z¹ = W¹ x + b¹, a¹ = ρ(z¹) with W¹ ∈ ℝ^{n_h}×{n_in}, b¹ ∈ ℝ^{n_h}."),
-        html.P(f"Layer 2 (output): z² = W² a¹ + b² with W² ∈ ℝ^{n_out}×{n_h}, b² ∈ ℝ^{n_out}."),
-        html.P(f"Total trainable parameters: {num_params}."),
-        html.P(f"Current activation: ρ(z) = {activation}."),
+        html.H5("Neuron equation"),
+        html.P("a = ρ(w⊤x + b)"),
+        html.P(f"where ρ = {activation}, composing a linear map (w⊤x + b) with a nonlinearity."),
+        html.Hr(),
+        html.H5("Hidden layer neurons"),
+        html.Ul(neuron_items, style={'fontSize': '11px', 'fontFamily': 'monospace'}),
+        html.Hr(),
+        html.H5("Parameter count"),
+        html.Ul([
+            html.Li(f"W¹: {n_h}×{n_in} = {num_params_W1} weights"),
+            html.Li(f"b¹: {n_h} biases"),
+            html.Li(f"W²: {n_out}×{n_h} = {num_params_W2} weights"),
+            html.Li(f"b²: {n_out} biases"),
+            html.Li(html.B(f"Total: {total_params} trainable parameters")),
+        ]),
     ])
 
     return fig_boundary, fig_activation, fig_network, explanation
 
+
+# ──────────────────────────────────────────────────────────────
+# Level 3: Deeper Networks and Expressivity  (universal approx)
+# ──────────────────────────────────────────────────────────────
+
+def level3_target_function(x, name):
+    """Return y values for the chosen 1-D target function."""
+    if name == 'sin':
+        return np.sin(x)
+    elif name == 'abs':
+        return np.abs(x)
+    elif name == 'quadratic':
+        return x ** 2
+    elif name == 'step':
+        return (x >= 0).astype(float)
+    elif name == 'sawtooth':
+        return x - np.floor(x)
+    return np.sin(x)
+
+
+def init_deep_mlp(input_dim, hidden_width, depth, output_dim=1):
+    """Initialise a variable-depth MLP with Xavier scaling."""
+    rng = np.random.default_rng()
+    params = {'depth': depth, 'width': hidden_width}
+
+    # First hidden layer
+    fan_in = input_dim
+    params['W0'] = rng.normal(0, 1.0 / np.sqrt(fan_in),
+                              size=(hidden_width, fan_in)).tolist()
+    params['b0'] = np.zeros(hidden_width).tolist()
+
+    # Additional hidden layers
+    for d in range(1, depth):
+        fan_in = hidden_width
+        params[f'W{d}'] = rng.normal(0, 1.0 / np.sqrt(fan_in),
+                                     size=(hidden_width, fan_in)).tolist()
+        params[f'b{d}'] = np.zeros(hidden_width).tolist()
+
+    # Output layer
+    fan_in = hidden_width
+    params[f'W{depth}'] = rng.normal(0, 1.0 / np.sqrt(fan_in),
+                                     size=(output_dim, fan_in)).tolist()
+    params[f'b{depth}'] = np.zeros(output_dim).tolist()
+
+    params['loss_history'] = []
+    return params
+
+
+def deep_mlp_forward(x_col, params, activation, return_intermediates=False):
+    """
+    Forward pass through a variable-depth MLP.
+    x_col: (N, 1)  returns (N, 1) output and optionally layer activations.
+    """
+    depth = params['depth']
+    A = x_col.T  # (1, N)
+
+    intermediates = []
+
+    for d in range(depth):
+        W = np.array(params[f'W{d}'])
+        b = np.array(params[f'b{d}']).reshape(-1, 1)
+        Z = W @ A + b
+        A = activation_forward(Z, activation)
+        if return_intermediates:
+            intermediates.append(A.copy())
+
+    # Output layer (linear)
+    W_out = np.array(params[f'W{depth}'])
+    b_out = np.array(params[f'b{depth}']).reshape(-1, 1)
+    out = W_out @ A + b_out  # (1, N)
+
+    if return_intermediates:
+        return out.T, intermediates      # (N, 1), list of (width, N)
+    return out.T                          # (N, 1)
+
+
+def train_deep_mlp(x_train, y_train, params, activation, epochs=200, lr=0.01):
+    """Train the deep MLP with simple GD on MSE loss.  Returns updated params."""
+    depth = params['depth']
+    N = x_train.shape[0]
+    loss_history = list(params.get('loss_history', []))
+
+    for _ in range(epochs):
+        # --- forward ---
+        As = [x_train.T]          # A[0] = input (1, N)
+        Zs = []
+
+        A = As[0]
+        for d in range(depth):
+            W = np.array(params[f'W{d}'])
+            b = np.array(params[f'b{d}']).reshape(-1, 1)
+            Z = W @ A + b
+            Zs.append(Z)
+            A = activation_forward(Z, activation)
+            As.append(A)
+
+        W_out = np.array(params[f'W{depth}'])
+        b_out = np.array(params[f'b{depth}']).reshape(-1, 1)
+        Z_out = W_out @ A + b_out          # (1, N)
+        y_pred = Z_out                     # linear output
+
+        # MSE loss
+        diff = y_pred - y_train.T           # (1, N)
+        loss = float(np.mean(diff ** 2))
+        loss_history.append(loss)
+
+        # --- backward ---
+        dZ = 2.0 * diff / N                # (1, N)
+
+        # Output layer grads
+        dW_out = dZ @ As[depth].T           # (1, width)
+        db_out = np.sum(dZ, axis=1, keepdims=True)
+
+        dA = W_out.T @ dZ                  # (width, N)
+
+        # Update output layer
+        W_out -= lr * dW_out
+        b_out -= lr * db_out
+        params[f'W{depth}'] = W_out.tolist()
+        params[f'b{depth}'] = b_out.flatten().tolist()
+
+        # Hidden layers (reverse)
+        for d in reversed(range(depth)):
+            dZ_h = activation_backward(dA, Zs[d], activation)
+            W = np.array(params[f'W{d}'])
+            b = np.array(params[f'b{d}']).reshape(-1, 1)
+
+            dW = dZ_h @ As[d].T
+            db = np.sum(dZ_h, axis=1, keepdims=True)
+
+            dA = W.T @ dZ_h
+
+            W -= lr * dW
+            b -= lr * db
+            params[f'W{d}'] = W.tolist()
+            params[f'b{d}'] = b.flatten().tolist()
+
+    params['loss_history'] = loss_history
+    return params
+
+
+# --- Level 3 callbacks ---
+
+@app.callback(
+    Output('level3-params-store', 'data'),
+    Input('level3-randomize-btn', 'n_clicks'),
+    Input('level3-train-btn', 'n_clicks'),
+    State('level3-width-slider', 'value'),
+    State('level3-depth-slider', 'value'),
+    State('level3-activation-dropdown', 'value'),
+    State('level3-target-dropdown', 'value'),
+    State('level3-epochs-slider', 'value'),
+    State('level3-params-store', 'data'),
+)
+def update_level3_params(n_rand, n_train, width, depth, activation,
+                         target, epochs, params):
+    ctx = dash.callback_context
+    trigger = ctx.triggered[0]['prop_id'].split('.')[0] if ctx.triggered else None
+
+    # Initialise on first visit or explicit randomize
+    if params is None or trigger == 'level3-randomize-btn':
+        params = init_deep_mlp(input_dim=1, hidden_width=width, depth=depth)
+
+    # Train
+    if trigger == 'level3-train-btn':
+        x_train = np.linspace(-2 * np.pi, 2 * np.pi, 400).reshape(-1, 1)
+        y_train = level3_target_function(x_train.flatten(), target).reshape(-1, 1)
+        params = train_deep_mlp(x_train, y_train, params, activation,
+                                epochs=epochs, lr=0.005)
+
+    # Store meta for the view callback
+    params['meta'] = {
+        'width': width, 'depth': depth,
+        'activation': activation, 'target': target,
+    }
+    return params
+
+
+@app.callback(
+    Output('level3-approx-graph', 'figure'),
+    Output('level3-loss-graph', 'figure'),
+    Output('level3-activations-graph', 'figure'),
+    Output('level3-arch-summary', 'children'),
+    Input('level3-params-store', 'data'),
+)
+def update_level3_views(params):
+    if params is None:
+        raise dash.exceptions.PreventUpdate
+
+    meta = params.get('meta', {})
+    width = meta.get('width', 8)
+    depth = meta.get('depth', 1)
+    activation = meta.get('activation', 'relu')
+    target = meta.get('target', 'sin')
+
+    x_plot = np.linspace(-2 * np.pi, 2 * np.pi, 500).reshape(-1, 1)
+    y_target = level3_target_function(x_plot.flatten(), target)
+
+    # Network prediction + intermediate activations
+    y_pred, intermediates = deep_mlp_forward(x_plot, params, activation,
+                                             return_intermediates=True)
+    y_pred = y_pred.flatten()
+
+    # 1) Side-by-side target vs approximation
+    fig_approx = go.Figure()
+    fig_approx.add_trace(go.Scatter(
+        x=x_plot.flatten(), y=y_target, mode='lines',
+        name='Target f(x)', line=dict(color='black', width=2, dash='dash')
+    ))
+    fig_approx.add_trace(go.Scatter(
+        x=x_plot.flatten(), y=y_pred, mode='lines',
+        name='Network output', line=dict(color='crimson', width=2)
+    ))
+    fig_approx.update_layout(
+        title=f"Universal approximation: {target}(x) vs network "
+              f"(depth={depth}, width={width}, act={activation})",
+        xaxis_title="x", yaxis_title="y",
+        legend=dict(x=0.01, y=0.99),
+        margin=dict(l=40, r=10, t=40, b=30),
+    )
+
+    # 2) Loss curve
+    loss_history = params.get('loss_history', [])
+    fig_loss = go.Figure()
+    if loss_history:
+        fig_loss.add_trace(go.Scatter(
+            y=loss_history, mode='lines',
+            name='MSE Loss', line=dict(color='steelblue')
+        ))
+    fig_loss.update_layout(
+        title="Training loss (MSE)",
+        xaxis_title="Epoch", yaxis_title="Loss",
+        margin=dict(l=40, r=10, t=40, b=30),
+    )
+
+    # 3) Per-layer activations plot (show first 5 neurons of each layer)
+    fig_acts = go.Figure()
+    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b']
+    for layer_idx, act_matrix in enumerate(intermediates):
+        n_show = min(5, act_matrix.shape[0])
+        for neuron in range(n_show):
+            fig_acts.add_trace(go.Scatter(
+                x=x_plot.flatten(),
+                y=act_matrix[neuron, :],
+                mode='lines',
+                name=f'L{layer_idx+1} n{neuron+1}',
+                line=dict(width=1, color=colors[layer_idx % len(colors)]),
+                opacity=0.7,
+                showlegend=(neuron == 0),
+                legendgroup=f'layer{layer_idx}',
+            ))
+    fig_acts.update_layout(
+        title="Hidden neuron activations per layer",
+        xaxis_title="x", yaxis_title="activation",
+        margin=dict(l=40, r=10, t=40, b=30),
+    )
+
+    # 4) Architecture summary
+    total_params = 0
+    layer_info = []
+    prev_dim = 1  # input dim
+    for d in range(depth):
+        n_w = prev_dim * width
+        n_b = width
+        total_params += n_w + n_b
+        layer_info.append(
+            html.Li(f"Hidden {d+1}: {prev_dim} → {width} "
+                     f"({n_w} weights + {n_b} biases)")
+        )
+        prev_dim = width
+    # Output layer
+    n_w = prev_dim * 1
+    n_b = 1
+    total_params += n_w + n_b
+    layer_info.append(
+        html.Li(f"Output: {prev_dim} → 1 ({n_w} weights + {n_b} bias)")
+    )
+
+    summary = html.Div([
+        html.P(f"Input: 1 feature (x)"),
+        html.P(f"Architecture: {depth} hidden layer{'s' if depth > 1 else ''}, "
+               f"{width} neurons each, activation = {activation}"),
+        html.Ul(layer_info, style={'fontSize': '12px', 'fontFamily': 'monospace'}),
+        html.P(html.B(f"Total trainable parameters: {total_params}")),
+        html.Hr(),
+        html.P("Insight: as width or depth increases, the network can represent "
+               "increasingly complex functions — this is the universal approximation "
+               "theorem in action. ReLU networks build piecewise-linear fits; "
+               "tanh/sigmoid can produce smoother curves.",
+               style={'fontSize': '12px', 'fontStyle': 'italic'}),
+    ])
+
+    return fig_approx, fig_loss, fig_acts, summary
 
 
 if __name__ == '__main__':

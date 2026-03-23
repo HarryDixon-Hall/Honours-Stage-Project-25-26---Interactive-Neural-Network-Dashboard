@@ -579,7 +579,7 @@ def skilltree_layout():
 
             dcc.Link([skill_box("Level 4", "Model Architecture Coding")], href="/level4"),         # row 2
 
-            dcc.Link([skill_box("Level 3", "Function Coding")], href="/level3"),       # row 3
+            dcc.Link([skill_box("Level 3", "Deeper Networks & Expressivity")], href="/level3"),       # row 3
 
             dcc.Link([skill_box("Level 2", "Architecture Impact")], href="/level2"),       # row 4
 
@@ -840,36 +840,108 @@ def level2_layout():
 
 def level3_layout():
     return html.Div([
-        html.H2("Function Coding",
-                    style={'textAlign': 'center', 'marginBottom': '20px'}),
-        # Instructions panel
+        html.H2(
+            "Level 3 – Deeper Networks and Expressivity",
+            style={'textAlign': 'center', 'marginBottom': '10px'}
+        ),
+
+        html.P(
+            "Stacking layers applies repeated space transformations. "
+            "More neurons and layers let the network approximate richer functions "
+            "(universal approximation). Use the sliders to watch piecewise-linear "
+            "approximations become more accurate.",
+            style={'textAlign': 'center', 'marginBottom': '20px', 'maxWidth': '800px',
+                   'margin': '0 auto 20px auto'}
+        ),
+
+        # Controls row
         html.Div([
-            html.H3("Task: Implement ReLU & Softmax"),
-            html.Ul([
-                html.Li("Copy the reference signature below"),
-                html.Li("Test with sample inputs"),
-                html.Li("Match the expected outputs"),
-                html.Li("Visualize your activations!")
-            ]),
-            html.Hr()
-        ], style={'width': '40%', 'float': 'left'}),
+            html.Div([
+                html.H4("Target function"),
+                dcc.Dropdown(
+                    id='level3-target-dropdown',
+                    options=[
+                        {'label': 'sin(x)', 'value': 'sin'},
+                        {'label': 'abs(x)', 'value': 'abs'},
+                        {'label': 'x² (quadratic)', 'value': 'quadratic'},
+                        {'label': 'step function', 'value': 'step'},
+                        {'label': 'sawtooth', 'value': 'sawtooth'},
+                    ],
+                    value='sin',
+                    clearable=False
+                ),
 
-        # Code editor (reuse sandbox style)
+                html.H4("Hidden width (neurons per layer)"),
+                dcc.Slider(
+                    id='level3-width-slider',
+                    min=1, max=32, step=1, value=8,
+                    marks={1: '1', 4: '4', 8: '8', 16: '16', 32: '32'}
+                ),
+
+                html.H4("Depth (number of hidden layers)"),
+                dcc.Slider(
+                    id='level3-depth-slider',
+                    min=1, max=6, step=1, value=1,
+                    marks={i: str(i) for i in range(1, 7)}
+                ),
+
+                html.H4("Activation function"),
+                dcc.Dropdown(
+                    id='level3-activation-dropdown',
+                    options=[
+                        {'label': 'ReLU', 'value': 'relu'},
+                        {'label': 'Tanh', 'value': 'tanh'},
+                        {'label': 'Sigmoid', 'value': 'sigmoid'},
+                    ],
+                    value='relu',
+                    clearable=False
+                ),
+
+                html.H4("Training epochs per click"),
+                dcc.Slider(
+                    id='level3-epochs-slider',
+                    min=50, max=500, step=50, value=200,
+                    marks={50: '50', 200: '200', 500: '500'}
+                ),
+
+                html.Div([
+                    html.Button('Randomize & Reset', id='level3-randomize-btn', n_clicks=0,
+                                style={'marginRight': '8px'}),
+                    html.Button('Train', id='level3-train-btn', n_clicks=0),
+                ], style={'marginTop': '12px'}),
+
+            ], style={'width': '28%', 'display': 'inline-block',
+                      'verticalAlign': 'top', 'padding': '0 20px'}),
+
+            # Side-by-side: target vs approximation
+            html.Div([
+                dcc.Graph(id='level3-approx-graph', style={'height': '50vh'}),
+            ], style={'width': '70%', 'display': 'inline-block'}),
+        ]),
+
+        html.Hr(),
+
+        # Bottom row: network info + parameter count + loss curve
         html.Div([
-            html.Label("Code Editor", style={'fontWeight': 'bold'}),
-            dcc.Textarea(
-                id='level3-code-input',
-                value="""# Task 1: ReLU activation""",
-                style={'width': '100%', 'height': '300px', 'fontFamily': 'Consolas'}
-            ),
-            html.Div(id='level3-output'),
-            dcc.Graph(id='level3-activation-plot'),
+            html.Div([
+                html.H4("Network architecture summary"),
+                html.Div(id='level3-arch-summary'),
+            ], style={'width': '33%', 'display': 'inline-block',
+                      'verticalAlign': 'top', 'padding': '0 20px'}),
 
-            html.Hr(),
+            html.Div([
+                html.H4("Training loss curve"),
+                dcc.Graph(id='level3-loss-graph'),
+            ], style={'width': '33%', 'display': 'inline-block'}),
 
-            html.Div(id='level3-progress', style={'color': 'green'})
+            html.Div([
+                html.H4("Per-layer activations"),
+                dcc.Graph(id='level3-activations-graph'),
+            ], style={'width': '33%', 'display': 'inline-block'}),
+        ]),
 
-        ])
+        # Store for model parameters and training history
+        dcc.Store(id='level3-params-store'),
     ])
 
 def level4_layout():
