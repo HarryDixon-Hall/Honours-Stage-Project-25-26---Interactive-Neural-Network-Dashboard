@@ -1,0 +1,13 @@
+{
+    "python.defaultInterpreterPath": "C:/venvs/interactive-dashboard/Scripts/python.exe",
+    "python.terminal.activateEnvironment": false,
+    "files.exclude": {
+        "**/.venv": true
+    },
+    "search.exclude": {
+        "**/.venv": true
+    },
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}"
+    ]
+}
