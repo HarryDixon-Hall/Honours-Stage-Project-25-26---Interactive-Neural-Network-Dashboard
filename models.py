@@ -163,35 +163,35 @@ class ComplexNN: #2 hidden layers (deep NN)
         m = y.shape[0]
 
         dz3 = self.a3.copy()       #start from the output probabilities given by forward pass
-        dz3[np.arrange(m), y] -= 1 #subtract 1 at the true class index  
+        dz3[np.arange(m), y] -= 1  #subtract 1 at the true class index
         dz3 /= m                   #new average over batch
 
 
         #backprop path: output => HL2 => HL1
 
         #output layer gradients
-        dW3 = np.dot(self.a2.T, X) 
+        dW3 = np.dot(self.a2.T, dz3)
         db3 = np.sum(dz3, axis=0, keepdims=True)
 
         #backprop for hidden layer 2
         da2 = np.dot(dz3, self.W3.T)
         dz2 = da2 * self.relu_derivative(self.z2)
         dW2 = np.dot(self.a1.T, dz2)
-        db2 = np.sum(dz1, axis = 0, keepdim=True)
+        db2 = np.sum(dz2, axis=0, keepdims=True)
 
         #backprop for hidden layer 1
         da1 = np.dot(dz2, self.W2.T)
         dz1 = da1 * self.relu_derivative(self.z1)
-        dW1 = np.dot(self.a1.T, dz1)
-        db1 = np.sum(dz1, axis = 0, keepdim=True)
+        dW1 = np.dot(X.T, dz1)
+        db1 = np.sum(dz1, axis=0, keepdims=True)
 
         #gradient descent updates after backpropagation
         self.W3 -= learning_rate * dW3 #output weights
-        self.b3 -= learning_rate * dW3 #output biases
+        self.b3 -= learning_rate * db3 #output biases
         self.W2 -= learning_rate * dW2 #hidden layer 2 weights
         self.b2 -= learning_rate * db2 #hidden layer 2 biases
         self.W1 -= learning_rate * dW1 #hidden layer 1 weights
-        self.b1 -= learning_rate * dW1 #hidden layer 1 weights
+        self.b1 -= learning_rate * db1 #hidden layer 1 biases
        
 
     #method for training a single epoch   

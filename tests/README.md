@@ -13,9 +13,8 @@
 - `pytest.skip("Not yet implemented")` — a pytest-specific call that marks a test as
   *pending* rather than passing or failing.
 
-Running the suite with `python -m pytest tests/` will show all pending tests as **SKIPPED**
-(shown as `s` or `SKIPPED` in the output), which is the correct signal that the test exists
-and has been *specified* but its assertions have not yet been written.
+Running the suite with `python -m pytest tests/` will show pending tests as **SKIPPED** and
+implemented tests as **PASSED** or **FAILED**.
 
 ---
 
@@ -92,14 +91,168 @@ strategy* because each test class isolates one component of the source code.
 
 ---
 
+## How pytest fits the Feature → FR/NFR → Test narrative flow
+
+A well-structured report about this project follows this chain:
+
+```
+Feature  →  Functional / Non-Functional Requirements  →  Test Design  →  pytest assertion
+```
+
+Each step has a concrete role, and pytest is the mechanism that closes the loop at the end.
+
+---
+
+### Step 1 — Identify the Feature
+
+A *feature* is a behaviour the system must provide.  For example:
+
+> **Feature:** The `LogisticRegression` model must be able to classify input samples into
+> probability distributions across the output classes.
+
+---
+
+### Step 2 — Write Functional and Non-Functional Requirements
+
+From that feature, specific requirements are derived:
+
+| Code | Type | Statement |
+|---|---|---|
+| FR-LR-03 | Functional | `forward()` output shape must be `(n_samples, n_classes)` |
+| FR-LR-02 | Functional | `forward()` must return a valid probability distribution (all values in [0, 1], rows sum to 1) |
+| FR-LR-04 | Functional | `compute_loss()` must return a non-negative scalar |
+| NFR-LR-01 | Non-Functional | `forward()` must complete in under 1 second for typical inputs |
+| NFR-LR-02 | Non-Functional | Using the same random seed must produce identical weights (reproducibility) |
+
+Functional Requirements (FR) describe *what* the code does.
+Non-Functional Requirements (NFR) describe *quality attributes* — how well it does it.
+
+---
+
+### Step 3 — Design the Test
+
+Each requirement is translated into a test design:
+
+- **Which function** is under test? (`logistic_regression_model.forward()`)
+- **What input** is needed? (A small feature matrix `small_X_train` from the fixture)
+- **What is the expected result?** (Shape `(20, 3)` for 20 samples and 3 classes)
+- **What assertion proves it?** (`assert output.shape == (20, 3)`)
+
+The test class name, test method name, and comment together encode the requirement chain:
+
+```python
+class TestLogisticRegressionFunctional:   # ← Feature: LogisticRegression, Type: FR
+    # FR-LR-03: forward() output shape is (n_samples, n_classes)
+    def test_forward_output_shape(self, logistic_regression_model, small_X_train):
+        ...                               # ← Requirement code visible in comment
+```
+
+---
+
+### Step 4 — The pytest assertion IS the verification
+
+The `assert` statement is the direct, executable translation of the requirement:
+
+```python
+class TestLogisticRegressionFunctional:
+    # FR-LR-03: forward() output shape is (n_samples, n_classes)
+    def test_forward_output_shape(self, logistic_regression_model, small_X_train):
+        output = logistic_regression_model.forward(small_X_train)
+        #                    ↑ call the function under test
+        assert output.shape == (small_X_train.shape[0], 3)
+        #      ↑ this assert IS the machine-readable version of FR-LR-03
+```
+
+---
+
+### Step 5 — pytest runs the assertion and reports the verdict
+
+When `python -m pytest tests/test_models.py` is executed:
+
+| Result | Meaning in the FR/NFR narrative |
+|---|---|
+| `PASSED` | The implementation **satisfies** this requirement |
+| `FAILED` | The implementation **violates** this requirement — pytest prints exactly what was expected and what was received |
+| `SKIPPED` | The requirement is specified but the assertion has not yet been written |
+
+A **FAILED** result is the most informative.  For example, if `ComplexNN.backward()` had a
+typo (`np.arrange` instead of `np.arange`), `test_train_epoch_returns_loss_and_accuracy`
+would fail with:
+
+```
+AttributeError: module 'numpy' has no attribute 'arrange'
+```
+
+This directly links the runtime error back to the violated requirement (FR-CNN-06), which
+links back to the feature.  pytest has *automatically executed* the verification and
+produced a traceable failure report.
+
+---
+
+### The complete chain, visualised
+
+```
+Feature
+│
+│  "LogisticRegression must classify inputs into probability distributions"
+│
+├─► FR-LR-03: forward() output shape is (n_samples, n_classes)
+│       │
+│       └─► Test design: call forward() with 20-sample input; expect shape (20, 3)
+│               │
+│               └─► pytest assertion:
+│                       output = logistic_regression_model.forward(small_X_train)
+│                       assert output.shape == (small_X_train.shape[0], 3)
+│                               │
+│                               ├── PASSED  → FR-LR-03 satisfied ✓
+│                               └── FAILED  → FR-LR-03 violated ✗
+│                                             (pytest prints the actual vs expected shape)
+│
+├─► NFR-LR-01: forward() completes in < 1 second
+│       │
+│       └─► Test design: time the forward() call; assert elapsed < 1.0
+│               │
+│               └─► pytest assertion:
+│                       start = time.perf_counter()
+│                       logistic_regression_model.forward(small_X_train)
+│                       assert time.perf_counter() - start < 1.0
+│                               │
+│                               ├── PASSED  → NFR-LR-01 satisfied ✓
+│                               └── FAILED  → NFR-LR-01 violated ✗
+│
+└─► (further FR/NFR → tests follow the same pattern)
+```
+
+---
+
+### Why this matters for a report
+
+In a report, you can:
+
+1. **Reference the FR/NFR code in the test comment** (`# FR-LR-03`) to create a
+   traceable link between the requirements section and the testing section.
+2. **Show the `pytest` output** (PASSED / FAILED / SKIPPED) as evidence that the
+   implementation meets (or does not yet meet) each requirement.
+3. **Explain a FAILED test** as evidence that a requirement was identified, a test was
+   designed to verify it, and the test caught a real defect — which was then fixed.
+
+The test file structure mirrors the report structure:
+- `TestLogisticRegressionFunctional` → the FR section for LogisticRegression
+- `TestLogisticRegressionNonFunctional` → the NFR section for LogisticRegression
+
+---
+
 ## Running the tests
 
 ```bash
 # Install dependencies (first time only)
 pip install -r requirements.txt
 
-# Run the whole suite — all tests will show as SKIPPED until implemented
+# Run the whole suite
 python -m pytest tests/ -v
+
+# Run only the implemented (non-skipped) tests
+python -m pytest tests/ -v --ignore=tests/test_database.py --ignore=tests/test_app.py
 
 # Run a single file
 python -m pytest tests/test_models.py -v
@@ -108,7 +261,7 @@ python -m pytest tests/test_models.py -v
 python -m pytest tests/test_models.py::TestSimpleNNFunctional::test_forward_output_shape -v
 ```
 
-## Implementing a test
+## Implementing a pending test
 
 Find the test body you want to implement, remove the `pytest.skip(...)` call, and replace
 it with `assert` statements.  For example:
@@ -131,9 +284,10 @@ tests/
 ├── README.md              # this file
 ├── __init__.py            # makes tests/ a Python package
 ├── conftest.py            # shared pytest fixtures (data, model instances)
-├── test_models.py         # LogisticRegression, SimpleNN, ComplexNN
-├── test_trainer.py        # build_model(), train_model()
-├── test_dataload.py       # load_dataset_*(), get_dataset_stats()
-├── test_database.py       # UserProgressTracker (planned class)
-└── test_app.py            # Dash app initialisation, layouts, callbacks
+├── test_models.py         # LogisticRegression, SimpleNN, ComplexNN  — IMPLEMENTED
+├── test_trainer.py        # build_model(), train_model()              — IMPLEMENTED
+├── test_dataload.py       # load_dataset_*(), get_dataset_stats()     — IMPLEMENTED
+├── test_database.py       # UserProgressTracker (planned class)       — PENDING
+└── test_app.py            # Dash app initialisation, layouts, callbacks — PENDING
 ```
+
