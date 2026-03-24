@@ -1,3 +1,4 @@
+#region Imports
 import dash
 from dash import dcc, html, Input, Output, State, callback_context
 import plotly.graph_objects as go
@@ -41,8 +42,10 @@ from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
 
 from sklearn.datasets import make_blobs, make_moons, make_circles, make_classification #for level 2
 import plotly.graph_objects as go
+#endregion
 
-
+#====DELCARATION: CODE HERE IS ASSISTED BY https://www.perplexity.ai/ 04/12/25 - 03/03/25====
+#region datahandling
 # Load data once at startup
 X_train_full, X_test, y_train_full, y_test, meta = load_dataset("iris") #feature/class names removed because meta fulfills those variables
 
@@ -53,6 +56,10 @@ X_train, X_val, y_train, y_val = train_test_split(
     X_train_full, y_train_full, test_size=0.2, random_state=42, stratify=y_train_full
 )
 
+#endregion
+
+#====DELCARATION: CODE HERE IS ASSISTED BY https://www.perplexity.ai/ 04/12/25 - 03/03/25====
+#region SECURE PROGRAMMING (syntax map for python execution) - WORK IN PROGRESS
 #safe python environment for user input
 SAFE_PYTHON_ENV = {
     '__builtins__': {
@@ -102,7 +109,10 @@ SAFE_PYTHON_ENV = {
     'confusion_matrix': confusion_matrix
 }
 
- 
+#endregion
+
+#====DELCARATION: CODE HERE IS ASSISTED BY https://www.perplexity.ai/ 04/12/25 - 03/03/25====
+#region app setup and information layout
 app = dash.Dash(__name__)
 
 app.config.suppress_callback_exceptions = True #to prevent callback errors from the teacher page for the dataset/model selection
@@ -228,7 +238,6 @@ TASKS_TEXT = html.Div([
 ])
 
 
-
 #new layout - 4 box grid
 
 #app.layout.children.append(dcc.Store(id="model-history-store"))
@@ -256,7 +265,10 @@ def update_info_content(n_intro, n_theory, n_tasks):
     else:
         return INTRODUCTION_TEXT
  
-#callback for training outcomes
+#endregion
+
+#====DELCARATION: CODE HERE IS ASSISTED BY https://www.perplexity.ai/ 04/12/25 - 03/03/25====
+#region callback and method for INITAL DASHBOARD TRAINING AND VISUALISATION 
 @app.callback(
     [
         Output('loss-curves', 'figure'),
@@ -708,12 +720,11 @@ def train_visualise_or_reset(train_clicks,
         'val_loss': val_history['loss'],
         'val_acc': val_history['accuracy']
     }
-   
 
+#endregion   
 
- 
- #start app
-
+#====DELCARATION: CODE HERE IS ASSISTED BY https://www.perplexity.ai/ 04/12/25 - 03/03/25====
+#region page layout routing logic (callbacks/ methods)
 #callback for display decision: student or teacher page
 #now the callback to get to the homepage actually works, can navigate all pages
 @app.callback(
@@ -740,6 +751,10 @@ def display_decision(pathname): #this is a basic page selector before it gets tr
     else:
         return home_layout()
 
+#endregion
+
+#====DELCARATION: CODE HERE IS ASSISTED BY https://www.perplexity.ai/ 04/12/25 - 03/03/25====
+#region SECURE PROGRAMMING (callback for interpreter control, python execution method and syntax highlighter) - WORK IN PROGRESS
 
 #callback for INTERPRETER CONTROL
 #this will be simpler because this app is already using a python interpreter
@@ -827,7 +842,6 @@ def execute_python_code(run_clicks, export_clicks, user_code):
         )
 
 
-
 #callback for a custom syntax highlighter/validator to read python code from the user
 #how will i get the error message if there's a compile fail?
 @app.callback(
@@ -843,9 +857,12 @@ def syntax_highlighter(pythonCode):
     #it will go character by character, no need to look at blank spaces unless necessary
     #will this method include validation??
 
-#callback for visualisation of UI sliders in real-time - to see the FNN architecture for the page layouts
+#endregion
 
-# REPLACE your callback with this (app.py)
+#====DELCARATION: CODE HERE IS ASSISTED BY Copilot (GPT-5.4) 22/03/26 - 23/04/26====
+#region MODEL FACTORY: Level 1 callbacks/methods (linear classifiers and 2d decision boundary visualisation) - WORK IN PROGRESS
+
+# callback to show 2d decision boundary which dynamically changes with hidden layer slider
 @app.callback(
     [Output('live-architecture', 'figure'), Output('live-weights-heatmap', 'figure'),
      Output('code-preview', 'children')],
@@ -876,7 +893,6 @@ def update_live_visualisations(hidden_size, seed):
     )
     
     return arch_fig, weight_fig, code_preview
-
 
 def build_architecture_diagram(model, hidden_size):
     fig = go.Figure()
@@ -913,7 +929,7 @@ def build_architecture_diagram(model, hidden_size):
                      height=400, showlegend=False)
     return fig
 
-# NEW: Self-contained decision boundary (app.py)
+# a self contained boundary decision for level 1
 from sklearn.decomposition import PCA
 
 def plot_decision_boundary(model, Xtrain_sample):
@@ -1046,8 +1062,10 @@ def update_decision_boundary(dataset, w1, w2, b):
 
     return fig
 
-#level 2 callback
+#endregion
 
+#====DECLARATION: CODE HERE IS ASSISTED BY Copilot (GPT-5.4) 22/03/26 - 23/04/26====
+#region MODEL FACTORY: Level 2 callbacks/methods to visual the structure of a single hidde layer perception with decision boundary - WORK IN PROGRESS
 #toy datasets 
 def load_toy_dataset(name, n_samples=300, noise=0.2, random_state=0):
     if name == 'moons':
@@ -1496,10 +1514,10 @@ def update_level2_views(params):
 
     return fig_boundary, fig_activation, fig_network, explanation
 
+#endregion
 
-# ──────────────────────────────────────────────────────────────
-# Level 3: Deeper Networks and Expressivity  (universal approx)
-# ──────────────────────────────────────────────────────────────
+#====DECLARATION: CODE HERE IS ASSISTED BY Copilot (GPT-5.4) 22/03/26 - 23/04/26====
+#region MODEL FACTORY: Level 3 callbacks/methods to illustrate a deeper network structure (why is depth helpful) - WORK IN PROGRESS
 
 def level3_target_function(x, name):
     """Return y values for the chosen 1-D target function."""
@@ -1635,9 +1653,6 @@ def train_deep_mlp(x_train, y_train, params, activation, epochs=200, lr=0.01):
 
     params['loss_history'] = loss_history
     return params
-
-
-# --- Level 3 callbacks ---
 
 @app.callback(
     Output('level3-params-store', 'data'),
@@ -1790,6 +1805,711 @@ def update_level3_views(params):
 
     return fig_approx, fig_loss, fig_acts, summary
 
+#endregion
+
+#====DECLARATION: CODE HERE IS ASSISTED BY Copilot (GPT-5.4) 22/03/26 - 23/04/26====
+#region MODEL FACTORY: Level 4 callbacks/methods to show trainin dynamics of FNN (forward pass/ backprop pass etc) - WORK IN PROGRESS
+def l4_init_mlp(hidden_dim, activation, dataset, val_split):
+    """Initialise a 2→H→1 MLP and split toy data into train/val."""
+    X_all, y_all = load_toy_dataset(dataset)
+    N = X_all.shape[0]
+    n_val = max(1, int(N * val_split))
+    # Fixed shuffle so data stays consistent within a session
+    rng = np.random.default_rng(0)
+    idx = rng.permutation(N)
+    X_all, y_all = X_all[idx], y_all[idx]
+
+    X_val, y_val = X_all[:n_val], y_all[:n_val]
+    X_train, y_train = X_all[n_val:], y_all[n_val:]
+
+    params = init_single_hidden_mlp(input_dim=2, hidden_dim=hidden_dim, output_dim=1)
+    # Convert numpy arrays to lists for JSON serialisation
+    for k in ['W1', 'b1', 'W2', 'b2']:
+        params[k] = np.array(params[k]).tolist()
+
+    params['train_loss'] = []
+    params['val_loss'] = []
+    params['train_acc'] = []
+    params['val_acc'] = []
+    params['epoch'] = 0
+    params['grad_norms'] = []  # per-layer gradient norms for the last step
+    params['X_train'] = X_train.tolist()
+    params['y_train'] = y_train.tolist()
+    params['X_val'] = X_val.tolist()
+    params['y_val'] = y_val.tolist()
+    return params
+
+
+def l4_compute_loss_acc(X, y, params, activation):
+    """Binary cross-entropy loss and accuracy for 2→H→1 MLP."""
+    for k in ['W1', 'b1', 'W2', 'b2']:
+        params[k] = np.array(params[k])
+    A2, _ = forward_pass(X, params, activation)
+    preds = (A2.flatten() >= 0.5).astype(int)
+    acc = float(np.mean(preds == y))
+    eps = 1e-8
+    y_row = y.reshape(1, -1).astype(float)
+    loss = -float(np.mean(y_row * np.log(A2 + eps) + (1 - y_row) * np.log(1 - A2 + eps)))
+    for k in ['W1', 'b1', 'W2', 'b2']:
+        params[k] = np.array(params[k]).tolist()
+    return loss, acc
+
+
+def l4_train_step(params, activation, lr, n_steps=1):
+    """Run n_steps of gradient descent, recording loss/acc/grad norms."""
+    X_train = np.array(params['X_train'])
+    y_train = np.array(params['y_train'])
+    X_val = np.array(params['X_val'])
+    y_val = np.array(params['y_val'])
+
+    # Restore numpy arrays
+    for k in ['W1', 'b1', 'W2', 'b2']:
+        params[k] = np.array(params[k])
+
+    W1, b1 = params['W1'], params['b1']
+    W2, b2 = params['W2'], params['b2']
+    y_row = y_train.reshape(1, -1).astype(float)
+    N = X_train.shape[0]
+
+    grad_norms_last = []
+
+    for _ in range(n_steps):
+        # Forward
+        A2, cache = forward_pass(X_train, params, activation)
+        A1 = cache['A1']
+        X_t = cache['X_t']
+
+        # BCE gradient
+        eps = 1e-8
+        dA2 = -(y_row / (A2 + eps) - (1 - y_row) / (1 - A2 + eps))
+        dZ2 = dA2 * A2 * (1 - A2)
+
+        dW2 = (dZ2 @ A1.T) / N
+        db2 = np.mean(dZ2, axis=1, keepdims=True)
+
+        dA1 = W2.T @ dZ2
+        dZ1 = activation_backward(dA1, cache['Z1'], activation)
+        dW1 = (dZ1 @ X_t.T) / N
+        db1 = np.mean(dZ1, axis=1, keepdims=True)
+
+        # Record gradient norms
+        grad_norms_last = [
+            float(np.linalg.norm(dW1)),
+            float(np.linalg.norm(db1)),
+            float(np.linalg.norm(dW2)),
+            float(np.linalg.norm(db2)),
+        ]
+
+        W2 -= lr * dW2
+        b2 -= lr * db2
+        W1 -= lr * dW1
+        b1 -= lr * db1
+        params.update({'W1': W1, 'b1': b1, 'W2': W2, 'b2': b2})
+
+        # Metrics
+        t_loss, t_acc = l4_compute_loss_acc(X_train, y_train, params, activation)
+        v_loss, v_acc = l4_compute_loss_acc(X_val, y_val, params, activation)
+        params['train_loss'].append(t_loss)
+        params['val_loss'].append(v_loss)
+        params['train_acc'].append(t_acc)
+        params['val_acc'].append(v_acc)
+        params['epoch'] += 1
+
+    params['grad_norms'] = grad_norms_last
+
+    # Serialise back to lists
+    for k in ['W1', 'b1', 'W2', 'b2']:
+        params[k] = np.array(params[k]).tolist()
+    return params
+
+
+def l4_make_gradient_flow_figure(params, hidden_dim, activation):
+    """Diagram showing gradient magnitudes flowing backward through layers."""
+    grad_norms = params.get('grad_norms', [])
+    if not grad_norms:
+        grad_norms = [0, 0, 0, 0]
+
+    layer_names = ['dW¹ (input→hidden)', 'db¹ (hidden bias)',
+                   'dW² (hidden→output)', 'db² (output bias)']
+    # Reverse so output is on top (backprop direction)
+    layer_names_rev = layer_names[::-1]
+    grad_norms_rev = grad_norms[::-1]
+
+    colors = ['#ef4444', '#f97316', '#3b82f6', '#22c55e']
+
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        x=grad_norms_rev,
+        y=layer_names_rev,
+        orientation='h',
+        marker_color=colors,
+        text=[f'{g:.4f}' for g in grad_norms_rev],
+        textposition='outside',
+    ))
+    fig.update_layout(
+        title='Gradient magnitude (backward flow ← output to input)',
+        xaxis_title='||gradient||',
+        margin=dict(l=10, r=10, t=40, b=30),
+        height=250,
+    )
+    return fig
+
+
+# --- Level 4 callbacks ---
+
+@app.callback(
+    Output('level4-params-store', 'data'),
+    Input('level4-reset-btn', 'n_clicks'),
+    Input('level4-step-btn', 'n_clicks'),
+    Input('level4-train50-btn', 'n_clicks'),
+    State('level4-width-slider', 'value'),
+    State('level4-activation-dropdown', 'value'),
+    State('level4-dataset-dropdown', 'value'),
+    State('level4-lr-slider', 'value'),
+    State('level4-split-slider', 'value'),
+    State('level4-params-store', 'data'),
+)
+def update_level4_params(n_reset, n_step, n_train50,
+                         width, activation, dataset, log_lr, val_split, params):
+    ctx = dash.callback_context
+    trigger = ctx.triggered[0]['prop_id'].split('.')[0] if ctx.triggered else None
+    lr = 10 ** log_lr
+
+    if params is None or trigger == 'level4-reset-btn':
+        params = l4_init_mlp(width, activation, dataset, val_split)
+
+    if trigger == 'level4-step-btn':
+        params = l4_train_step(params, activation, lr, n_steps=1)
+
+    if trigger == 'level4-train50-btn':
+        params = l4_train_step(params, activation, lr, n_steps=50)
+
+    params['meta'] = {
+        'width': width, 'activation': activation, 'dataset': dataset,
+        'lr': lr, 'val_split': val_split,
+    }
+    return params
+
+
+@app.callback(
+    Output('level4-boundary-graph', 'figure'),
+    Output('level4-loss-graph', 'figure'),
+    Output('level4-accuracy-graph', 'figure'),
+    Output('level4-gradient-graph', 'figure'),
+    Output('level4-pass-explanation', 'children'),
+    Output('level4-fit-status', 'children'),
+    Output('level4-epoch-counter', 'children'),
+    Input('level4-params-store', 'data'),
+)
+def update_level4_views(params):
+    if params is None:
+        raise dash.exceptions.PreventUpdate
+
+    meta = params.get('meta', {})
+    width = meta.get('width', 6)
+    activation = meta.get('activation', 'tanh')
+    dataset = meta.get('dataset', 'moons')
+    lr = meta.get('lr', 0.03)
+    epoch = params.get('epoch', 0)
+
+    # Reconstruct numpy params for figures
+    np_params = dict(params)
+    for k in ['W1', 'b1', 'W2', 'b2']:
+        np_params[k] = np.array(params[k])
+
+    # 1) Decision boundary (train data)
+    X_train = np.array(params['X_train'])
+    y_train = np.array(params['y_train'])
+    fig_boundary = make_decision_boundary_figure(X_train, y_train, np_params, activation)
+    fig_boundary.update_layout(
+        title=f"Decision boundary (epoch {epoch}, lr={lr:.4f})"
+    )
+
+    # 2) Loss curves
+    fig_loss = go.Figure()
+    if params['train_loss']:
+        fig_loss.add_trace(go.Scatter(
+            y=params['train_loss'], mode='lines',
+            name='Train loss', line=dict(color='steelblue')
+        ))
+        fig_loss.add_trace(go.Scatter(
+            y=params['val_loss'], mode='lines',
+            name='Val loss', line=dict(color='crimson', dash='dash')
+        ))
+    fig_loss.update_layout(
+        title='Loss over epochs',
+        xaxis_title='Epoch', yaxis_title='BCE Loss',
+        margin=dict(l=40, r=10, t=40, b=30),
+    )
+
+    # 3) Accuracy curves
+    fig_acc = go.Figure()
+    if params['train_acc']:
+        fig_acc.add_trace(go.Scatter(
+            y=params['train_acc'], mode='lines',
+            name='Train acc', line=dict(color='steelblue')
+        ))
+        fig_acc.add_trace(go.Scatter(
+            y=params['val_acc'], mode='lines',
+            name='Val acc', line=dict(color='crimson', dash='dash')
+        ))
+    fig_acc.update_layout(
+        title='Accuracy over epochs',
+        xaxis_title='Epoch', yaxis_title='Accuracy',
+        yaxis=dict(range=[0, 1.05]),
+        margin=dict(l=40, r=10, t=40, b=30),
+    )
+
+    # 4) Gradient flow diagram
+    fig_grad = l4_make_gradient_flow_figure(params, width, activation)
+
+    # 5) Forward / backward pass walkthrough
+    W1 = np.array(params['W1'])
+    b1 = np.array(params['b1'])
+    W2 = np.array(params['W2'])
+    b2 = np.array(params['b2'])
+    grad_norms = params.get('grad_norms', [0, 0, 0, 0])
+    if not grad_norms:
+        grad_norms = [0, 0, 0, 0]
+
+    pass_explanation = html.Div([
+        html.H5("Forward pass (data flows →)"),
+        html.Ol([
+            html.Li([
+                html.B("Linear transform: "),
+                f"z¹ = W¹ · x + b¹  (W¹ is {width}×2, b¹ is {width}×1)"
+            ]),
+            html.Li([
+                html.B("Activation: "),
+                f"a¹ = {activation}(z¹)  — nonlinearity bends the space"
+            ]),
+            html.Li([
+                html.B("Output: "),
+                f"z² = W² · a¹ + b²  →  ŷ = σ(z²)  (probability)"
+            ]),
+            html.Li([
+                html.B("Loss: "),
+                "L = −[y·log(ŷ) + (1−y)·log(1−ŷ)]  (binary cross-entropy)"
+            ]),
+        ], style={'fontSize': '12px'}),
+
+        html.H5("Backward pass (gradients flow ←)"),
+        html.Ol([
+            html.Li([
+                html.B("∂L/∂z² "),
+                "= ŷ − y  (output error)"
+            ]),
+            html.Li([
+                html.B("∂L/∂W² "),
+                f"= ∂L/∂z² · a¹ᵀ  →  ||∇W²|| = {grad_norms[2]:.4f}"
+            ]),
+            html.Li([
+                html.B("Chain rule into hidden: "),
+                f"∂L/∂a¹ = W²ᵀ · ∂L/∂z²  →  "
+                f"∂L/∂z¹ = ∂L/∂a¹ ⊙ {activation}'(z¹)"
+            ]),
+            html.Li([
+                html.B("∂L/∂W¹ "),
+                f"= ∂L/∂z¹ · xᵀ  →  ||∇W¹|| = {grad_norms[0]:.4f}"
+            ]),
+        ], style={'fontSize': '12px'}),
+
+        html.P(f"Weight update: W ← W − {lr:.4f} · ∂L/∂W  (gradient descent)",
+               style={'fontWeight': 'bold', 'fontSize': '12px', 'marginTop': '8px'}),
+    ])
+
+    # 6) Over/under-fitting status
+    if len(params['train_loss']) >= 2:
+        t_loss = params['train_loss'][-1]
+        v_loss = params['val_loss'][-1]
+        t_acc = params['train_acc'][-1]
+        v_acc = params['val_acc'][-1]
+        gap = v_loss - t_loss
+
+        if t_loss > 0.5:
+            status_color = '#f97316'
+            status_text = 'Under-fitting – the model has not learned the pattern yet. Train more or increase capacity.'
+        elif gap > 0.15:
+            status_color = '#ef4444'
+            status_text = (f'Over-fitting detected – val loss ({v_loss:.3f}) much higher '
+                           f'than train loss ({t_loss:.3f}). '
+                           'The model memorises training data. Try fewer neurons or early stopping.')
+        else:
+            status_color = '#22c55e'
+            status_text = 'Good fit – training and validation loss are close. The model generalises well.'
+
+        fit_status = html.Div([
+            html.Div(status_text,
+                     style={'color': status_color, 'fontWeight': 'bold',
+                            'marginBottom': '10px'}),
+            html.Table([
+                html.Tr([html.Th(''), html.Th('Train'), html.Th('Val')]),
+                html.Tr([html.Td('Loss'), html.Td(f'{t_loss:.4f}'), html.Td(f'{v_loss:.4f}')]),
+                html.Tr([html.Td('Accuracy'), html.Td(f'{t_acc:.2%}'), html.Td(f'{v_acc:.2%}')]),
+                html.Tr([html.Td('Gap'), html.Td(colspan=2, children=f'{gap:+.4f}')]),
+            ], style={'fontSize': '12px', 'borderCollapse': 'collapse',
+                      'width': '100%'}),
+            html.Hr(),
+            html.P('Tip: a large train-val gap signals overfitting. '
+                   'A high loss for both signals underfitting. '
+                   'The learning rate controls step size—too large overshoots, '
+                   'too small learns slowly.',
+                   style={'fontSize': '11px', 'fontStyle': 'italic'}),
+        ])
+    else:
+        fit_status = html.P('Press Train to start learning.',
+                            style={'color': '#6b7280'})
+
+    epoch_text = f"Epoch: {epoch}"
+
+    return (fig_boundary, fig_loss, fig_acc, fig_grad,
+            pass_explanation, fit_status, epoch_text)
+
+#endregion
+
+#====DECLARATION: CODE HERE IS ASSISTED BY Copilot (GPT-5.4) 22/03/26 - 23/04/26====
+#region MODEL FACTORY: Level 5 callbacks/methods to show hidden representations and feature spaces - WORK IN PROGRESS
+
+def l5_init_mlp(hidden_width, depth, activation, dataset):
+    """Initialise a 2→H→…→H→1 classifier MLP and store dataset."""
+    X, y = load_toy_dataset(dataset)
+    rng = np.random.default_rng()
+
+    params = {'depth': depth, 'width': hidden_width}
+
+    # First hidden layer  (2 → hidden_width)
+    fan_in = 2
+    params['W0'] = rng.normal(0, np.sqrt(2.0 / fan_in),
+                              size=(hidden_width, fan_in)).tolist()
+    params['b0'] = np.zeros(hidden_width).tolist()
+
+    # Additional hidden layers  (hidden_width → hidden_width)
+    for d in range(1, depth):
+        params[f'W{d}'] = rng.normal(0, np.sqrt(2.0 / hidden_width),
+                                     size=(hidden_width, hidden_width)).tolist()
+        params[f'b{d}'] = np.zeros(hidden_width).tolist()
+
+    # Output layer  (hidden_width → 1, sigmoid)
+    params[f'W{depth}'] = rng.normal(0, np.sqrt(2.0 / hidden_width),
+                                     size=(1, hidden_width)).tolist()
+    params[f'b{depth}'] = np.zeros(1).tolist()
+
+    params['loss_history'] = []
+    params['epoch'] = 0
+    params['X'] = X.tolist()
+    params['y'] = y.tolist()
+    return params
+
+
+def l5_forward_all_layers(X, params, activation):
+    """
+    Forward pass returning activations after every layer (list of (N, dim)).
+    Index 0 = input (N,2), then one entry per hidden layer, then output probs (N,1).
+    """
+    depth = params['depth']
+    A = X.T  # (2, N)
+    layer_outputs = [X.copy()]  # layer 0 = input
+
+    for d in range(depth):
+        W = np.array(params[f'W{d}'])
+        b = np.array(params[f'b{d}']).reshape(-1, 1)
+        Z = W @ A + b
+        A = activation_forward(Z, activation)
+        layer_outputs.append(A.T.copy())  # (N, hidden_width)
+
+    # Output layer (sigmoid)
+    W_out = np.array(params[f'W{depth}'])
+    b_out = np.array(params[f'b{depth}']).reshape(-1, 1)
+    Z_out = W_out @ A + b_out
+    probs = 1.0 / (1.0 + np.exp(-Z_out))  # (1, N)
+    layer_outputs.append(probs.T.copy())  # (N, 1)
+    return layer_outputs, probs
+
+
+def l5_train(params, activation, epochs=50, lr=0.05):
+    """Train the deep classifier with BCE loss; returns updated params."""
+    X = np.array(params['X'])
+    y = np.array(params['y'])
+    depth = params['depth']
+    N = X.shape[0]
+    loss_history = list(params.get('loss_history', []))
+
+    for _ in range(epochs):
+        # ── forward ──
+        As = [X.T]  # list of layer activations, As[0] = (2, N)
+        Zs = []
+
+        A = As[0]
+        for d in range(depth):
+            W = np.array(params[f'W{d}'])
+            b = np.array(params[f'b{d}']).reshape(-1, 1)
+            Z = W @ A + b
+            Zs.append(Z)
+            A = activation_forward(Z, activation)
+            As.append(A)
+
+        W_out = np.array(params[f'W{depth}'])
+        b_out = np.array(params[f'b{depth}']).reshape(-1, 1)
+        Z_out = W_out @ A + b_out
+        probs = 1.0 / (1.0 + np.exp(-Z_out))  # (1, N)
+
+        # BCE loss
+        eps = 1e-8
+        y_row = y.reshape(1, -1).astype(float)
+        loss = -float(np.mean(y_row * np.log(probs + eps)
+                              + (1 - y_row) * np.log(1 - probs + eps)))
+        loss_history.append(loss)
+
+        # ── backward ──
+        dZ_out = probs - y_row  # (1, N)
+
+        dW_out = (dZ_out @ As[depth].T) / N
+        db_out = np.mean(dZ_out, axis=1, keepdims=True)
+        dA = W_out.T @ dZ_out  # (width, N)
+
+        W_out -= lr * dW_out
+        b_out -= lr * db_out
+        params[f'W{depth}'] = W_out.tolist()
+        params[f'b{depth}'] = b_out.flatten().tolist()
+
+        for d in range(depth - 1, -1, -1):
+            dZ = activation_backward(dA, Zs[d], activation)
+            W = np.array(params[f'W{d}'])
+            dW = (dZ @ As[d].T) / N
+            db = np.mean(dZ, axis=1, keepdims=True)
+            if d > 0:
+                dA = W.T @ dZ
+            W -= lr * dW
+            b_vec = np.array(params[f'b{d}']).reshape(-1, 1)
+            b_vec -= lr * db
+            params[f'W{d}'] = W.tolist()
+            params[f'b{d}'] = b_vec.flatten().tolist()
+
+    params['loss_history'] = loss_history
+    params['epoch'] = params.get('epoch', 0) + epochs
+    return params
+
+
+def l5_project_2d(A, method='pca'):
+    """Project (N, D) activations to 2D for visualisation. If D<=2, pad/slice."""
+    if A.shape[1] == 1:
+        return np.column_stack([A[:, 0], np.zeros(A.shape[0])])
+    if A.shape[1] == 2:
+        return A[:, :2]
+    # Simple PCA via SVD (centred)
+    mu = A.mean(axis=0)
+    Ac = A - mu
+    _, _, Vt = np.linalg.svd(Ac, full_matrices=False)
+    return Ac @ Vt[:2].T
+
+
+def l5_linear_separability_score(A_2d, y):
+    """
+    Fit a simple linear classifier (perceptron-like) on the 2D projection
+    and return accuracy.  Uses closed-form logistic regression shortcut:
+    pseudo-inverse solution as a quick proxy.
+    """
+    N = A_2d.shape[0]
+    X_aug = np.column_stack([A_2d, np.ones(N)])  # (N, 3)
+    y_col = y.reshape(-1, 1).astype(float)
+    # Least-squares solution
+    try:
+        w = np.linalg.lstsq(X_aug, y_col, rcond=None)[0]
+    except np.linalg.LinAlgError:
+        return 0.5
+    preds = (X_aug @ w >= 0.5).astype(int).flatten()
+    return float(np.mean(preds == y))
+
+
+
+@app.callback(
+    Output('level5-params-store', 'data'),
+    Input('level5-dataset-dropdown', 'value'),
+    Input('level5-depth-slider', 'value'),
+    Input('level5-width-slider', 'value'),
+    Input('level5-activation-dropdown', 'value'),
+    Input('level5-reset-btn', 'n_clicks'),
+)
+def update_level5_params(dataset, depth, width, activation, _reset):
+    return l5_init_mlp(width, depth, activation, dataset)
+
+@app.callback(
+    Output('level5-params-store', 'data', allow_duplicate=True),
+    Output('level5-feature-graph', 'figure'),
+    Output('level5-boundary-graph', 'figure'),
+    Output('level5-loss-graph', 'figure'),
+    Output('level5-layer-slider', 'max'),
+    Output('level5-layer-slider', 'marks'),
+    Output('level5-layer-slider', 'value'),
+    Output('level5-layer-explanation', 'children'),
+    Output('level5-separability-info', 'children'),
+    Output('level5-epoch-counter', 'children'),
+    Input('level5-train50-btn', 'n_clicks'),
+    Input('level5-train200-btn', 'n_clicks'),
+    Input('level5-layer-slider', 'value'),
+    State('level5-params-store', 'data'),
+    State('level5-activation-dropdown', 'value'),
+    prevent_initial_call=True,
+)
+def update_level5_views(n50, n200, layer_idx, params, activation):
+    if params is None:
+        raise dash.exceptions.PreventUpdate
+
+    ctx = dash.callback_context
+    trigger = ctx.triggered[0]['prop_id'] if ctx.triggered else ''
+
+    # ── train if a train button was pressed ──
+    if 'train50' in trigger:
+        params = l5_train(params, activation, epochs=50, lr=0.05)
+    elif 'train200' in trigger:
+        params = l5_train(params, activation, epochs=200, lr=0.05)
+
+    depth = params['depth']
+    X = np.array(params['X'])
+    y = np.array(params['y'])
+
+    # Forward to get all layer activations
+    layer_outputs, probs = l5_forward_all_layers(X, params, activation)
+    # layer_outputs: [input(N,2), hidden1(N,W), ..., hiddenD(N,W), output(N,1)]
+
+    # Update layer slider range: 0..depth+1
+    slider_max = depth + 1
+    marks = {0: 'Input'}
+    for d in range(1, depth + 1):
+        marks[d] = f'Hidden {d}'
+    marks[depth + 1] = 'Output'
+
+    # Clamp layer_idx
+    if layer_idx is None or layer_idx > slider_max:
+        layer_idx = 0
+
+    # ── Feature-space scatter for the selected layer ──
+    A = layer_outputs[layer_idx]  # (N, dim)
+    A_2d = l5_project_2d(A)
+
+    colors = ['#3b82f6' if yi == 0 else '#ef4444' for yi in y]
+    fig_feature = go.Figure()
+    fig_feature.add_trace(go.Scatter(
+        x=A_2d[:, 0], y=A_2d[:, 1], mode='markers',
+        marker=dict(color=colors, size=5, opacity=0.7),
+        hovertemplate='dim1: %{x:.3f}<br>dim2: %{y:.3f}<extra></extra>',
+    ))
+    layer_label = marks.get(layer_idx, f'Layer {layer_idx}')
+    dim_actual = A.shape[1]
+    proj_note = '' if dim_actual <= 2 else f' (PCA from {dim_actual}D)'
+    fig_feature.update_layout(
+        title=f'Data after {layer_label}{proj_note}',
+        xaxis_title='Dimension 1', yaxis_title='Dimension 2',
+        template='plotly_white', margin=dict(t=40, b=30),
+    )
+
+    # ── Decision boundary in input space ──
+    x_min, x_max = X[:, 0].min() - 0.5, X[:, 0].max() + 0.5
+    y_min, y_max = X[:, 1].min() - 0.5, X[:, 1].max() + 0.5
+    step = 0.05
+    xx, yy = np.meshgrid(np.arange(x_min, x_max, step),
+                         np.arange(y_min, y_max, step))
+    grid = np.c_[xx.ravel(), yy.ravel()].astype(np.float32)
+    _, grid_probs = l5_forward_all_layers(grid, params, activation)
+    zz = grid_probs.flatten().reshape(xx.shape)
+
+    fig_boundary = go.Figure()
+    fig_boundary.add_trace(go.Contour(
+        x=np.arange(x_min, x_max, step), y=np.arange(y_min, y_max, step),
+        z=zz, colorscale='RdBu', opacity=0.5,
+        showscale=False, contours=dict(showlines=False),
+    ))
+    fig_boundary.add_trace(go.Scatter(
+        x=X[:, 0], y=X[:, 1], mode='markers',
+        marker=dict(color=y, colorscale='RdBu', size=5, line=dict(width=0.5, color='black')),
+        hoverinfo='skip',
+    ))
+    fig_boundary.update_layout(
+        title='Decision boundary (input space)',
+        template='plotly_white', margin=dict(t=40, b=30),
+        xaxis_title='x₁', yaxis_title='x₂',
+    )
+
+    # ── Loss curve ──
+    loss_hist = params.get('loss_history', [])
+    fig_loss = go.Figure()
+    if loss_hist:
+        fig_loss.add_trace(go.Scatter(
+            y=loss_hist, mode='lines', name='BCE Loss',
+            line=dict(color='#f59e0b'),
+        ))
+    fig_loss.update_layout(
+        title='Training loss (BCE)',
+        xaxis_title='Epoch', yaxis_title='Loss',
+        template='plotly_white', margin=dict(t=40, b=30),
+    )
+
+    # ── Layer explanation ──
+    epoch = params.get('epoch', 0)
+    if layer_idx == 0:
+        explanation = html.Div([
+            html.P("Layer 0 is the raw input — the original 2D coordinates of each data point."),
+            html.P("No transformation has been applied yet. The scatter plot shows the dataset "
+                   "exactly as it was generated."),
+        ])
+    elif layer_idx <= depth:
+        explanation = html.Div([
+            html.P(f"Hidden layer {layer_idx} applies an affine transformation "
+                   f"W{layer_idx}·a + b{layer_idx} followed by the {activation} activation."),
+            html.P(f"This maps the {A.shape[1]}-dimensional representation into a new "
+                   f"{A.shape[1]}D feature space where the network can separate the classes "
+                   "more easily."),
+            html.P("Each successive layer bends and folds the space further, progressively "
+                   "untangling the data until the classes become linearly separable.",
+                   style={'fontStyle': 'italic', 'fontSize': '12px'}),
+        ])
+    else:
+        explanation = html.Div([
+            html.P("The output layer applies a final linear map W·a + b followed by sigmoid."),
+            html.P("This produces a single probability per sample. Values close to 0 or 1 "
+                   "indicate confident classification — the network has (hopefully) made "
+                   "the classes separable in the previous hidden layers."),
+        ])
+
+    # ── Linear separability score ──
+    sep_acc = l5_linear_separability_score(A_2d, y)
+    if layer_idx == 0:
+        sep_msg = html.Div([
+            html.P(f"A straight line through the input space achieves "
+                   f"{sep_acc * 100:.1f}% accuracy."),
+            html.P("For non-linearly-separable datasets (moons, circles) this will be low — "
+                   "that's why we need hidden layers!"),
+        ])
+    elif layer_idx <= depth:
+        sep_color = '#16a34a' if sep_acc > 0.9 else '#eab308' if sep_acc > 0.75 else '#dc2626'
+        sep_msg = html.Div([
+            html.P([
+                "Linear separability of this hidden representation: ",
+                html.Span(f"{sep_acc * 100:.1f}%",
+                          style={'fontWeight': 'bold', 'color': sep_color, 'fontSize': '18px'}),
+            ]),
+            html.P("Once this approaches ~95%+ the network has successfully untangled "
+                   "the data — a simple straight line can now separate the classes."
+                   if sep_acc < 0.95 else
+                   "The hidden representation is linearly separable! The network has "
+                   "successfully learned to disentangle the classes.",
+                   style={'fontStyle': 'italic', 'fontSize': '12px'}),
+        ])
+    else:
+        preds = (np.array(probs).flatten() >= 0.5).astype(int)
+        net_acc = float(np.mean(preds == y))
+        sep_msg = html.Div([
+            html.P(f"Network output accuracy: {net_acc * 100:.1f}%"),
+            html.P("This is the final classification. If accuracy is high the preceding "
+                   "hidden layers successfully created a linearly-separable feature space."),
+        ])
+
+    epoch_text = f"Epoch: {epoch}"
+
+    return (params, fig_feature, fig_boundary, fig_loss,
+            slider_max, marks, layer_idx,
+            explanation, sep_msg, epoch_text)
+#endregion
 
 if __name__ == '__main__':
     app.run(debug=False)   #changed debug to false because otherwise it resets the page every minute

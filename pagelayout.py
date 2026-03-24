@@ -1,62 +1,15 @@
+#DECLARATION: CODE HERE IS ASSISTED BY https://www.perplexity.ai/  (GPT 5.4) 04/12/25 - 22/03/26
+#DECLARATION: CODE HERE IS ASSISTED BY Copilot (GPT 5.4) 22/03/25 - 23/04/26
+
+#region Imports
 import dash
 from dash import dcc, html, Input, Output, State, callback_context
 import numpy as np
+#endregion
 
-"""
-def teacher_layout():
-    return html.Div([
-        html.H2("Teacher Page - Lesson setup"),
-        html.Label("Dataset"),
-        dcc.Dropdown(
-            ["Iris", "Wine", "Seeds"],
-            "Iris",
-            id="teacher-dataset-dropdown",
-        ),
+#region layouts for test and home pages
 
-        html.Label("Model Type"),
-        dcc.Dropdown(
-            ["Logistic Regression", "NN-1-Layer", "NN-2-Layer"],
-            "NN-1-Layer",
-            id="teacher-model-type",
-        ),
-
-        html.Label("Hidden size (for NN)"),
-        dcc.Slider(1, 32, 1, value=8, id="teacher-hidden-size"),
-
-        html.Label("Learning rate (log10)"),
-        dcc.Slider(-3, -1, 0.1, value=2, id="teacher-learning-rate"),
-
-        html.Label("Epochs"),
-        dcc.Slider(0, 50, 100, value=50, id="teacher-epochs"),
-
-        html.Label("Student Control Permissive"),
-        dcc.Checklist(
-            options=[
-                {"label": "Hidden size", "value": "hidden_size"},
-                {"label": "Learning rate", "value": "lr"},
-                {"label": "Epochs", "value": "epochs"},
-            ],
-            value=["hidden_size", "lr"],
-            id="teacher-controls",
-        ),
-
-        #area to write and save a lesson for the student
-
-        html.Label("Lesson instructions"),
-        dcc.Textarea(
-            id="tasks-text",
-            style={"width": "100%", "height": 120},
-            placeholder="1) Look at overfitting",
-        ),
-
-        html.Button("Save lesson preset",
-                    id="save-lesson-btn",
-                    n_clicks=0),
-        html.Div(id="teacher-status",
-                 style={"marginTop": "10px,", "color": "green"}),
-
-    ]),
-"""
+#this is the original layout dashboard - probably wont be used anymore
 def level0_layout():
     return html.Div(
     #html.H1("Level 1 - Hyperparameter Playground")
@@ -495,9 +448,9 @@ def home_layout(): #removed the type error by splitting it out
                    #INTRODUCTION_TEXT  # Reuse existing intro content (maybe)
             
     ])
+#endregion
 
-#new levels
-
+#region SECURE PROGRAMMING: layout for sandbox code
 def sandbox_layout():
     return html.Div([
         html.H2("SANDBOX",
@@ -551,9 +504,10 @@ def sandbox_layout():
 
 
     ])
+#endregion
 
+#region ADAPTIVE LEARNING: hopefully this can be be integrated with gamification features
 #skill tree data as a placeholder to showcase clicing on different levels at different points
-
 SKILL_TREE_DATA = {
     "nodes": [
         {"id": "level1", "name": "Hyperparams", "x": 0, "y": 0, "unlocked": True, "completed": False},
@@ -575,9 +529,9 @@ def skilltree_layout():
                     style={'textAlign': 'center', 'marginBottom': '20px'}),
 
         html.Div([
-            dcc.Link([skill_box("Level 5", "The ML Pipeline")], href="/level5"),      # row 1
+            dcc.Link([skill_box("Level 5", "Hidden Representations & Feature Spaces")], href="/level5"),      # row 1
 
-            dcc.Link([skill_box("Level 4", "Model Architecture Coding")], href="/level4"),         # row 2
+            dcc.Link([skill_box("Level 4", "Training via Loss & Backprop")], href="/level4"),         # row 2
 
             dcc.Link([skill_box("Level 3", "Deeper Networks & Expressivity")], href="/level3"),       # row 3
 
@@ -593,13 +547,14 @@ def skilltree_layout():
             "margin": "0 auto",
             "padding": "20px"
     })
-
 def skill_box(title, subtitle):
     return html.Div([
         html.H3(title),
         html.P(subtitle)
     ], className = "skill-box")
+#endregion
 
+#region Level layouts
 """
 def level1_layout():
     return html.Div([
@@ -946,108 +901,250 @@ def level3_layout():
 
 def level4_layout():
     return html.Div([
-        html.H2("Full Architecture Coding",
-                    style={'textAlign': 'center', 'marginBottom': '20px'}),
-        
-        html.Div([
-            html.H3("Build SimpleNN Class"),
-            html.P("Your ReLU & Softmax from Level 3 must match models-4.py exactly"),
-            html.Ul([
-                html.Li("Copy SimpleNN signature below"),
-                html.Li("Implement __init__, forward, backward, train_epoch"),
-                html.Li("Match Level 2 training curves")
-            ]),
-            
-            html.H4("Reference Template"),
-            html.Pre("""class SimpleNN:"""),
-        ], style={'width': '45%', 'float': 'left'}),
+        html.H2(
+            "Level 4 – Training via Loss and Backpropagation",
+            style={'textAlign': 'center', 'marginBottom': '10px'}
+        ),
 
-        html.Div([
-            html.Label("Custom SimpleNN Implementation"),
-            dcc.Textarea(id='level4-code-input', value="Level3 functions here",
-            style = {'width': '100%', 'height': '400px'}),
+        html.P(
+            "Explore how networks learn: observe the loss surface, watch gradient "
+            "descent update weights, step through forward and backward passes, "
+            "and develop intuition for learning rate and over/under-fitting.",
+            style={'textAlign': 'center', 'marginBottom': '20px', 'maxWidth': '850px',
+                   'margin': '0 auto 20px auto'}
+        ),
 
-            html.Button('Test Class', id='level4-test-btn', n_clicks=0),
-            html.Button('Train & Compare', id='level4-train-btn', n_clicks=0),
-            html.Div(id='level4-status')
-            ], style={'width': '55%', 'float': 'right'}),
-
-        html.Div(id='level4-output', style={'clear': 'both'}),
+        # Top row: controls + decision boundary animation
         html.Div([
-            dcc.Graph(id='level4-loss-compare'),
-            dcc.Graph(id='level4-weight-compare')
-        ], style={'display': 'flex'})
-            
+            # Left: controls
+            html.Div([
+                html.H4("Toy dataset"),
+                dcc.Dropdown(
+                    id='level4-dataset-dropdown',
+                    options=[
+                        {'label': 'Moons', 'value': 'moons'},
+                        {'label': 'Circles', 'value': 'circles'},
+                        {'label': 'Linear', 'value': 'linear'},
+                    ],
+                    value='moons', clearable=False
+                ),
+
+                html.H4("Hidden width"),
+                dcc.Slider(
+                    id='level4-width-slider',
+                    min=2, max=16, step=1, value=6,
+                    marks={2: '2', 4: '4', 8: '8', 12: '12', 16: '16'}
+                ),
+
+                html.H4("Activation function"),
+                dcc.Dropdown(
+                    id='level4-activation-dropdown',
+                    options=[
+                        {'label': 'ReLU', 'value': 'relu'},
+                        {'label': 'Tanh', 'value': 'tanh'},
+                        {'label': 'Sigmoid', 'value': 'sigmoid'},
+                    ],
+                    value='tanh', clearable=False
+                ),
+
+                html.H4("Learning rate"),
+                dcc.Slider(
+                    id='level4-lr-slider',
+                    min=-3, max=0, step=0.1, value=-1.5,
+                    marks={-3: '0.001', -2: '0.01', -1: '0.1', 0: '1.0'},
+                    tooltip={'placement': 'bottom', 'always_visible': True}
+                ),
+
+                html.H4("Train / validation split"),
+                dcc.Slider(
+                    id='level4-split-slider',
+                    min=0.1, max=0.5, step=0.05, value=0.2,
+                    marks={0.1: '10%', 0.2: '20%', 0.3: '30%', 0.5: '50%'}
+                ),
+
+                html.Div([
+                    html.Button('Reset & Randomize', id='level4-reset-btn', n_clicks=0,
+                                style={'marginRight': '8px'}),
+                    html.Button('Train 1 Epoch', id='level4-step-btn', n_clicks=0,
+                                style={'marginRight': '8px'}),
+                    html.Button('Train 50 Epochs', id='level4-train50-btn', n_clicks=0),
+                ], style={'marginTop': '12px'}),
+
+                html.Div(id='level4-epoch-counter',
+                         style={'marginTop': '8px', 'fontWeight': 'bold'}),
+
+            ], style={'width': '28%', 'display': 'inline-block',
+                      'verticalAlign': 'top', 'padding': '0 20px'}),
+
+            # Right: decision boundary
+            html.Div([
+                dcc.Graph(id='level4-boundary-graph', style={'height': '50vh'}),
+            ], style={'width': '70%', 'display': 'inline-block'}),
+        ]),
+
+        html.Hr(),
+
+        # Middle row: loss curves + gradient flow diagram
+        html.Div([
+            html.Div([
+                html.H4("Training & validation loss curves"),
+                dcc.Graph(id='level4-loss-graph'),
+            ], style={'width': '33%', 'display': 'inline-block'}),
+
+            html.Div([
+                html.H4("Training & validation accuracy"),
+                dcc.Graph(id='level4-accuracy-graph'),
+            ], style={'width': '33%', 'display': 'inline-block'}),
+
+            html.Div([
+                html.H4("Backprop gradient flow"),
+                dcc.Graph(id='level4-gradient-graph'),
+            ], style={'width': '33%', 'display': 'inline-block'}),
+        ]),
+
+        html.Hr(),
+
+        # Bottom row: step-through explanation
+        html.Div([
+            html.Div([
+                html.H4("Forward / Backward pass walkthrough"),
+                html.Div(id='level4-pass-explanation'),
+            ], style={'width': '50%', 'display': 'inline-block',
+                      'verticalAlign': 'top', 'padding': '0 20px'}),
+
+            html.Div([
+                html.H4("Fitting status & insights"),
+                html.Div(id='level4-fit-status'),
+            ], style={'width': '50%', 'display': 'inline-block',
+                      'verticalAlign': 'top', 'padding': '0 20px'}),
+        ]),
+
+        # Stores
+        dcc.Store(id='level4-params-store'),
     ])
 
 def level5_layout():
     return html.Div([
-        html.H1("LEVEL 5: Complete ML Pipeline", style={'textAlign': 'center'}),
-        
-        html.Div([
-            html.H3("✅ Build Production Pipeline"),
-            html.P("Integrate your SimpleNN + create optimizers"),
-            html.Ul([
-                html.Li("Load data: loaddataset('iris')"),
-                html.Li("Custom SGD/Mini-batch optimizer"),
-                html.Li("Early stopping + L2 regularization"),
-                html.Li("Beat sklearn LogisticRegression (95%+ accuracy)")
-            ])
-        ], style={'width': '35%', 'float': 'left'}),
-        
-        # Full pipeline code editor
-        html.Div([
-            html.Label("Complete Pipeline"),
-            dcc.Textarea(id='level5-code-input', value="""# YOUR SimpleNN FROM LEVEL 4 HERE
-class SimpleNN:
-    # Paste your working class
+        html.H2(
+            "Level 5 \u2013 Hidden Representations and Feature Spaces",
+            style={'textAlign': 'center', 'marginBottom': '10px'}
+        ),
 
-# Task 1: Custom Optimizer Class  
-class CustomOptimizer:
-    def __init__(self, lr=0.01, batch_size=32, momentum=0.9):
-        self.lr = lr
-        self.batch_size = batch_size  
-        self.momentum = momentum
-        self.v_w1 = self.v_b1 = self.v_w2 = self.v_b2 = 0
-        
-    def step(self, model, X_batch, y_batch):
-        # Implement SGD + momentum updates
-        pass
+        html.P(
+            "Watch what hidden layers actually do: each layer re-maps the data into a new "
+            "feature space. Slide through layers to see the input data morph until the "
+            "final hidden layer makes the classes linearly separable.",
+            style={'textAlign': 'center', 'marginBottom': '20px', 'maxWidth': '850px',
+                   'margin': '0 auto 20px auto'}
+        ),
 
-# Task 2: Training Pipeline
-def train_pipeline(dataset='iris', epochs=100):
-    # 1. Load data
-    X_train, X_test, y_train, y_test, meta = loaddataset(dataset)
-    
-    # 2. Build model  
-    model = SimpleNN(4, 8, 3, seed=42)
-    optimizer = CustomOptimizer(lr=0.01, batch_size=32)
-    
-    # 3. Training loop with early stopping
-    history = {'loss': [], 'val_loss': []}
-    best_val_loss = float('inf')
-    
-    for epoch in range(epochs):
-        # Your training code here
-        pass
-    
-    return model, history
-
-# RUN PIPELINE
-model, history = train_pipeline()
-print(f"Test Accuracy: {np.mean(np.argmax(model.forward(X_test), 1) == y_test):.3f}")
-""", style={'width': '100%', 'height': '500px'}),
-            
-            html.Button('Run Pipeline', id='level5-run-btn', n_clicks=0),
-            html.Button('Compare vs Sklearn', id='level5-compare-btn', n_clicks=0)
-        ], style={'width': '65%', 'float': 'right'}),
-        
-        html.Div(id='level5-output', style={'clear': 'both', 'marginTop': '20px'}),
-        
-        # Full dashboard visuals
+        # ── top row: controls + feature-space scatter ──
         html.Div([
-            dcc.Graph(id='level5-loss-curves'),
-            dcc.Graph(id='level5-confusion-matrix'),
-            dcc.Graph(id='level5-accuracy-metrics')
-        ], style={'display': 'flex', 'gap': '20px'})
+            # Left column: controls
+            html.Div([
+                html.H4("Toy dataset"),
+                dcc.Dropdown(
+                    id='level5-dataset-dropdown',
+                    options=[
+                        {'label': 'Moons', 'value': 'moons'},
+                        {'label': 'Circles', 'value': 'circles'},
+                        {'label': 'Linear', 'value': 'linear'},
+                    ],
+                    value='moons', clearable=False
+                ),
+
+                html.H4("Network depth (hidden layers)"),
+                dcc.Slider(
+                    id='level5-depth-slider',
+                    min=1, max=5, step=1, value=3,
+                    marks={i: str(i) for i in range(1, 6)}
+                ),
+
+                html.H4("Hidden width"),
+                dcc.Slider(
+                    id='level5-width-slider',
+                    min=2, max=16, step=1, value=6,
+                    marks={2: '2', 4: '4', 8: '8', 12: '12', 16: '16'}
+                ),
+
+                html.H4("Activation function"),
+                dcc.Dropdown(
+                    id='level5-activation-dropdown',
+                    options=[
+                        {'label': 'ReLU', 'value': 'relu'},
+                        {'label': 'Tanh', 'value': 'tanh'},
+                        {'label': 'Sigmoid', 'value': 'sigmoid'},
+                    ],
+                    value='tanh', clearable=False
+                ),
+
+                html.Div([
+                    html.Button('Reset & Randomize', id='level5-reset-btn', n_clicks=0,
+                                style={'marginRight': '8px'}),
+                    html.Button('Train 50 Epochs', id='level5-train50-btn', n_clicks=0,
+                                style={'marginRight': '8px'}),
+                    html.Button('Train 200 Epochs', id='level5-train200-btn', n_clicks=0),
+                ], style={'marginTop': '12px'}),
+
+                html.Div(id='level5-epoch-counter',
+                         style={'marginTop': '8px', 'fontWeight': 'bold'}),
+
+                html.Hr(),
+                html.H4("Layer slider"),
+                html.P("Slide to see the data after each layer:",
+                       style={'fontSize': '12px'}),
+                dcc.Slider(
+                    id='level5-layer-slider',
+                    min=0, max=3, step=1, value=0,
+                    marks={0: 'Input'},
+                    tooltip={'placement': 'bottom', 'always_visible': True}
+                ),
+
+            ], style={'width': '28%', 'display': 'inline-block',
+                      'verticalAlign': 'top', 'padding': '0 20px'}),
+
+            # Right column: feature-space scatter
+            html.Div([
+                html.H4("Feature-space view (layer embedding)",
+                        style={'textAlign': 'center'}),
+                dcc.Graph(id='level5-feature-graph', style={'height': '55vh'}),
+            ], style={'width': '70%', 'display': 'inline-block'}),
+        ]),
+
+        html.Hr(),
+
+        # ── middle row: decision boundary + loss curve ──
+        html.Div([
+            html.Div([
+                html.H4("Decision boundary (input space)"),
+                dcc.Graph(id='level5-boundary-graph'),
+            ], style={'width': '50%', 'display': 'inline-block'}),
+
+            html.Div([
+                html.H4("Training loss curve"),
+                dcc.Graph(id='level5-loss-graph'),
+            ], style={'width': '50%', 'display': 'inline-block'}),
+        ]),
+
+        html.Hr(),
+
+        # ── bottom row: interpretability explanation ──
+        html.Div([
+            html.Div([
+                html.H4("What is happening at this layer?"),
+                html.Div(id='level5-layer-explanation'),
+            ], style={'width': '50%', 'display': 'inline-block',
+                      'verticalAlign': 'top', 'padding': '0 20px'}),
+
+            html.Div([
+                html.H4("Linear separability check"),
+                html.Div(id='level5-separability-info'),
+            ], style={'width': '50%', 'display': 'inline-block',
+                      'verticalAlign': 'top', 'padding': '0 20px'}),
+        ]),
+
+        # Stores
+        dcc.Store(id='level5-params-store'),
     ])
+
+#endregion

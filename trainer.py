@@ -1,3 +1,4 @@
+#DECLARATION: CODE HERE IS ASSISTED BY https://www.perplexity.ai/ 04/12/25 - 22/03/26
 from models import LogisticRegression
 from models import SimpleNN
 from models import ComplexNN

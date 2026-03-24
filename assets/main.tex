@@ -1,0 +1,1019 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{tabularx}
+\usepackage{cite} 
+\usepackage{hyperref}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage[acronym]{glossaries}
+\usepackage{float}
+
+
+%this is for the hyperlink formatting
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    pdftitle={Overleaf Example},
+    pdfpagemode=FullScreen,
+    }
+
+\definecolor{codegray}{rgb}{0.95,0.95,0.95}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+
+\lstdefinestyle{terminal}{
+    backgroundcolor=\color{codegray},
+    basicstyle=\ttfamily\small,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    frame=single,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2
+}
+
+\lstdefinestyle{python}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+\begin{document}
+
+\begin{center}
+        \vspace*{0cm}
+        
+        \begin{figure}[h]
+        \begin{center}
+        \includegraphics[width=.3\columnwidth]{uoh_primary_brandmark_rgb.png}
+        \end{center}
+        \end{figure}
+        \vspace*{0.5cm}
+        
+        \LARGE
+        \textsc{Honours Project Final Report}
+        \vspace{0.5cm}
+                
+        \Huge
+        \textbf{Machine Learning Sandbox: An environment for self-directed learning of Feed-Forward Neural Networks}
+        \vspace{1cm}
+        
+        \large
+        Author
+        \vspace{0.25cm}
+        
+        \LARGE
+        Harry Dixon-Hall
+        \vspace{0.5cm}
+        
+        \large 
+        Supervisor
+        \vspace{.25cm}
+        
+        \LARGE 
+        Dr John Dixon
+        \vspace{0.5cm}
+
+        \large 
+        Lecturer
+        \vspace{.25cm}
+        
+        \LARGE 
+        Dr Peter Robinson
+        \vspace{0.5cm}
+        
+        %\setstretch{1.5
+        
+        %\vfill
+        {\small \monthyeardate\today\\Word Count:}
+
+        
+        
+        \vspace{1cm}       
+        {\Large \textbf{Department of Computer Science\\University of Hull}}
+            
+        \vspace*{0cm}
+        
+    \end{center}
+
+\maketitle
+
+\tableofcontents
+\newpage
+
+\listoffigures
+\newpage
+
+\listoftables
+\newpage
+
+\section{Preface}
+\subsection{Declarations}
+I declare in this project report, except where explicitly outlined, the contents contained within are my own and any work is wholly intended for this assignment and degree. No work in this in report was done in collaboration with any other persons, unless specified beside the artefact. AI tools such as Perplexity (model Sonar) and Copilot (model GPT 5.4) were used in part for software implementation of features that underpin this project and for bibliographical research in the literature review. The output of these Large Language Models were validated by the author through scrutiny, testing and modification when needed. \\
+\null\hfill Harry Dixon-Hall \\
+\null\hfill \monthyeardate\today\
+ 
+\subsection{Acknowledgements}
+I'd like to thank the following individual for their sincere and thorough encouragement during the course of this Honours Project work: James Thorley, Joeseph Lobo-Kazinczi, Reece Wilkinson, my father, mother, brother, his girlfriend (soon to be sister-in-law),
+
+\section{Abstract} %What is considered success in a product project versus research?
+%This summarise literally everything from the introduction to the evaluation to give the user an idea of what the project work is about.
+
+\subsection{Summary: Nature of the work}
+\subsection{Summary: Methodology}
+\subsection{Summary Success criteria and results from methodology}
+
+\section{Introduction}
+\subsection{Context \& Project Motivation}
+Individuals with a desire to learn the structure of the Machine Learning pipeline, could benefit from programming exercises which allow them to conduct exploration of those techniques. This domain of autodidact-al learning provides a focus to implement features, rather than the pedagogical efficacy being an end in itself.
+\subsection{Project Aims}
+To create an opportunity for Machine Learning exploration the platforms must be an interactive educational platform which specialises in the fabrication and testing of neural network, which guides the user from testing pre-built models with optimisation strategies to building entirely new models from scratch through an in-built Python editor. Through this process the user must be exposed to key visualisations of the architecture, functions and mathematical concepts which underpin the mechanism of Feed-Forward Neural Networks.
+\subsection{Solution to Aims}
+The project's features fulfil five broad categories within the domain of self-exploratory learning platforms within Machine Learning,
+
+\begin{itemize}
+    \item Model Factory - To fabricate models using the internal logic of the platform.
+    \item Adaptive Learning - The platform will change behaviour to accommodate user input.
+    \item Systems Architecture - The modular design of the platform will allow scalability.
+    \item Distribution - Users must be able to access the platform, not just from the development machine.
+    \item Secure Programming - The fabricated user logic must not interfere with the internal logic of the platform to enable.
+\end{itemize}
+\subsection{Upcoming Chapters}
+To summarise the forthcoming report content, the report will follow a narrative to explain the relevant features of the learning-platform domain, first an elaboration of the aims and their respective objectives which will link to key functional tests to prove success in fulfilling the aims of the project. Secondly, a literature review (background) that will serve as a primer into the techniques of design, features and testing within the domain of Computer Science Learning Platforms. Thirdly, from the background into the methodology the user will have a contextual understanding when methods or technology are justified in the pursuit orientating the project towards completing aims and objectives. Lastly, there will be chapters on design, implementation and testing of features which will be critically evaluation by how the features have fulfilled testing standards, therefore aims and objectives of the project and the Computer Science Programme Competencies.
+
+
+\subsection{Aims \& Objectives} %this must be full of MEASURABLE objectives
+\subsubsection{Primary Objectives} %Are these objectives S.M.A.R.T
+%Need to make sure John Dixon would be happy with these objetives as actually measurable items!
+%Each objective will have specific FUNCTION TESTS, make sure to number the objectives
+\begin{enumerate}
+    \item An integrated Model Factory which enables ML model fabrication and testing
+    \item A modular systems design which allows scalability of page or script extension from development perspective
+    \item Interpretable and adaptive task feedback, visualisation that tailors to user code or input
+    \item Distribution of the learning platform through cloud deployment
+    \item A database which enables storage of persistent data over the long term which allows the user track their progress through
+    \item A secure programming environment which does not interfere with backend logic and makes full use of real-time syntax highlighting and validation for interpretability.
+    \item Integration of gamification features such as achievements, skill trees and progress tracking.
+\end{enumerate}
+
+\subsubsection{Secondary Objectives:} % what something a secondary objective? how will the success criteria be different from the primary objectives
+\begin{enumerate}
+    \item Scalability Capacity %this could be good but how will it be measured so anyone could understand its been fulfilled?
+\end{enumerate}
+\subsubsection{Scope}
+\begin{itemize}
+    %MODEL FACTORY
+    \item Fabricate a model by Python Code within the platform
+    \item Fabricate a model by UI building blocks 
+    \item Optimise configure/preconfigured models with UI sliders (hyperparameters)
+    \item Testing suite for model efficacy
+    \item ML models can support classification problems (IRIS)
+    %SECURE PROGRAMMING
+    \item Ring-fenced python code execution (send the code to middleware? authentication?)
+    \item Real-time syntax highlighting through tokenisation (regex? or is that a different thing)
+    \item Real-time syntax validation (tokenisation?)
+    \item A user authentication strategy using the dash app middleware
+    %DISTRIBUTION
+    \item Deployment of the web app on a cloud server %how about a virtual machine deployment instead
+    \item Database (hosted or local?) to store persistent data for a user
+    %ADAPTIVE LEARNING
+    \item Real-time execution of code in a task cell to visual a function, mechanism or architecture of FNN
+    \item Graph algorithms (topological sorting) to display progress
+    \item A state machine to keep track of progress
+    %SCALABLE ARCHITECTURE
+    \item Multi-page routing (option more pages)
+    \item Modular python scripts (more can easily be added, scalable)
+
+\end{itemize}
+\subsubsection{Scope Exclusion}
+
+\begin{itemize}
+    \item Real-time control supervision of a simulated process control system.
+    \item Development of a novel machine learning algorithm.
+    \item Industrial deployment of machine learning product.
+    \item Regression learning tasks
+\end{itemize}
+
+\subsubsection{Deliverables} %further explained in functional requirement spec
+
+\begin{itemize}
+    \item Functional Dash application for Neural Network experimentation or visualisation.
+    \item Documentation of frontend and back-end code and their relationship with the code.
+    \item Tasks to enable exploration of the ML pipeline 
+    \item Documentation of project pedagogical efficacy %why?? not CS
+    \item A web app that is scalable to multiple instances depending on demand 
+    \item Visualisation of models, model parts (activation, backprop etc) which adapt to user code in real-time with the task-code-cell
+    \item Short term local database or hosted database that is persistent, or a local sql server that will be persistent for the user
+    
+\end{itemize}
+
+\subsubsection{Success Criteria} 
+The success criteria of each objective will be if the testing of its respective features fulfils the testing conditions. The testing will be split into two categories of functional or quality control which is whether the features match the functional requirement or does not break code (unit tests). The functional requirements will be outlined in Technical Design and testing of function/quality in Technical Achievement.
+
+\section{Literature Review} 
+\subsection{Foundations of Computer Science Education \& Purpose of Review}
+Education of Computer Science increasingly relies on interactive, self-directed digital environments which allow the user to acquire skills in programming technique and knowledge of an area in Computer Science. Within this context, applications of Machine Learning education come to issues with interpretability, scalability, abstraction of concepts and complexity of the models. This literature review will start with the broad scope of CS education to discuss issues of interactivity, scalability and interpretability that bolster self-driven learning. Then moving on to more specialised items such as techniques for building a secure in-application programming environment, the required structure of a database for user's data needs and visualising the architecture and mechanism of Neural Networks (FNN).
+
+
+%need to cover core implementation of motivation, feedback
+% drill and pracice
+
+%what is all this...
+%This needs to be a story of the domain of education in ML and Computer Science in general
+%Honestly, my main inspiration is Turing Complete video game on steam...
+%I think its a good start because its a good introduction into a important area of computer, programming, and the features in there would serve as good primer
+%My lit review needs to start as education in computer science and gradually condense down into neural networks and the education of it. 
+%I could look at how different educational platforms use features to build an an area for self exploration
+%What are the problem areas that features can solve in the pursuit of education in computer science specifically, platforums that allow exploration without a teacher. Autodidactal
+\subsection{Systems Architecture for data education} %SYSTEMS
+\subsubsection{Web frameworks for data education}
+An interactive user interface requires a page layout with callbacks in order to facilitate an, at least initially, codeless interaction with a Neural Network architecture.
+Interactive data education platforms generally have web frameworks that use reactive page layouts and callbacks which are event based to employ functions from the backend. The interaction with ML models is usually codeless, these models being Neural Networks. Examples of this are shown below. The intention is to enable model interactions without requiring extension programming knowledge from the user.
+
+Examples:
+Tensor Playground (2016)
+ML.j interactive demo (2020)
+Observable notebooks in data education (2019)
+
+\subsubsection{Modular Software Engineering}
+Key functions of a ML education application such as data loading, model configuration and model training are generally built as a modules which can be easily reused, tested and be better insulated from user interference. This follows the principles of Clean Architectures pattern which has been specifically used for ML projects to separate the concerns of maintainability and scalability of the framework.
+
+Examples:
+
+Clean architecture for machine learning projects (2021)
+Modular deep learning frameworks (2018)
+Software Engineering for Machine Learning (2020)
+
+\subsubsection{State Persistence Patterns}
+Educational platforms in the ML context will often rely on a state machine to retain user progress or cache results from model configuration or testing. Approaches to this range from local-first patterns using CRDTs, reactive state management for web application (such as dash apps) and offline first web apps % need to go into more detail about what these concepts mean, what if someone was reading this for the first time?
+
+Examples:
+"Local-First Software with JSON CRDTs" (2021)
+"Reactive State Management in Dash Applications" (2022)
+"Offline-First Progressive Web Apps for Data Science" (2020)
+
+\subsection{Neural Network Architectures and Training Dynamics} %MODEL FACTORY
+Educational platforms in CS, especially ML focussed applications will incorporate the neural network concepts of core architecture, parameter/hyperparameter dynamics and training behaviour. This section will surveys application which bridged the gap between NN theory/mechanisms and visualisation for the benefit of a 
+
+\subsubsection{Feed Forward Neural Network Fundamentals}
+A feed forward neural network will take input values to an interconnected set of nodes called a layer, this calculate a weight sum then use an activation function, then the result will be passed forward (forward pass) until it reaches the output layer to show output a prediction. This prediction will have an error-difference with the true value which the model is aiming for. The model contains a learning algorithm called Back-propagation which will continually correct the node calculations in the hidden layers to reduce the prediction error, the model architecture only allows a forward or backward flow of data (a pass) this being a prediction calculation then a correction of error respectively.
+%Rumelhart, D. E., Hinton, G. E., & Williams, R. J. (1986). "Learning representations by back-propagating errors." Nature, 323(6088), 533-536. [Most cited NN paper ever]
+\subsubsection{Activation Functions \& Non-Linearities}
+Activation functions introduce the capacity to handle non-linearity in FNN model, this means that the model can handle problems beyond linear regression. Common functions include RELU, hyperbolic tangent and sigmoid. RELU are suggested to be the gold-standard in deep-learning because they have been shown to out-compete tanh and sigmoid in accelerating training convergence and reducing gradient problems. %(Nair and Hinton, 2010).
+\subsubsection{Live Training \& Architecture  Visualisation}
+Training visulisation serves as a tool to mitigate the "black box" nature of the neural network mechanism or architecture, this is often done through decision boundaries, weight histograms, loss curves and activation patterns. Another important aspect of visualisation is the architecture of the Neural Network as a result of user input through UI sliders or code, there has been effort in ML applications to visualise the link between neural network architecture and training dynamics in a way that can be easily accessible to users.
+%Liu, M., et al. (2017). "Visualizing and understanding neural networks." IEEE Transactions on Visualization and Computer Graphics. [TensorBoard creators]
+
+\subsection{Algorithms for Adaptive Learning Systems} %ADAPTIVE LEARNING
+\subsubsection{Graph Algorithms for Skill Dependencies} %topological sorting
+In educational platforms, there is often a function for showing progress before other the next item can be shown to the user this can be done with prerquisite algorithms such as Directed Acyclic Graph (DAG) where each edge a "must complete" value before the application can display the next sequential task. Another algorithm for this purpose can be topological sorting which produces a linear sequence of values which respect all dependencies of each node, the mechanism of this was discussed in Kahn's (1962) seminar %should i bother explaining this further? its just the skill tree  
+%Kahn, A. (1962). "Topological sorting of large networks." Communications of the ACM, 5(11), 558-562. [ACM classic, invented the algorithm]
+\subsubsection{Finite State Machines for Learning Progression}
+Learn progression often follows a conventional set of discrete states to track progression in tasks ("not started", "in progress", "finished"). The transition would be triggered by completion or failure of a task, this state-transition pattern is often implemented with finite state machine (FSM). An analysis of efficient algorithms was done by Balle (2013), and earlier Siegelmann and Sontag (1991) where able to simulate the efficacy of FSM with neural network for the purpose of adaptive educational platforms that track learning path progress.
+%Balle, B. (2013). "Learning finite-state machines: Algorithms and analysis." PhD thesis, McGill University (published as Springer book chapter). 
+%[Or Siegelmann, H. T., & Sontag, E. D. (1991). "On the computational power of neural nets." Journal of Computer and System Sciences, 50(1), 2-22 for NN-FSM link]
+\subsubsection{Model Optimisation Algorithms}
+A neural network model often requires continuous adjustment to minimise prediction error which can achieved with the use of optimisation algorithms. The actual value of error can be captured by loss functions such as mean-squared error or cross entropy. There are different algorithms to achieve optimisation such as Stochastic gradient descent (SGD) which uses mini-batches of data (REFERENCE HERE!!). Adaptive Moment Estimation (ADAM) algorithm  was introduced by Kingma and Ba (2015) which enables faster convergence and can be used across diverse model architectures.
+
+- Stochastic gradient descent (SGD)
+- Adaptive moment estimation (ADAM)
+
+%Kingma, D. P., & Ba, J. (2015). "Adam: A method for stochastic optimization." International Conference on Learning Representations (ICLR). [~100k citations, Adam inventor paper]
+
+\subsection{Data Structures for Model Interpretability} %ADAPTIVE LEARNING, does that mean the system itself changes to adapt to user input, or how the model changes, or how user changes??
+%what does this mean??
+\subsubsection{Foundations for Interpretability in Frameworks}
+Neural Networks contain an abundance of complex calculations which are immediately discernable due to the "black-box" nature of internal mechanisms. Due to the fact calculations cannot be directly observed, some ML applications have pursued externalising these mechanism with visualisation. The genuine efficacy of techniques such as visualisation (confusion matrices, heatmaps etc) results has been shown to enable to self-directed learners to understand model architecture and post-hoc training results (Molnar, 2020).
+%Molnar, C. (2020). Interpretable Machine Learning: A Guide for Making Black Box Models Explainable. (Chapter in Springer Machine Learning Mastery series) [Cites 5000+ times]
+\subsubsection{Computation Graph Visualisation} %Interpretability point
+A node in a Feed-Forward Neural Network (input, hidden or output layer) represents a calculation using weights and activation functions by using a Directed Acyclic Graph (DAG) to represent the flow of data between layers. To represent the forward or backward pass would require two versions of a DAG graph in order to mitigate the opaqueness Neural Network mechanisms, Ying et al. (2019) discussed how applications that use deal with data science and models would significantly benefit from graph representation to boost interpretability of the application for the user.
+%Ying, R., et al. (2019). "DataSifter: An interpretable model for graph representation learning." Nature Machine Intelligence, 1(12), 565-573. [Nature journal, GNN computation graphs]
+\subsubsection{Evaluation Metrics Visualisation} %Interpretability point
+Applications will use evaluation metrics to quanitify the performance of the model to mitigate vagueness in model performance, examples of this would 
+
+\begin{itemize}
+    \item Confusion Matrices - Reveal per class errors
+    \item Precision Recall - Show trade off under class imbalance %i guess between train/val/test?
+    \item ROC curves - Illustrate discrimination ability across thresholds %whatever that means...
+\end{itemize}
+
+It has been said that visualisation is an essential component of interpretable ML application, by enabling an assessment of model performance from the user rather than just accumulating successful performance metrics (Doshi-Velez and Kim, 2017)
+%Doshi-Velez, F., & Kim, B. (2017). "Towards a rigorous science of interpretable machine learning." arXiv preprint arXiv:1702.08608 (widely cited, invited to ICML workshop). [PNAS framework paper]
+\subsection{Secure Programming Environment} %SECURE PROGRAMMING
+\subsubsection{Foundations for Security in Programming}
+An important problem CS platforms must deal with is isolating potentially dangerous code to prevent system, this is generally done through a diverse set of defence mechanisms such as virtual machines or runtime verification, (Parno et al. 2022) looks at providing formal guarantees for security, partically Python code in ML applications. 
+%Parno, B., et al. (2022). "Provably-Safe Multilingual Software Sandboxing using WebAssembly." USENIX Security Symposium. [CMU security lab]
+\subsubsection{Sandbox security model}
+CS Applications that deal with untrusted code generally isolate it to a dockered sandbox to prevent malicious/faulty code from affecting key backend logic. An example of allowing safe computation within would be the Harvard CS50 course which allows a multitude of students to safely execute their personal code within the Harvard network (Malan, 2011)
+%Malan, D. J. (2011). "CS50 Sandbox: Secure Execution of Untrusted Code." Proceedings of the 42nd ACM Technical Symposium on Computer Science Education (SIGCSE). [Harvard CS50 system]
+\subsubsection{Educational Code Platforms}
+There are several CS platforms that deal with user deployed code such as Github, Replit, Codepen which execute generally untrusted code which usually isolated to prevent attacks on other users aswell maintenance routines such as memory limits, containerisation and network restrictions, platforms such as these were evaluated for their ability to prevent attacks to the system and co-users and 90\% failed even one attack vector (files access, command inject, network exfiltration) (Chen et al. 2024). 
+%Chen, B., et al. (2024). "SandboxEval: Towards Securing Test Environment for Untrusted Code." arXiv preprint arXiv:2504.00018 (USENIX Security submission quality). [Tests platforms like Copilot]
+\subsection{Distributed Deployment of Educational Platform} %DISTRIBUTION
+\subsubsection{Cloud Deployment with Educational Platforms}
+Educational platforms in the Computing context usually deploy a cloud deployment pattern like; Infrastructure-as-a-service (Iaas), Platform-as-a-service (PaaS) or Software-as-a-service (Saas) - the infrastructure being virtual machine, the platform being application runtimes and the software being the educational platform itself. This is done to scale up user support to a multitude of learners without local infrastructure  such as the (Gonzalez, 2015) the Google app engine that offers a Saas with automatic scaling, CI/CD and no-config database.
+%González-Martínez, J. A., et al. (2015). "Cloud computing and education: A state-of-the-art survey." Computers & Education, 80, 263-287. [538 citations, Elsevier top journal]
+\subsubsection{Distributed Educational Platforms}
+Educational application that are distributed tend to support a large number of user instances on the cloud such as in Nigerian Universities (Okai-Ugbaje, S., et al. (2020)) where the distribution is auto scaled depending on the current user traffic without using local infrastructure which was said to reduce costs by 67\% .
+%Okai-Ugbaje, S., et al. (2020). "Cloud-based m-learning: A pedagogical tool to manage the Nigerian university system." International Journal of Educational Technology in Higher Education, 17(1), 1-22. [SpringerOpen, real deployment case]
+\subsubsection{CS Theory in Cloud Practice}
+Any computing platform that uses cloud distribution system generally must conform to the following areas of CS theory: Consistency, Availability and partial tolerance. It is known that not all of these items can be guaranteed at the same time so platform developers must consider trade-offs in distribution design which was discussed by (Armbrust, 2010) who analysed production of NoSqldatabases, an achievement of 99\% stable quorum read/writes at the cost of immediate consistency.
+%Armbrust, M., et al. (2010). "A view of cloud computing." Communications of the ACM, 53(4), 50-58. [ACM, Berkeley authors, 20k+ citations]
+
+\subsection{Interactive Development Environment}
+
+\subsection{Code handling with AI assistance}
+
+\subsection{Programming Languages for Data handling in machine learning}
+
+\subsection{Synthesis: Positioning within existing literature} 
+%This must be objective 
+%This must show other solutions which are similar but don't have features you have
+%this can be referred to later to show where inspiration has been taken to do specific features
+This review has established the technical prerequisites to build an education platforms rather than the outcomes. It has surveyed the underpinning features of educational platforms such as secure programming, adaptive learning, distribution, reactive web features and neural network computation (for ML platforms). The applications that have been analysed do not generally combine this stack of feature categories, especially, for self-directed exploration of Machine Learning.
+
+
+\section{Methodology and Management} %This is the HOW bit, as in what technology will used to achieve the WHAT
+
+\subsection{Introduction}
+This sections will illustrate justifications for the project planning strategy and the use of technologies drawn from the literature review.
+\subsection{Planning}
+\textbf{Agile with 2-week sprints} Each sprint will cover a feature category for development, these being: MF, AL, SP, D, SA.
+%Gantt chart here
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{gantt_ml_sandbox.png}
+\caption{6 sprints: Model Factory → Secure Programming → Live Viz → Distribution}
+\end{figure}
+
+\subsection{Task Management}
+\textbf{Structure for scrums in Agile iterative development (solo)}:
+\begin{itemize}
+\item Daily stand-ups by checking OneNote, MyBib and Kanban Board 
+\item Sprint Review 
+\item Backlog: 128 tasks, prioritised by requirement number % what software to backlog
+\end{itemize}
+
+\subsubsection{Test-Driven Development}
+The idea of test driven development is ensure a feature is designed to comply with quality/functional tests before the code is fully implemented, each feature design will follow a common procedure by mapping its functional requirements to a designed test.
+\begin{itemize}
+    \item 1. Write failing functional test.
+    \item 2. Write failing quality test.
+    \item 3. Minimal implementation will be tested.
+    \item 4. Analysis of functional/quality test status results.
+    \item 5. Refactoring and full implementation.
+    \item 6. Unit tests will ensure any current applicaton functionality is not interfered by new implementation.
+\end{itemize}
+
+%Agile iterative developement with kanban board (I DID NOT DO THIS)
+
+%What do i say here because I'll probably have a lot of features to talk about but i didnt really stick my gantt chart plan at all, is this a sign of bad management or good iterative development by truly trying to achieve CS competencies
+
+%I mainly used my notebook to keep track of things or onenote?
+
+%I can discuss the constraint i came into during developement? is the fact i had no time due to other modules valid, iterative developent! (This is at the end!)
+
+%Quality control?? what does this mean and how do i show ive done, i guess it means how have a ensured my code is working/meeting functional requirement
+
+\subsection{Risk Management} 
+
+%Development
+\documentclass{article}
+\usepackage{float} % Supports [H] placement
+
+\setcounter{secnumdepth}{3}    % Enables up to subsubsection
+\setcounter{tocdepth}{3}       % Includes them in TOC
+
+
+%Development
+\subsubsection{Development Risks}  % Changed from \subssubsection
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|l|l|l|l|}
+\hline
+\textbf{Risk} & \textbf{Severity} & \textbf{Likelihood} & 
+\textbf{Risk Level (S*L)} & \textbf{Consequence} & \textbf{Mitigation}\\ 
+\hline
+Callback race  & Medium & High     & Medium $\times$ High   & test1 & test2 \\
+Sandbox escape & Low    & Critical & Low $\times$ Critical  & test1 & test2 \\
+Heroku sleep   & High   & Medium   & High $\times$ Medium   & test1 & test2\\
+Coverage <85\% & Medium & Medium   & Medium $\times$ Medium & test1 & test2 \\
+\hline
+\end{tabular}
+\caption{Risk register prevents project failure}
+\end{table}
+
+
+
+
+%Operational Risks
+\subsubsection{Operational Risks}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|l|l|l|l|}
+\hline
+\textbf{Risk} & \textbf{Severity} & \textbf{Likelihood} & 
+\textbf{Risk Level (S*L)} & \textbf{Consequence} & \textbf{Mitigation}\\ 
+\hline
+Callback race  & Medium & High     & Medium $\times$ High   & test1 & test2 \\
+Sandbox escape & Low    & Critical & Low $\times$ Critical  & test1 & test2 \\
+Heroku sleep   & High   & Medium   & High $\times$ Medium   & test1 & test2\\
+Coverage <85\% & Medium & Medium   & Medium $\times$ Medium & test1 & test2 \\
+\hline
+\end{tabular}
+\caption{Risk register prevents project failure}
+\end{table}
+
+
+
+%these are the risks concerning the actual developement of the code, does these include the ethical, legal, social etc?
+%I think it would be easier to discusss this if i do the user testing because then there's a wealth of problems to discuss
+
+\subsection{Supervisor Meetings}
+\paragraph{Meetings with Supervisor:} Supervisory in-person meetings have been conducted on a fortnightly basis in order to discuss current progress towards goals set in the task plan and ensure accountability in working towards those goals. The discussion of programme competencies throughout the meetings was influential in the decision to pivot the project.
+
+\textbf{Meeting log outcomes(Appendix B)}
+
+\item \textbf{Date: 15th October}
+\item \textbf{Mode:} In-person
+\item \textbf{Participants:} Harry Dixon-Hall and Dr John Dixon
+
+\begin{itemize}
+\item The report must have sufficient references when key points are made.
+\item Project should be emphasised as a Computer Science Product not a pure research project.
+\item Supervisor suggested adding a Translation-Layer Interface between simulation and ML controller for handling data, manual control of parameters and visualisation of live data.
+\end{itemize}
+
+\item \textbf{29th October:}
+\item \textbf{Mode:} In-person
+\item \textbf{Participants:} Harry Dixon-Hall and Dr John Dixon
+\begin{itemize}
+\item Supervisor suggested digital twins for forecasting of ML control over simulation parameters.
+\item Supervisor suggested training a model on a multitude of episodes to get the optimised control strategy
+\end{itemize}
+
+\item \textbf{12th November:}
+\item \textbf{Mode:} In-person
+\item \textbf{Participants:} Harry Dixon-Hall and Dr John Dixon
+\begin{itemize}
+\item Showcase of PID control over CSTR simulation with a temperature plot over time
+\item Supervisor suggested an increased granularity of temperature changes, more frequent time steps.
+\item Plan to show supervisor a simulation with NN control against PID control of the CSTR simulation.
+\end{itemize}
+
+\item \textbf{26th November:}
+\item \textbf{Mode:} In-person
+\item \textbf{Participants:} Harry Dixon-Hall and Dr John Dixon
+\begin{itemize}
+\item Project pivot to interactive NN teaching dashboard from process control optimisation with ML controller.
+\item Discussion of Gantt chart and how to explain not fulfilling deadlines because of project pivot.
+\end{itemize}
+
+\item \textbf{10th December:}
+\item \textbf{Mode:} In-person
+\item \textbf{Participants:} Harry Dixon-Hall and Dr John Dixon
+\begin{itemize}
+\item Discussion of midway review meeting details such as time and process.
+\item Discussion of how to conduct an ethical user study of the interactive NN dashboard.
+\item Discussion of bringing relevant papers from the field that discuss pedagogical efficacy in teaching tools.
+\end{itemize}
+
+\subsection{Processes for Development}
+
+\subsubsection{Design}
+\begin{enumerate}
+    \item UML for users
+    \item Wireframes for UI designs
+    \item TDD specs for logic of UI (functional, quality tests)
+\end{enumerate}
+
+\subsubsection{Implementation}
+The implementation will split into five CS areas for the sake of narrative efficacy.
+\begin{enumerate}
+    \item Model factory
+    \item Secure programming
+    \item Adaptive Learning
+    \item Systems Architecture
+    \item Distribution
+\end{enumerate}
+
+\subsubsection{Quality Control}
+\begin{enumerate}
+    \item pytests >90\% pass
+    \item Sandbox isolation tests
+    \item Unit tests
+\end{enumerate}
+
+\subsubsection{Evaluation}
+Functional requirement verification by number
+
+\subsection{Rationale for Technologies}
+
+\subsubsection{Interactive Development Environment}
+
+\subsubsection{Programming Language}
+
+\subsubsection{Website Framework}
+
+\subsubsection{Library for ML mathemical computation}
+
+\subsubsection{Visualisation}
+
+\subsubsection{Data handling from datasets}
+
+\subsubsection{Persistent storage of user data}
+
+\subsubsection{Testing}
+
+\subsubsection{AI-Assistive Software}
+
+\section{Technical Design} %this needs to be a story
+
+\subsection{Application Domain \& Problem}
+%The technical primer what the user will be involved with
+To continue from the Literature Review, application of self-learning for CS or ML generally have some but not all of the following CS feature stack:
+\begin{itemize}
+    \item NN construction through UI or code
+    \item Visualisation of NN architecture or functions
+    \item Adapative progress
+    \item Scalable distribution to concurrent users
+    \item A code architecture which conforms to modularity
+\end{itemize}
+
+\subsection{Design Process Narrative Summary}
+As stated in the Methodology the project development will follow TDD principles. Each feature should map to a relevant list of requirements that will conform to acceptance tests to ensure the feature is fulfilling functional/non-functional conditions. After the features, requirements and tests are created, the features themselves must be designed to ensure the minimal implementation conforms to acceptance tests.
+
+The following designs will ensure the following attributes of each feature:
+
+\begin{itemize}
+\item UML - Illustrates module scope boundaries
+\item Wireframe - Ensures usability of feature [2.2 Gonzalez-Martinez PaaS patterns]
+\item User Story - Illuminates user flow through the UI path
+\end{itemize} %function requirents => acceptance tests => designs
+
+\subsection{Test Design of Feature Requirements - Acceptance and Quality (TDD) - By Category}
+
+%function
+%quality - not just tests
+% code agnostic pseudocode for design outline
+%\paragraph{Unit Tests}
+%\paragraph{Performance}
+%\paragraph{Sandbox security}
+%\paragraph{UI standards}
+
+\subsubsection{Model Factory}
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{0.7cm}|p{7cm}|p{7cm}|}
+\hline
+\textbf{Req} & \textbf{F/NF Requirement} & \textbf{Pseudocode Test Logic}  \\
+\hline
+1.1.1 &  Fabricate model from UI building blocks.   & \textbf{INPUT:} UI layer config [4,8,3] \\
+(F)   &                                             &         CREATE model from UI blocks     \\
+      &                                             &         ASSERT model weights exist      \\
+\hline
+1.1.2 &  Fabricate model from python code           & \textbf{INPUT:} SimpleNN Model"\\
+(F)   &  execution.                                 &        EXECUTE code in sandbox \\
+      &                                             &        ASSERT model object created successfully \\
+\hline
+1.1.3 & Optimise pre-configured models using        & \textbf{INPUT:} slider hidden=8       \\
+(F)   & hyperparameter sliders.                      &        UPDATE visualization          \\
+      &                                             &         COUNT hidden nodes in diagram \\
+      &                                             &         ASSERT count EQUALS 8         \\
+\hline
+1.1.4 & Models can be deleted after fabrication.    & \textbf{INPUT:} Existing model \\
+(F)   &                                             &         DELETE model \\
+      &                                             &         ASSERT model reference NULL \\
+\hline
+1.1.5 & Models can solve problems from              & \textbf{INPUT:} Iris dataset \\
+(F)   & classification datasets,                    &         TRAIN model on data \\
+      & (IRIS, WINE, DIGITS).                       &         PREDICT test set \\
+      &                                             &         ASSERT accuracy GREATER 90\% \\
+\hline
+1.2.1 &  Architecture Visualisation Latency.        & \textbf{INPUT:} slider change \\
+(NF)  &                                             &         MEASURE visualization render time \\
+      &                                             &         ASSERT time LESS THAN 200ms \\
+\hline
+1.2.2 & Model training accuracy >90\% on Iris       & \textbf{INPUT:} Iris dataset \\
+(NF)  & classification.                             &         TRAIN model 100 epochs \\
+      &                                             &         ASSERT final accuracy GREATER 90\% \\
+\hline
+1.2.3 & Memory usage below 500MB for concurrent     & \textbf{INPUT:} 10 concurrent models \\
+(NF)  & model training.                             &         MEASURE peak memory usage \\
+      &                                             &         ASSERT usage LESS THAN 500MB \\
+\hline
+\end{tabular}
+\caption{Model Factory TDD specifications}
+\end{table}
+
+\subsubsection{Secure Programming}
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{1cm}|p{6cm}|p{6cm}|}
+\hline
+\textbf{Req} & \textbf{F/NF Requirement} & \textbf{Pseudocode Test Logic}  \\
+\hline
+2.1.1 & Highlight python code syntax in real time & \textbf{INPUT:} Python code with keywords \\
+      &                                           &         PARSE code \\
+      &                                           &         IDENTIFY syntax keywords \\
+      &                                           &         ASSERT keywords highlighted \\
+\hline
+2.1.2 & Validate python code for syntax errors    & \textbf{INPUT:} valid Python code \\
+      &                                           &         VALIDATE syntax \\
+      &                                           &         ASSERT validation passes \\
+\hline
+2.1.3 & Execute validated python code             & \textbf{INPUT:} valid model code \\
+      &                                           &         EXECUTE in sandbox \\
+      &                                           &         ASSERT output displayed \\
+\hline
+2.1.4 & Return output upon successful compile     & \textbf{INPUT:} malicious commands \\
+      &                                           &         EXECUTE each in sandbox \\
+      &                                           &         ASSERT ALL raise security exceptions \\
+\hline
+2.1.5 & Return error upon compile fail            & \textbf{INPUT:} malicious commands \\
+      &                                           &         EXECUTE each in sandbox \\
+      &                                           &         ASSERT ALL raise security exceptions \\
+\hline
+2.1.6 & Code execution sent to middleware first   & \textbf{INPUT:} malicious commands \\
+      &                                           &         EXECUTE each in sandbox \\
+      &                                           &         ASSERT ALL raise security exceptions \\
+\hline
+2.2.1 & All potential attack vectors are blocked  & \textbf{INPUT:} SandboxEval attack suite \\
+      &                                           &         EXECUTE all 15 vectors \\
+      &                                           &         ASSERT 100\% blocked [2.6.2] \\
+\hline
+2.2.2 & No globals leakage                        & \textbf{INPUT:} 1000-line Python \\
+      &&         MEASURE syntax validation time \\
+      &&         ASSERT time LESS THAN 50ms \\
+\hline
+2.2.3 && \textbf{INPUT:} dangerous globals \\
+      &&         CHECK sandbox environment \\
+      &&         ASSERT os/sys modules ABSENT \\
+\hline
+\end{tabular}
+\caption{Secure Programming TDD specifications}
+\end{table}
+
+\subsubsection{Adaptive Learning}
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{1cm}|p{6cm}|p{6cm}|}
+\hline
+\textbf{Req} & \textbf{F/NF Requirement}                 & \textbf{Pseudocode Test Logic}  \\
+\hline
+3.1.1        & Visualise weights in FNNs.                & \textbf{INPUT:} trained FNN model \\
+             &                                           &         EXTRACT weight matrices \\
+             &                                           &         CREATE heatmap visualization \\
+             &                                           &         ASSERT weights visible \\
+\hline
+3.1.2        & Visualise activation functions in FNNs.   & \textbf{INPUT:} slider hidden=12 \\
+             &                                           &         UPDATE architecture diagram \\
+             &                                           &         ASSERT 12 hidden nodes (r) \\
+\hline
+3.1.3        & Visualise forward pass in FNNs.           & \textbf{INPUT:} slider hidden=12 \\
+             &                                           &         UPDATE architecture diagram \\
+             &                                           &         ASSERT 12 hidden nodes (r) \\
+\hline
+3.1.4        & Visualise backward pass in FNNs.          & \textbf{INPUT:} slider hidden=12 \\
+             &                                           &         UPDATE architecture diagram \\
+             &                                           &         ASSERT 12 hidden nodes (r) \\
+\hline
+3.1.5        & Real time model-architecture visual       & \textbf{INPUT:} slider hidden=12 \\
+             & depending on slider input from user.      &         UPDATE architecture diagram \\
+             &                                           &         ASSERT 12 hidden nodes (r) \\
+\hline
+3.1.6        & Real time model-architecture visual       & \textbf{INPUT:} slider hidden=12 \\
+             & depending on python code.                 &         UPDATE architecture diagram \\
+             &                                           &         ASSERT 12 hidden nodes (r) \\
+\hline
+3.1.7        & Topological sorting will display .        & \textbf{INPUT:} slider hidden=12 \\
+             & progress of code cells within tasks       &         UPDATE architecture diagram \\
+             & visually                                  &         ASSERT 12 hidden nodes (r) \\
+\hline
+3.1.8        & A state machine to keep track of progress & \textbf{INPUT:} slider hidden=12 \\
+             & for user.                                 &         UPDATE architecture diagram \\
+             &                                           &         ASSERT 12 hidden nodes (r) \\
+\hline
+3.1.9        & Play/mute asset music.                    & \textbf{INPUT:} slider hidden=12 \\
+             &                                           &         UPDATE architecture diagram \\
+             &                                           &         ASSERT 12 hidden nodes (r) \\
+\hline
+3.1.10       & System will play brief completion music   & \textbf{INPUT:} slider hidden=12 \\
+             & upon code cell completion.                &         UPDATE architecture diagram \\
+             &                                           &         ASSERT 12 hidden nodes (r) \\
+\hline
+3.2.1        &  Visualisation callback latency below     & \textbf{INPUT:} task dep graph \\
+             &  150 ms                                   &         APPLY topological sort \\
+             &                                           &         ASSERT linear progression \\   &                                           &         valid \\
+\hline
+3.2.2        & Progress state persists across browser    & \textbf{INPUT:} visual trigger \\
+             & sessions.                                 &         MEASURE callback execution \\
+             &                                           &         ASSERT time LESS THAN 150ms \\
+\hline
+3.2.3        & Topological sort completes 50 tasks       & \textbf{INPUT:} 50 task dependencies \\
+             & below 10ms.                               &         COMPUTE topological sort \\
+             &                                           &         ASSERT computation LESS THAN\\ &                                           &         10ms \\
+\hline
+3.2.4        & Audio assets are below 100 kb in memory   & \textbf{INPUT:} 50 task dependencies \\
+             & and are non-blocking to the system.       &         COMPUTE topological sort \\
+             &                                           &         ASSERT computation LESS THAN\\ &                                           &         10ms \\
+\hline
+\end{tabular}
+\caption{Adaptive Learning TDD specifications}
+\end{table}
+
+\subsubsection{Distribution}
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{1cm}|p{6cm}|p{6cm}|}
+\hline
+\textbf{Req} & \textbf{F/NF Requirement}               & \textbf{Pseudocode Test Logic}  \\
+\hline
+4.1.1 & Cloud deployment of dash app using dash server.& \textbf{INPUT:} production URL \\
+      &                                                &         SEND HTTP GET request \\
+      &                                                &         ASSERT response STATUS 200 \\
+\hline
+4.1.2 & Use of vertical machines.                      & \textbf{INPUT:} production URL \\
+      &                                                &         SEND HTTP GET request \\
+      &                                                &         ASSERT response STATUS 200 \\
+\hline
+4.1.3 & External database that will store user         & \textbf{INPUT:} user progress data \\
+      & progress and model configuration as            &         SAVE to database \\
+      & persistent long-term data.                     &         RETRIEVE data \\
+      &                                                &         ASSERT data preserved \\
+\hline
+4.1.4 & External database that will store user         & \textbf{INPUT:} user progress data \\
+      & progress and model configuration as            &         SAVE to database \\
+      & persistent long-term data.                     &         RETRIEVE data \\
+      &                                                &         ASSERT data preserved \\
+\hline
+4.1.5 & External database that will store user         & \textbf{INPUT:} user progress data \\
+      & progress and model configuration as            &         SAVE to database \\
+      & persistent long-term data.                     &         RETRIEVE data \\
+      &                                                &         ASSERT data preserved \\
+\hline
+4.2.1 & The deployment style (Heroku) has capacity     & \textbf{INPUT:} 1000 database queries \\
+      & to scale 100 concurrent users.                 &         MEASURE 99 percentile latency \\
+      &                                                &         ASSERT latency LESS THAN 100ms \\
+\hline
+4.2.2 & Database query latency below 100 ms            & \textbf{INPUT:} 1000 database queries \\
+      &                                                &         MEASURE 99 percentile latency \\
+      &                                                &         ASSERT latency LESS THAN 100ms \\
+\hline
+4.2.3 & The uptime is 99.9\%                           & \textbf{INPUT:} continuous monitoring \\
+      & (this is heroku monitoring for dyno)           &         TRACK uptime 24 hours \\
+      &                                                &         ASSERT uptime GREATER 99.9\% \\
+\hline
+4.2.4 & Auto-save triggers less then 10 seconds        & \textbf{INPUT:} continuous monitoring \\
+      & after execution                                &         TRACK uptime 24 hours \\
+      &                                                &         ASSERT uptime GREATER 99.9\% \\
+\hline
+4.2.5 & Upon save command, the system will save        & \textbf{INPUT:} continuous monitoring \\
+      & in less 10ms                                   &         TRACK uptime 24 hours \\
+      &                                                &         ASSERT uptime GREATER 99.9\% \\
+\hline
+\end{tabular}
+\caption{Distribution TDD specifications}
+\end{table}
+
+\subsubsection{System Architecture}
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{1cm}|p{6cm}|p{6cm}|}
+\hline
+\textbf{Req} & \textbf{F/NF Requirement}               & \textbf{Pseudocode Test Logic}  \\
+\hline
+5.1.1 & System uses multi-page routing                 & \textbf{INPUT:} URL /level1 \\
+      &                                                &         NAVIGATE to page \\
+      &                                                &         ASSERT page loads successfully \\
+\hline
+5.1.2 & System uses modular code architecture for      & \textbf{IMPORT:} all 6 modules \\
+      & dash app scripts                               &         CHECK import graph \\
+      &                                                &         ASSERT no circular dependency \\
+\hline
+5.2.1 & Each python script load time is below 2 seconds& \textbf{INPUT:} cold application start \\
+      &                                                &         MEASURE module load time \\
+      &                                                &         ASSERT time LESS THAN 2s \\
+\hline
+5.2.2 & No circular imports detected                   & \textbf{INPUT:} cold application start \\
+      &                                                &         MEASURE module load time \\
+      &                                                &         ASSERT time LESS THAN 2s \\
+\hline
+5.2.3 & All modules are successfully import            & \textbf{INPUT:} cold application start \\
+      &                                                &         MEASURE module load time \\
+      &                                                &         ASSERT time LESS THAN 2s \\
+\hline
+5.2.4 & Documentation coverage over                    & \textbf{INPUT:} all Python modules \\
+      & 95\% (pydocstyle)                              &         ANALYSE documentation \\
+      &                                                &         ASSERT coverage GREATER 95\% \\
+\hline
+\end{tabular}
+\caption{System Architecture TDD specifications}
+\end{table}
+
+\subsection{System Design Diagrams} %Can draw these later
+\subsubsection{System Architecture}
+%High level diagram of python script modules and their relationship
+
+\subsubsection{Module Interfaces}
+%A big UML diagram, what is UML? why do i need it to show interfaces?
+
+\subsubsection{Control flow sequence in System}
+%I think i need a diagram that shows how the python scripts control each other for data
+
+\subsubsection{UI wireframes}
+
+% All these need to be beginner, intermediate and advanced wireframes to show design progression at difference time/date
+
+%1. Each task 1-5 (task complete/in progress/fail) (code cell changes)
+%2. Skill tree 
+%3. Home page
+
+\subsubsection{User Story/Flow} %is there a /flow????
+
+\section{Technical Implementation \& Testing} %This area is split between what WILL happen from design and what 
+
+\subsection{Introduction}
+This section is split into five broad areas of Computer Science, each category will contain features that fulfil its respective CS area, the technique and what problem it will solve. Each feature will relate to a functional requirement open up the avenue for testing item with evaluation.
+
+\subsection{Model Factory Features} %use the table in the email to John DIXON, feature, technique, CS area and problem solved
+
+%Feature categories
+%1. Model Factory (advanced computational architecture)
+%2. Secure programming
+%3. Adaptive Learning
+%4. Distribution
+%5. Systems architecture
+
+\subsubsection{NN-visualisation}
+
+\subsubsection{Optimisation of model}
+
+\subsubsection{Build model by UI building blocks}
+
+\subsubsection{Build model by python code sandbox}
+
+\subsubsection{Model testing suite by UI control}
+
+\subsection{Secure Programming Features}
+
+\subsubsection{Live code evaluation} 
+%execution of code and using the interpreter
+
+\subsubsection{Syntax highlighting} 
+%execution before the execution?? 
+
+\subsubsection{Syntax validation} 
+%luxury if i have time
+
+\subsubsection{cryptography?? login page maybe}
+
+\subsubsection{Safe execution of code - sent away}
+%In a proper web app, the execution code is sent away to a separate area for execution the result of that execution (success or fail) will be given back to the user the idea is the user with malicious intentions can't directly meddle with the backend logic of the app through the task cells
+
+\subsection{Adaptive Learning Features} %gamification
+
+\subsubsection{Permissive on user controls}
+%is this still a real feature because i've removed the teacher role
+\subsubsection{Level dependency graph skill tree}
+
+\subssubsection{Visualise code cells or UI sliders in real time}
+%ive put this as an all in one thing because visualisation seems like a catch all skill
+%split between:
+%oppurtunity to show forward or backpropagation
+%to show model architecture with layers, sizes etc depending what code cell task is completing, the good thing would be to somehow show the architecute changing in real time as the user changes code e.g 1 or 2 hidden layers, so the code would need to execute before the user has actually executed it themselves
+
+%there's something in my head thats thinking about showing the mathematics off but is showing lots of visualisation just the same skill
+
+%skills in visualisation:
+
+%1. Real time code visualisation (checking for conditions in code real-time, continuous execution
+%2. showing off maths (activations, architecture, weights, forward/back pass
+
+\subsection{Distribution Features}
+\subsubsection{Database for user information (progress scores etc)} 
+%should i use a hosted database? the difference is between a long-term-persistent data or short-term data?
+
+\subsubsection{Cloud deployment using dash app server}
+
+\subsection{Systems Architecture Features}
+\subsubsection{Multi-page routing} %is there a degree to which something like this is not actually very good feature but talking about it well in this report could still get me marks?
+
+\subsubsection{Multi-file modular scripts}
+
+\subsection{TESTING}
+\subsubsection{Software testing \& Results} %how am i going to use this (unit tests) to show how my features are meeting functional/non-functional requirements??
+
+%CATEGORIES: Model Factory, Secure Programming, Adaptive learning, systems architecture, distribution
+
+%1. What units do i need to show for quality control to show test driven development
+
+%2. Functional test for each category
+
+%3. Non-functional test for each category
+
+\subsubsection{User Testing \& Results}
+%I dont know how necessary this is really, i probably won't have to time to implement any changes as a result of feedback...
+
+%It would be a good show of feedback-driven developement if i could get something if i could make a change
+
+
+
+
+\section{Evaluation of Test Results}
+\subsection{Evaluation of outcomes from testing against requirements} %
+\subsection{Critical Reflection}
+
+\section{Conclusions}
+% Link back to introduction and literature to tie know of the narrative
+
+\section{Future Work}
+%Identify the next steps to make this project truly finished
+%I think this would focus on scalability particuarly
+%What could other people do to carry this project forward
+
+\section{Back-matter}
+\subsection{Appendices}
+\subsection{Glossary}
+\begin{itemize}
+
+%General
+\item CS = Computer Science
+\item ML = Machine Learning
+\item TDD = Test Driven Development
+\item FNN = Feed Forward Neural Network
+\item FP = Forward Pass
+\item BP = back pass
+
+%Activation functions
+
+\item ADAM = Adaptive Moment Estimation
+\item TAHN = Hyperbolic Tangent
+\item RELU = Rectified Linear Unit
+
+\end{itemize}
+\subsection{Bibliography} %16 references, probably need to get about 30-40 references that are good journals, no wiki, websites are ill-prefered, books are ok i think
+
+\begin{itemize}
+\item Armbrust, M. \emph{et al.} (2010) A view of cloud computing. \emph{Communications of the ACM}, 53(4), pp. 50--58. [online] Available at: \url{https://dl.acm.org/doi/10.1145/1721654.1721672} [Accessed 17 March 2026]. %good link
+
+\item Balle, B. (2013) Learning finite-state machines: Algorithms and analysis. PhD thesis. McGill University. Available at: \url{https://borjaballe.github.io/other/phdthesis.pdf} [Accessed 17 March 2026]. % good link
+
+\item Chen, B. \emph{et al.} (2024) SandboxEval: Towards securing test environment for untrusted code. [online] arXiv. Available at: \url{https://arxiv.org/abs/2504.00018} [Accessed 17 March 2026]. % good link
+
+\item Doshi-Velez, F. and Kim, B. (2017) Towards a rigorous science of interpretable machine learning. [online] arXiv. Available at: \url{https://arxiv.org/abs/1702.08608} [Accessed 17 March 2026]. % good link
+
+
+\item González-Martínez, J.A. \emph{et al.} (2015) Cloud computing and education: A state-of-the-art survey. \emph{Computers \& Education}, 80, pp. 263--287. [online] Available at: \url{https://www.sciencedirect.com/science/article/pii/S0360131514001985} [Accessed 17 March 2026]. %good link
+
+
+\item Kahn, A. (1962) Topological sorting of large networks. \emph{Communications of the ACM}, 5(11), pp. 558--562. [online] Available at: \url{https://dl.acm.org/doi/10.1145/368996.369025} [Accessed 17 March 2026]. % good link
+
+\item Kingma, D.P. and Ba, J. (2015) Adam: A method for stochastic optimization. \emph{International Conference on Learning Representations (ICLR)}. [online] Available at: \url{https://arxiv.org/abs/1412.6980} [Accessed 17 March 2026]. % good link
+
+\item (BAD) Liu, M. \emph{et al.} (2017) Visualizing and understanding neural networks. \emph{IEEE Transactions on Visualization and Computer Graphics}, [online] Available at: \url{https://arxiv.org/abs/1802.01528} [Accessed 17 March 2026]. %bad link and paper doesn't exist i think
+
+\item Malan, D.J. (2011) CS50 Sandbox: Secure execution of untrusted code. In: \emph{Proceedings of the 42nd ACM Technical Symposium on Computer Science Education (SIGCSE)}, pp. 401--406. [online] Available at: \url{https://dash.harvard.edu/server/api/core/bitstreams/7312037c-c956-6bd4-e053-0100007fdf3b/content} [Accessed 17 March 2026]. %good link, paper is a bit short?
+
+\item Molnar, C. (2020) \emph{Interpretable machine learning: A guide for making black box models explainable}. Lulu.com. [online] Available at: \url{https://christophm.github.io/interpretable-ml-book/} [Accessed 17 March 2026]. %this could be the bible for ML interpretability!!
+
+\item Nair, V. and Hinton, G.E. (2010) Rectified linear units improve restricted Boltzmann machines. In: \emph{Proceedings of the 27th International Conference on Machine Learning (ICML)}, pp. 807--814. [online] Available at: \url{https://www.cs.toronto.edu/~hinton/absps/reluICML.pdf} [Accessed 17 March 2026].  %good link
+
+\item Okai-Ugbaje, S. \emph{et al.} (2020) Cloud-based m-learning: A pedagogical tool to manage the Nigerian university system. \emph{International Journal of Educational Technology in Higher Education}, 17(1), p. 22. [online] Available at: \url{https://educationaltechnologyjournal.springeropen.com/articles/10.1186/s41239-020-00201-4} [Accessed 17 March 2026]. %Good link %this link could be a mistake because its about educational outcomes rather than the technical prerequsites
+
+\item Parno, B. \emph{et al.} (2022) Provably-safe multilingual software sandboxing using WebAssembly. In: \emph{31st USENIX Security Symposium (USENIX Security 22)}, pp. 699--716. [online] Available at: \url{https://www.usenix.org/publications/loginonline/provably-safe-multilingual-software-sandboxing-using-webassembly} [Accessed 17 March 2026].  %good link
+
+\item Rumelhart, D.E., Hinton, G.E. and Williams, R.J. (1986) Learning representations by back-propagating errors. \emph{Nature}, 323(6088), pp. 533--536. [online] Available at: \url{https://www.nature.com/articles/323533a0} [Accessed 17 March 2026]. %good link
+
+\item Siegelmann, H.T. and Sontag, E.D. (1991) On the computational power of neural nets. \emph{Journal of Computer and System Sciences}, 50(1), pp. 2--22. [online] Available at: \url{https://binds.cs.umass.edu/papers/1992_Siegelmann_COLT.pdf} [Accessed 17 March 2026]. %good link
+
+\item Ying, R. \emph{et al.} (2019) DataSifter: An interpretable model for graph representation learning. \emph{Nature Machine Intelligence}, 1(12), pp. 565--573. [online] Available at: \url{https://www.nature.com/articles/s42256-019-0120-9} [Accessed 17 March 2026]. %paper doesn't exist, bad link
+\end{itemize}
+
+\end{document}

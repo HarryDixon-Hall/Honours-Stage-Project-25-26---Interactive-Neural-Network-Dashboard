@@ -1,5 +1,7 @@
+#DECLARATION: CODE HERE IS ASSISTED BY https://www.perplexity.ai/ 04/12/25 - 22/03/26
 import numpy as np
 
+#region MODEL FACTORY: preconfigured models to be manipulated by code or UI controls as an instance of the classes
 class LogisticRegression: #same as SimpleNN but without hidden layer
     def __init__(self, input_size, output_size, seed=None):
         np.random.seed(seed)
@@ -203,6 +205,6 @@ class ComplexNN: #2 hidden layers (deep NN)
         accuracy = np.mean(predictions == y)
         return loss, accuracy
 
-
+#endregion
 
 

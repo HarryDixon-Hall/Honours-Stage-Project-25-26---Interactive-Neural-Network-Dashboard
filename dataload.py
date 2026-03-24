@@ -1,3 +1,4 @@
+#DECLARATION: CODE HERE IS ASSISTED BY https://www.perplexity.ai/  (GPT 5.4) 04/12/25 - 22/03/26
 import numpy as np
 from sklearn.datasets import load_iris
 from sklearn.datasets import load_digits
