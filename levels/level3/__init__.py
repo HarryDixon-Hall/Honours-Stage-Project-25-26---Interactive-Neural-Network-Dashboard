@@ -1,6 +1,7 @@
 from levels.level3.callbacks import register_level3_callbacks
 from levels.level3.layout import level3_layout
 from levels.level3.methods import (
+	build_level3_execution_environment,
 	level3_activation_heatmap_figure,
 	level3_build_meta,
 	level3_confusion_matrix_figure,
@@ -23,6 +24,7 @@ from levels.level3.methods import (
 __all__ = [
 	'level3_layout',
 	'register_level3_callbacks',
+	'build_level3_execution_environment',
 	'make_level3_placeholder_figure',
 	'level3_build_meta',
 	'level3_serialize_split',

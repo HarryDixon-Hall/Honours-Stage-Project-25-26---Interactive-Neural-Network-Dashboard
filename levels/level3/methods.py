@@ -2,13 +2,16 @@ import numpy as np
 import plotly.graph_objects as go
 from dash import html
 from plotly.subplots import make_subplots
+from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import train_test_split
 
 from levels.level2 import (
 	init_level2_mlp,
+	level2_evaluate_metrics,
 	level2_forward_pass,
 	level2_set_baseline_history,
 	load_toy_dataset,
+	train_level2_model,
 )
 
 
@@ -391,3 +394,64 @@ def level3_notebook_status_children(store):
 	if not store['cell_runs']['evaluate']:
 		return html.Div('Inspection complete. Run Cell 6 to compute evaluation metrics and misclassified points.')
 	return html.Div('All six notebook steps have been executed. Change a configuration and rerun the relevant cell to compare behaviours.')
+
+
+def build_level3_execution_environment(cell_number, dataset, depth, width, activation, epochs):
+	hidden_layers = [width] * depth
+	X, y = load_toy_dataset(dataset)
+	X_train, X_test, y_train, y_test = train_test_split(
+		X,
+		y,
+		test_size=0.25,
+		random_state=42,
+		stratify=y,
+	)
+
+	model = init_level2_mlp(input_dim=2, hidden_layers=hidden_layers, output_dim=1)
+	model = level2_set_baseline_history(X_train, y_train, model, activation, l2=1e-4)
+	if cell_number >= 4:
+		model = train_level2_model(
+			X_train,
+			y_train,
+			model,
+			activation=activation,
+			epochs=epochs,
+			lr=0.08,
+			l2=1e-4,
+		)
+
+	return {
+		'__builtins__': {
+			'print': print,
+			'int': int,
+			'float': float,
+			'str': str,
+			'list': list,
+			'dict': dict,
+			'tuple': tuple,
+			'range': range,
+			'len': len,
+			'sum': sum,
+			'max': max,
+			'min': min,
+			'__import__': __import__,
+		},
+		'np': np,
+		'confusion_matrix': confusion_matrix,
+		'load_toy_dataset': load_toy_dataset,
+		'init_level2_mlp': init_level2_mlp,
+		'level2_forward_pass': level2_forward_pass,
+		'level2_evaluate_metrics': level2_evaluate_metrics,
+		'train_level2_model': train_level2_model,
+		'dataset_name': dataset,
+		'hidden_layers': hidden_layers,
+		'activation': activation,
+		'epochs': epochs,
+		'X': X,
+		'y': y,
+		'X_train': X_train,
+		'X_test': X_test,
+		'y_train': y_train,
+		'y_test': y_test,
+		'model': model,
+	}

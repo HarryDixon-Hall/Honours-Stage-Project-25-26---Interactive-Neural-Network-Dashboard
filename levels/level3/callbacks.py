@@ -14,6 +14,7 @@ except ImportError:
 import numpy as np
 from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
 
+from code_execution import execute_python_snippet
 from levels.level2 import (
     level2_evaluate_metrics,
     level2_forward_pass,
@@ -24,6 +25,7 @@ from levels.level2 import (
     train_level2_model,
 )
 from levels.level3.methods import (
+    build_level3_execution_environment,
     level3_activation_heatmap_figure,
     level3_build_meta,
     level3_confusion_matrix_figure,
@@ -306,3 +308,79 @@ def register_level3_callbacks(app):
             metrics_summary,
             notebook_status,
         )
+
+    @app.callback(
+        Output('level3-cell-1-console', 'children'),
+        Output('level3-cell-2-console', 'children'),
+        Output('level3-cell-3-console', 'children'),
+        Output('level3-cell-4-console', 'children'),
+        Output('level3-cell-5-console', 'children'),
+        Output('level3-cell-6-console', 'children'),
+        Input('level3-load-data-btn', 'n_clicks'),
+        Input('level3-define-model-btn', 'n_clicks'),
+        Input('level3-forward-btn', 'n_clicks'),
+        Input('level3-train-btn', 'n_clicks'),
+        Input('level3-inspect-btn', 'n_clicks'),
+        Input('level3-evaluate-btn', 'n_clicks'),
+        State('level3-cell-1-code', 'value'),
+        State('level3-cell-2-code', 'value'),
+        State('level3-cell-3-code', 'value'),
+        State('level3-cell-4-code', 'value'),
+        State('level3-cell-5-code', 'value'),
+        State('level3-cell-6-code', 'value'),
+        State('level3-dataset-dropdown', 'value'),
+        State('level3-depth-slider', 'value'),
+        State('level3-width-slider', 'value'),
+        State('level3-activation-dropdown', 'value'),
+        State('level3-epochs-slider', 'value'),
+        prevent_initial_call=True,
+    )
+    def execute_level3_cells(
+        n_load,
+        n_define,
+        n_forward,
+        n_train,
+        n_inspect,
+        n_evaluate,
+        cell_1_code,
+        cell_2_code,
+        cell_3_code,
+        cell_4_code,
+        cell_5_code,
+        cell_6_code,
+        dataset,
+        depth,
+        width,
+        activation,
+        epochs,
+    ):
+        _ = (n_load, n_define, n_forward, n_train, n_inspect, n_evaluate)
+        ctx = dash.callback_context
+        if not ctx.triggered:
+            raise dash.exceptions.PreventUpdate
+
+        trigger = ctx.triggered[0]['prop_id'].split('.')[0]
+        button_to_cell = {
+            'level3-load-data-btn': (1, cell_1_code),
+            'level3-define-model-btn': (2, cell_2_code),
+            'level3-forward-btn': (3, cell_3_code),
+            'level3-train-btn': (4, cell_4_code),
+            'level3-inspect-btn': (5, cell_5_code),
+            'level3-evaluate-btn': (6, cell_6_code),
+        }
+
+        cell_number, code = button_to_cell[trigger]
+        execution_env = build_level3_execution_environment(
+            cell_number,
+            dataset,
+            depth,
+            width,
+            activation,
+            epochs,
+        )
+        output_children, error_children, _ = execute_python_snippet(code, execution_env)
+        console_children = error_children if error_children else output_children
+
+        responses = [dash.no_update] * 6
+        responses[cell_number - 1] = console_children
+        return tuple(responses)

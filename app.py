@@ -22,6 +22,7 @@ import plotly.tools as tls
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from code_execution import execute_python_snippet
 from dataload import load_dataset, get_dataset_stats
 from trainer import train_model
 from trainer import build_model
@@ -801,71 +802,9 @@ def execute_python_code(run_clicks, export_clicks, user_code):
     # EXPORT BUTTON
     if export_clicks:
         return "", "", go.Figure(), dict(content=user_code, filename="script.py")
-    
-    # EXECUTE BUTTON
-    import io
-    output_capture = io.StringIO()
-    
-    try:
-        # CAPTURE PRINT OUTPUT
-        import sys
-        old_stdout = sys.stdout
-        sys.stdout = output_capture
-        
-        # SAFE EXECUTION (no dangerous builtins!)
-        exec(user_code, SAFE_PYTHON_ENV)
-        
-        sys.stdout = old_stdout
-        result = output_capture.getvalue()
 
-        outputs = []
-
-        if plt.get_fignums():
-            fig = plt.gcf()
-            buf = io.BytesIO()
-            fig.savefig(buf, format='png', dpi=150, bbox_inches='tight')
-            buf.seek(0)
-            img_str = base64.b64encode(buf.read()).decode()
-            plt.close('all')
-            outputs.append(html.Img(
-                src=f"data:image/png;base64,{img_str}",
-                style={'max-width': '100%', 'height': 'auto', 'display': 'block', 'margin-bottom': '10px'}
-            ))
-
-        # Print output immediately follows
-        if result.strip():
-            outputs.append(html.Pre(
-                result,
-                style={'margin': '0', 'white-space': 'pre-wrap', 'font-family': 'monospace', 'font-size': '14px'}
-            ))
-
-        # Empty result → "success"
-        if not outputs:
-            outputs.append(html.Pre("Code executed successfully (no output)"))
-        
-        return html.Div(outputs), "", go.Figure(), dash.no_update
-
-        
-    except SyntaxError as e:
-        return (
-            "",
-            html.Div([
-                html.H3(f"Syntax Error (Line {e.lineno})", style={"color": "red"}),
-                html.Pre(str(e))
-            ]),
-            go.Figure(),
-            dash.no_update
-        )
-    except Exception as e:
-        return (
-            "",
-            html.Div([
-                html.H3("Compile Error", style={"color": "red"}),
-                html.Pre(str(e))
-            ]),
-            go.Figure(),
-            dash.no_update
-        )
+    output_children, error_children, figure = execute_python_snippet(user_code, SAFE_PYTHON_ENV, plt)
+    return output_children, error_children, figure, dash.no_update
 
 
 #callback for a custom syntax highlighter/validator to read python code from the user
