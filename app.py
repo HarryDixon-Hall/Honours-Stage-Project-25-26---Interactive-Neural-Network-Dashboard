@@ -1,6 +1,16 @@
 #region Imports
+from importlib import import_module
+
 import dash
-from dash import dcc, html, Input, Output, State, callback_context
+from dash import dcc, html
+try:
+    from dash import Input, Output, State, callback_context
+except ImportError:
+    dash_dependencies = import_module('dash.dependencies')
+    Input = dash_dependencies.Input
+    Output = dash_dependencies.Output
+    State = dash_dependencies.State
+    callback_context = dash.callback_context
 import plotly.graph_objects as go
 import matplotlib
 matplotlib.use('Agg')  # Dash-safe
@@ -1090,22 +1100,49 @@ def load_toy_dataset(name, n_samples=300, noise=0.2, random_state=0):
     # Ensure shapes (N, 2) and (N,)
     return X.astype(np.float32), y.astype(np.int32)
 
-def init_single_hidden_mlp(input_dim=2, hidden_dim=4, output_dim=1, rng=None):
+def init_level2_mlp(input_dim=2, hidden_layers=None, output_dim=1, rng=None):
     if rng is None:
         rng = np.random.default_rng()
+    if hidden_layers is None:
+        hidden_layers = [6, 6]
 
-    # Xavier / Glorot-like scaling for stability
-    W1 = rng.normal(0.0, 1.0 / np.sqrt(input_dim), size=(hidden_dim, input_dim))
-    b1 = np.zeros((hidden_dim, 1))
-    W2 = rng.normal(0.0, 1.0 / np.sqrt(hidden_dim), size=(output_dim, hidden_dim))
-    b2 = np.zeros((output_dim, 1))
+    layer_sizes = [input_dim] + list(hidden_layers) + [output_dim]
+    weights = []
+    biases = []
+
+    for fan_in, fan_out in zip(layer_sizes[:-1], layer_sizes[1:]):
+        weights.append(
+            rng.normal(0.0, 1.0 / np.sqrt(fan_in), size=(fan_out, fan_in))
+        )
+        biases.append(np.zeros((fan_out, 1)))
 
     return {
-        'W1': W1,
-        'b1': b1,
-        'W2': W2,
-        'b2': b2,
+        'weights': [weight.tolist() for weight in weights],
+        'biases': [bias.tolist() for bias in biases],
+        'epoch': 0,
+        'history': {
+            'epochs': [0],
+            'loss': [],
+            'accuracy': [],
+        },
     }
+
+
+def level2_deserialize_params(params):
+    weights = [np.array(weight, dtype=np.float64) for weight in params['weights']]
+    biases = [np.array(bias, dtype=np.float64) for bias in params['biases']]
+    return weights, biases
+
+
+def level2_serialize_params(weights, biases, params):
+    params['weights'] = [weight.tolist() for weight in weights]
+    params['biases'] = [bias.tolist() for bias in biases]
+    return params
+
+
+def level2_parameter_count(params):
+    weights, biases = level2_deserialize_params(params)
+    return int(sum(weight.size + bias.size for weight, bias in zip(weights, biases)))
 
 def activation_forward(Z, activation):
     if activation == 'relu':
@@ -1131,78 +1168,118 @@ def activation_backward(dA, Z, activation):
         raise ValueError(f"Unknown activation: {activation}")
     return dZ
 
-def forward_pass(X, params, activation):
-    """
-    X: (N, 2)
-    returns dict with intermediate values for backprop
-    """
-    W1, b1 = params['W1'], params['b1']  # (H,2), (H,1)
-    W2, b2 = params['W2'], params['b2']  # (1,H), (1,1)
+def level2_forward_pass(X, params, activation):
+    """Run a configurable MLP forward pass for the Level 2 builder."""
+    weights, biases = level2_deserialize_params(params)
+    activations = [X.T]
+    pre_activations = []
+    current_activation = X.T
 
-    X_t = X.T  # (2, N)
+    for weight, bias in zip(weights[:-1], biases[:-1]):
+        Z = weight @ current_activation + bias
+        pre_activations.append(Z)
+        current_activation = activation_forward(Z, activation)
+        activations.append(current_activation)
 
-    Z1 = W1 @ X_t + b1          # (H, N)
-    A1 = activation_forward(Z1, activation)  # (H, N)
+    Z_out = weights[-1] @ current_activation + biases[-1]
+    A_out = 1.0 / (1.0 + np.exp(-Z_out))
+    pre_activations.append(Z_out)
+    activations.append(A_out)
 
-    Z2 = W2 @ A1 + b2           # (1, N)
-    A2 = 1.0 / (1.0 + np.exp(-Z2))  # sigmoid output (1, N)
-
-    cache = {
-        'X_t': X_t,
-        'Z1': Z1,
-        'A1': A1,
-        'Z2': Z2,
-        'A2': A2,
+    return A_out, {
+        'activations': activations,
+        'pre_activations': pre_activations,
     }
-    return A2, cache
 
-def train_single_hidden_step(X, y, params, activation='tanh',
-                             steps=50, lr=0.1, l2=0.0):
-    """
-    Run a few GD steps to make the boundary visibly change.
-    X: (N, 2), y: (N,)
-    """
-    W1, b1 = params['W1'], params['b1']
-    W2, b2 = params['W2'], params['b2']
 
-    y_row = y.reshape(1, -1)  # (1, N)
+def level2_evaluate_metrics(X, y, params, activation, l2=0.0):
+    predictions, _ = level2_forward_pass(X, params, activation)
+    y_row = y.reshape(1, -1)
+    eps = 1e-8
+    loss = -np.mean(y_row * np.log(predictions + eps) + (1 - y_row) * np.log(1 - predictions + eps))
 
-    for _ in range(steps):
-        # Forward
-        A2, cache = forward_pass(X, params, activation)
-        A1, X_t = cache['A1'], cache['X_t']
+    if l2 > 0:
+        weights, _ = level2_deserialize_params(params)
+        loss += 0.5 * l2 * sum(np.sum(weight * weight) for weight in weights)
 
-        # Binary cross-entropy derivative wrt A2
-        eps = 1e-8
-        dA2 = -(y_row / (A2 + eps) - (1 - y_row) / (1 - A2 + eps))  # (1, N)
+    accuracy = np.mean((predictions >= 0.5).astype(np.int32) == y_row)
+    return {
+        'loss': float(loss),
+        'accuracy': float(accuracy),
+        'epoch': int(params.get('epoch', 0)),
+        'parameter_count': level2_parameter_count(params),
+    }
 
-        # dZ2 = dL/dA2 * dA2/dZ2
-        dZ2 = dA2 * A2 * (1 - A2)  # sigmoid prime
 
-        # Gradients for W2, b2
-        dW2 = (dZ2 @ A1.T) / X.shape[0]  # (1, H)
-        db2 = np.mean(dZ2, axis=1, keepdims=True)  # (1,1)
+def level2_set_baseline_history(X, y, params, activation, l2=0.0):
+    metrics = level2_evaluate_metrics(X, y, params, activation, l2=l2)
+    params['epoch'] = 0
+    params['history'] = {
+        'epochs': [0],
+        'loss': [metrics['loss']],
+        'accuracy': [metrics['accuracy']],
+    }
+    return params
 
-        # Backprop into hidden layer
-        dA1 = W2.T @ dZ2  # (H, N)
-        dZ1 = activation_backward(dA1, cache['Z1'], activation)  # (H, N)
 
-        dW1 = (dZ1 @ X_t.T) / X.shape[0]  # (H, 2)
-        db1 = np.mean(dZ1, axis=1, keepdims=True)  # (H,1)
+def train_level2_model(X, y, params, activation='tanh', epochs=80, lr=0.08, l2=1e-4):
+    """Train the Level 2 configurable MLP with full-batch gradient descent."""
+    weights, biases = level2_deserialize_params(params)
+    y_row = y.reshape(1, -1)
+    sample_count = X.shape[0]
 
-        # Optional L2 regularization
-        if l2 > 0:
-            dW2 += l2 * W2
-            dW1 += l2 * W1
+    history = params.get('history', {'epochs': [0], 'loss': [], 'accuracy': []})
+    epochs_history = list(history.get('epochs', [0]))
+    loss_history = list(history.get('loss', []))
+    accuracy_history = list(history.get('accuracy', []))
 
-        # Gradient descent update
-        W2 -= lr * dW2
-        b2 -= lr * db2
-        W1 -= lr * dW1
-        b1 -= lr * db1
+    for _ in range(epochs):
+        predictions, cache = level2_forward_pass(
+            X,
+            {'weights': [weight.tolist() for weight in weights], 'biases': [bias.tolist() for bias in biases]},
+            activation
+        )
+        dZ = predictions - y_row
+        gradients_w = [None] * len(weights)
+        gradients_b = [None] * len(biases)
 
-        params.update({'W1': W1, 'b1': b1, 'W2': W2, 'b2': b2})
+        for layer_index in reversed(range(len(weights))):
+            prev_activation = cache['activations'][layer_index]
+            gradients_w[layer_index] = (dZ @ prev_activation.T) / sample_count
+            gradients_b[layer_index] = np.mean(dZ, axis=1, keepdims=True)
 
+            if l2 > 0:
+                gradients_w[layer_index] += l2 * weights[layer_index]
+
+            if layer_index > 0:
+                dA_prev = weights[layer_index].T @ dZ
+                dZ = activation_backward(
+                    dA_prev,
+                    cache['pre_activations'][layer_index - 1],
+                    activation
+                )
+
+        for layer_index in range(len(weights)):
+            weights[layer_index] -= lr * gradients_w[layer_index]
+            biases[layer_index] -= lr * gradients_b[layer_index]
+
+        params['epoch'] = int(params.get('epoch', 0)) + 1
+        serialized_params = {
+            'weights': [weight.tolist() for weight in weights],
+            'biases': [bias.tolist() for bias in biases],
+            'epoch': params['epoch'],
+        }
+        metrics = level2_evaluate_metrics(X, y, serialized_params, activation, l2=l2)
+        epochs_history.append(params['epoch'])
+        loss_history.append(metrics['loss'])
+        accuracy_history.append(metrics['accuracy'])
+
+    params = level2_serialize_params(weights, biases, params)
+    params['history'] = {
+        'epochs': epochs_history,
+        'loss': loss_history,
+        'accuracy': accuracy_history,
+    }
     return params
 
 def make_decision_boundary_figure(X, y, params, activation, grid_step=0.03):
@@ -1217,7 +1294,7 @@ def make_decision_boundary_figure(X, y, params, activation, grid_step=0.03):
     grid_points = np.c_[xx.ravel(), yy.ravel()]
 
     # Forward pass on grid
-    A2_grid, _ = forward_pass(grid_points, params, activation)
+    A2_grid, _ = level2_forward_pass(grid_points, params, activation)
     Z = A2_grid.reshape(xx.shape)  # predicted probability
 
     contour = go.Contour(
@@ -1277,242 +1354,372 @@ def make_activation_figure(activation):
     )
     return fig
 
-def make_network_diagram_figure(input_dim=2, hidden_dim=4, output_dim=1,
+def make_network_diagram_figure(input_dim=2, hidden_layers=None, output_dim=1,
                                 params=None, activation='tanh'):
-    # x positions for 3 layers
-    x_in, x_hid, x_out = 0, 1, 2
+    if hidden_layers is None:
+        hidden_layers = [6, 6]
 
-    # y positions: spread nodes vertically
-    y_in = np.linspace(0, 1, input_dim)
-    y_hid = np.linspace(0, 1, hidden_dim)
-    y_out = np.linspace(0, 1, output_dim)
-
-    # Extract weight matrices if available
-    W1 = np.array(params['W1']) if params else None  # (H, 2)
-    b1 = np.array(params['b1']) if params else None  # (H, 1)
-    W2 = np.array(params['W2']) if params else None  # (1, H)
-    b2 = np.array(params['b2']) if params else None  # (1, 1)
+    layer_sizes = [input_dim] + list(hidden_layers) + [output_dim]
+    layer_x_positions = np.linspace(0, 1, len(layer_sizes))
+    weights, biases = level2_deserialize_params(params) if params else (None, None)
 
     nodes_x = []
     nodes_y = []
-    text = []
+    labels = []
     hover_text = []
-    layer_colors = []
+    colors = []
+    edge_traces = []
+    layer_coordinates = []
+    annotations = []
 
-    # Input nodes
-    for i in range(input_dim):
-        nodes_x.append(x_in)
-        nodes_y.append(y_in[i])
-        text.append(f"x{i+1}")
-        hover_text.append(f"Input x{i+1}")
-        layer_colors.append("lightblue")
-
-    # Hidden nodes - show neuron equation on hover
-    for j in range(hidden_dim):
-        nodes_x.append(x_hid)
-        nodes_y.append(y_hid[j])
-        text.append(f"h{j+1}")
-        if W1 is not None and b1 is not None:
-            w_str = ' + '.join(f'{W1[j, i]:+.2f}·x{i+1}' for i in range(input_dim))
-            b_val = b1[j, 0]
-            hover_text.append(
-                f"z{j+1} = {w_str} {b_val:+.2f}<br>"
-                f"a{j+1} = {activation}(z{j+1})"
-            )
+    for layer_index, layer_size in enumerate(layer_sizes):
+        y_positions = np.linspace(0, 1, layer_size)
+        layer_coordinates.append(y_positions)
+        if layer_index == 0:
+            layer_name = 'Input'
+            color = '#93c5fd'
+        elif layer_index == len(layer_sizes) - 1:
+            layer_name = 'Output'
+            color = '#fca5a5'
         else:
-            hover_text.append(f"h{j+1} = {activation}(w⊤x + b)")
-        layer_colors.append("lightgreen")
+            layer_name = f'Hidden {layer_index}'
+            color = '#86efac'
 
-    # Output nodes
-    for k in range(output_dim):
-        nodes_x.append(x_out)
-        nodes_y.append(y_out[k])
-        text.append(f"ŷ")
-        if W2 is not None and b2 is not None:
-            w_str = ' + '.join(f'{W2[k, j]:+.2f}·a{j+1}' for j in range(hidden_dim))
-            b_val = b2[k, 0]
-            hover_text.append(
-                f"z_out = {w_str} {b_val:+.2f}<br>"
-                f"ŷ = σ(z_out)"
-            )
-        else:
-            hover_text.append("ŷ = σ(w⊤a + b)")
-        layer_colors.append("salmon")
+        annotations.append(dict(
+            x=layer_x_positions[layer_index],
+            y=1.1,
+            text=f"{layer_name}<br>{layer_size} neuron(s)",
+            showarrow=False,
+            font=dict(size=11)
+        ))
+
+        for node_index, y_position in enumerate(y_positions):
+            nodes_x.append(layer_x_positions[layer_index])
+            nodes_y.append(y_position)
+            colors.append(color)
+
+            if layer_index == 0:
+                labels.append(f"x{node_index + 1}")
+                hover_text.append(f"Input feature x{node_index + 1}")
+            elif layer_index == len(layer_sizes) - 1:
+                labels.append('ŷ')
+                bias_value = biases[layer_index - 1][node_index, 0] if biases is not None else 0.0
+                hover_text.append(
+                    f"Output node<br>bias={bias_value:+.3f}<br>ŷ = σ(z)"
+                )
+            else:
+                labels.append(f"h{layer_index}.{node_index + 1}")
+                bias_value = biases[layer_index - 1][node_index, 0] if biases is not None else 0.0
+                hover_text.append(
+                    f"Layer {layer_index} neuron {node_index + 1}<br>bias={bias_value:+.3f}<br>a = {activation}(z)"
+                )
+
+    for layer_index in range(len(layer_sizes) - 1):
+        source_x = layer_x_positions[layer_index]
+        target_x = layer_x_positions[layer_index + 1]
+        source_y_positions = layer_coordinates[layer_index]
+        target_y_positions = layer_coordinates[layer_index + 1]
+        current_weights = weights[layer_index] if weights is not None else None
+
+        for source_index, source_y in enumerate(source_y_positions):
+            for target_index, target_y in enumerate(target_y_positions):
+                if current_weights is not None:
+                    weight_value = current_weights[target_index, source_index]
+                    edge_color = 'steelblue' if weight_value >= 0 else 'crimson'
+                    edge_width = max(0.5, min(4.5, abs(weight_value) * 2.5))
+                    edge_hover = (
+                        f"Layer {layer_index + 1} weight[{target_index + 1},{source_index + 1}] = "
+                        f"{weight_value:+.3f}"
+                    )
+                else:
+                    edge_color = 'grey'
+                    edge_width = 1
+                    edge_hover = 'Weight'
+
+                edge_traces.append(go.Scatter(
+                    x=[source_x, (source_x + target_x) / 2, target_x],
+                    y=[source_y, (source_y + target_y) / 2, target_y],
+                    mode='lines',
+                    line=dict(color=edge_color, width=edge_width),
+                    hovertext=[None, edge_hover, None],
+                    hoverinfo='text',
+                    showlegend=False
+                ))
 
     node_trace = go.Scatter(
         x=nodes_x,
         y=nodes_y,
         mode='markers+text',
-        text=text,
+        text=labels,
         textposition='middle right',
         hovertext=hover_text,
         hoverinfo='text',
-        marker=dict(size=18, color=layer_colors, line=dict(width=1, color='black'))
+        marker=dict(size=16, color=colors, line=dict(width=1, color='black'))
     )
-
-    # Edges as separate Scatter traces (lines) with hover showing weight value
-    edge_traces = []
-
-    # Input -> Hidden edges
-    for i in range(input_dim):
-        for j in range(hidden_dim):
-            if W1 is not None:
-                w_val = W1[j, i]
-                edge_hover = f"w¹[{j+1},{i+1}] = {w_val:.3f}<br>x{i+1} → h{j+1}"
-                edge_width = max(0.5, min(4, abs(w_val) * 3))
-                edge_color = 'steelblue' if w_val >= 0 else 'crimson'
-            else:
-                edge_hover = f"w¹[{j+1},{i+1}]"
-                edge_width = 1
-                edge_color = 'grey'
-            # Midpoint for hover target
-            mx = (x_in + x_hid) / 2
-            my = (y_in[i] + y_hid[j]) / 2
-            edge_traces.append(go.Scatter(
-                x=[x_in, mx, x_hid],
-                y=[y_in[i], my, y_hid[j]],
-                mode='lines',
-                line=dict(color=edge_color, width=edge_width),
-                hovertext=[None, edge_hover, None],
-                hoverinfo='text',
-                showlegend=False
-            ))
-
-    # Hidden -> Output edges
-    for j in range(hidden_dim):
-        for k in range(output_dim):
-            if W2 is not None:
-                w_val = W2[k, j]
-                edge_hover = f"w²[{k+1},{j+1}] = {w_val:.3f}<br>h{j+1} → ŷ"
-                edge_width = max(0.5, min(4, abs(w_val) * 3))
-                edge_color = 'steelblue' if w_val >= 0 else 'crimson'
-            else:
-                edge_hover = f"w²[{k+1},{j+1}]"
-                edge_width = 1
-                edge_color = 'grey'
-            mx = (x_hid + x_out) / 2
-            my = (y_hid[j] + y_out[k]) / 2
-            edge_traces.append(go.Scatter(
-                x=[x_hid, mx, x_out],
-                y=[y_hid[j], my, y_out[k]],
-                mode='lines',
-                line=dict(color=edge_color, width=edge_width),
-                hovertext=[None, edge_hover, None],
-                hoverinfo='text',
-                showlegend=False
-            ))
 
     fig = go.Figure(data=edge_traces + [node_trace])
     fig.update_layout(
-        title="Single hidden layer network (hover for w⊤x + b)",
+        title='User-built network architecture',
         xaxis=dict(showgrid=False, zeroline=False, visible=False),
         yaxis=dict(showgrid=False, zeroline=False, visible=False),
-        margin=dict(l=0, r=0, t=40, b=0),
-        showlegend=False
+        margin=dict(l=0, r=0, t=70, b=0),
+        showlegend=False,
+        annotations=annotations,
     )
     return fig
 
+
+def make_level2_training_curves_figure(history):
+    epochs = history.get('epochs', [])
+    losses = history.get('loss', [])
+    accuracies = history.get('accuracy', [])
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=epochs,
+        y=losses,
+        mode='lines+markers',
+        name='Loss',
+        line=dict(color='#dc2626', width=3)
+    ))
+    fig.add_trace(go.Scatter(
+        x=epochs,
+        y=accuracies,
+        mode='lines+markers',
+        name='Accuracy',
+        line=dict(color='#0f766e', width=3),
+        yaxis='y2'
+    ))
+    fig.update_layout(
+        title='Optimisation behaviour across training runs',
+        xaxis_title='Epoch',
+        yaxis=dict(title='Loss'),
+        yaxis2=dict(title='Accuracy', overlaying='y', side='right', range=[0, 1]),
+        margin=dict(l=0, r=0, t=50, b=0),
+        legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1)
+    )
+    return fig
+
+
+def make_level2_metrics_cards(metrics):
+    card_style = {
+        'backgroundColor': 'white',
+        'borderRadius': '14px',
+        'padding': '14px 16px',
+        'boxShadow': '0 2px 8px rgba(15, 23, 42, 0.08)',
+        'border': '1px solid #e5e7eb'
+    }
+    label_style = {'fontSize': '12px', 'textTransform': 'uppercase', 'color': '#64748b', 'letterSpacing': '0.08em'}
+    value_style = {'fontSize': '24px', 'fontWeight': '700', 'marginTop': '6px'}
+    subtitle_style = {'fontSize': '12px', 'color': '#64748b', 'marginTop': '4px'}
+
+    return [
+        html.Div([
+            html.Div('Accuracy', style=label_style),
+            html.Div(f"{metrics['accuracy'] * 100:.1f}%", style=value_style),
+            html.Div('Classification performance on the selected toy dataset.', style=subtitle_style),
+        ], style=card_style),
+        html.Div([
+            html.Div('Loss', style=label_style),
+            html.Div(f"{metrics['loss']:.4f}", style=value_style),
+            html.Div('Binary cross-entropy after the current training run.', style=subtitle_style),
+        ], style=card_style),
+        html.Div([
+            html.Div('Parameters', style=label_style),
+            html.Div(str(metrics['parameter_count']), style=value_style),
+            html.Div('Trainable weights and biases in the current builder architecture.', style=subtitle_style),
+        ], style=card_style),
+        html.Div([
+            html.Div('Epoch', style=label_style),
+            html.Div(str(metrics['epoch']), style=value_style),
+            html.Div('Accumulated full-batch training epochs for this run.', style=subtitle_style),
+        ], style=card_style),
+    ]
+
+
+def make_level2_summary_panel(params, activation):
+    meta = params.get('meta', {})
+    hidden_layers = meta.get('hidden_layer_sizes', [6, 6])
+    layer_sizes = [2] + list(hidden_layers) + [1]
+    weights, biases = level2_deserialize_params(params)
+    layer_items = []
+
+    for layer_index, (weight, bias) in enumerate(zip(weights, biases), start=1):
+        if layer_index < len(weights):
+            layer_label = f"Hidden {layer_index}"
+            transform = activation
+        else:
+            layer_label = 'Output'
+            transform = 'sigmoid'
+
+        layer_items.append(
+            html.Li(
+                f"{layer_label}: W{layer_index} shape {weight.shape}, b{layer_index} shape {bias.shape}, activation={transform}",
+                style={'fontFamily': 'monospace', 'fontSize': '11px'}
+            )
+        )
+
+    return html.Div([
+        html.Div(
+            f"Architecture: {' → '.join(str(size) for size in layer_sizes)}",
+            style={'fontWeight': '700', 'marginBottom': '10px'}
+        ),
+        html.P(
+            "Forward map: h⁽ˡ⁾ = ρ(W⁽ˡ⁾h⁽ˡ⁻¹⁾ + b⁽ˡ⁾), with a sigmoid output layer for binary classification.",
+            style={'fontSize': '13px', 'marginBottom': '10px'}
+        ),
+        html.P(
+            f"Hidden activation: {activation} | Total parameters: {level2_parameter_count(params)}",
+            style={'fontSize': '13px', 'color': '#475569'}
+        ),
+        html.Ul(layer_items, style={'paddingLeft': '18px', 'marginBottom': '10px'}),
+        html.Div(
+            "Tip: add layers or neurons to increase expressivity, then compare whether the extra capacity actually improves the learned boundary and training curves.",
+            style={'fontSize': '12px', 'color': '#64748b'}
+        )
+    ])
+
+
+def make_level2_comparison_panel(compare_store, current_metrics):
+    if not compare_store:
+        return html.Div([
+            html.H4('Comparison Run', style={'marginTop': '0'}),
+            html.P(
+                'Save a baseline with Compare Run, then change the architecture or train again to inspect the difference in accuracy, loss, and model size.',
+                style={'fontSize': '13px', 'color': '#64748b', 'marginBottom': '0'}
+            ),
+        ])
+
+    saved_metrics = compare_store['metrics']
+    saved_meta = compare_store['meta']
+    accuracy_delta = current_metrics['accuracy'] - saved_metrics['accuracy']
+    loss_delta = current_metrics['loss'] - saved_metrics['loss']
+    parameter_delta = current_metrics['parameter_count'] - saved_metrics['parameter_count']
+
+    return html.Div([
+        html.H4('Comparison Run', style={'marginTop': '0'}),
+        html.P(
+            f"Saved baseline: {saved_meta['dataset']} | {' → '.join(str(size) for size in saved_meta['layer_sizes'])} | {saved_meta['activation']}",
+            style={'fontSize': '13px', 'marginBottom': '10px'}
+        ),
+        html.Div(f"Accuracy delta: {accuracy_delta * 100:+.1f}%", style={'fontWeight': '600', 'marginBottom': '6px'}),
+        html.Div(f"Loss delta: {loss_delta:+.4f}", style={'fontWeight': '600', 'marginBottom': '6px'}),
+        html.Div(f"Parameter delta: {parameter_delta:+d}", style={'fontWeight': '600', 'marginBottom': '10px'}),
+        html.P(
+            'Use this panel to decide whether added capacity improved general behaviour or only made optimisation heavier.',
+            style={'fontSize': '12px', 'color': '#64748b', 'marginBottom': '0'}
+        ),
+    ])
+
 @app.callback(
     Output('level2-params-store', 'data'),
-    Input('level2-randomize-btn', 'n_clicks'),
-    Input('level2-trainstep-btn', 'n_clicks'),
-    State('level2-width-slider', 'value'),
-    State('level2-activation-dropdown', 'value'),
-    State('level2-dataset-dropdown', 'value'),
+    Output('level2-compare-store', 'data'),
+    Input('level2-train-btn', 'n_clicks'),
+    Input('level2-reset-btn', 'n_clicks'),
+    Input('level2-compare-btn', 'n_clicks'),
+    Input('level2-hidden-layers-slider', 'value'),
+    Input('level2-neurons-slider', 'value'),
+    Input('level2-activation-dropdown', 'value'),
+    Input('level2-dataset-dropdown', 'value'),
     State('level2-params-store', 'data'),
+    State('level2-compare-store', 'data'),
 )
-def update_level2_params(n_rand, n_step, width, activation, dataset, params):
+def update_level2_params(n_train, n_reset, n_compare, hidden_layers, neurons_per_layer,
+                         activation, dataset, params, compare_store):
     ctx = dash.callback_context
     trigger = ctx.triggered[0]['prop_id'].split('.')[0] if ctx.triggered else None
+    hidden_layer_sizes = [neurons_per_layer] * hidden_layers
+    meta = {
+        'hidden_layers': hidden_layers,
+        'neurons_per_layer': neurons_per_layer,
+        'hidden_layer_sizes': hidden_layer_sizes,
+        'activation': activation,
+        'dataset': dataset,
+        'layer_sizes': [2] + hidden_layer_sizes + [1],
+    }
+    rebuild_triggers = {
+        None,
+        'level2-reset-btn',
+        'level2-hidden-layers-slider',
+        'level2-neurons-slider',
+        'level2-activation-dropdown',
+        'level2-dataset-dropdown',
+    }
 
-    # 1) On first use or randomize: initialize weights/biases for 2D->width->1 MLP
-    if params is None or trigger == 'level2-randomize-btn':
-        params = init_single_hidden_mlp(input_dim=2, hidden_dim=width, output_dim=1)
+    if params is None or trigger in rebuild_triggers:
+        params = init_level2_mlp(input_dim=2, hidden_layers=hidden_layer_sizes, output_dim=1)
+        params['meta'] = meta
+        X, y = load_toy_dataset(dataset)
+        params = level2_set_baseline_history(X, y, params, activation, l2=1e-4)
 
-    # 2) On train step: run a few gradient steps on the chosen toy dataset
-    if trigger == 'level2-trainstep-btn':
-        X, y = load_toy_dataset(dataset)  # e.g. moons/circles/linear
-        params = train_single_hidden_step(X, y, params, activation=activation, steps=50)
+    if trigger == 'level2-train-btn':
+        params['meta'] = meta
+        X, y = load_toy_dataset(dataset)
+        params = train_level2_model(X, y, params, activation=activation, epochs=80, lr=0.08, l2=1e-4)
 
-    # Also store meta: width, activation, dataset for the view callback
-    params['meta'] = {'width': width, 'activation': activation, 'dataset': dataset}
-    return params
+    if trigger == 'level2-compare-btn':
+        params['meta'] = meta
+        X, y = load_toy_dataset(dataset)
+        metrics = level2_evaluate_metrics(X, y, params, activation, l2=1e-4)
+        compare_store = {
+            'meta': meta,
+            'metrics': metrics,
+        }
+
+    params['meta'] = meta
+    return params, compare_store
 
 @app.callback(
     Output('level2-decision-boundary-graph', 'figure'),
     Output('level2-activation-graph', 'figure'),
     Output('level2-network-diagram-graph', 'figure'),
     Output('level2-math-explanation', 'children'),
-    Input('level2-params-store', 'data')
+    Output('level2-metrics-row', 'children'),
+    Output('level2-comparison-panel', 'children'),
+    Output('level2-training-curves-graph', 'figure'),
+    Input('level2-params-store', 'data'),
+    Input('level2-compare-store', 'data')
 )
-def update_level2_views(params):
+def update_level2_views(params, compare_store):
     if params is None:
         raise dash.exceptions.PreventUpdate
 
     meta = params.get('meta', {})
-    width = meta.get('width', 4)
+    hidden_layer_sizes = meta.get('hidden_layer_sizes', [6, 6])
     activation = meta.get('activation', 'tanh')
     dataset = meta.get('dataset', 'moons')
 
-    # 1) Decision boundary figure
-    X, y = load_toy_dataset(dataset)          # same helper as above
+    X, y = load_toy_dataset(dataset)
+    metrics = level2_evaluate_metrics(X, y, params, activation, l2=1e-4)
+
     fig_boundary = make_decision_boundary_figure(X, y, params, activation)
-    # Update title to highlight linear→curve bending
-    if dataset == 'linear':
-        fig_boundary.update_layout(title="Decision boundary (hidden layer can separate linear data)")
-    else:
-        fig_boundary.update_layout(title=f"Decision boundary on '{dataset}' (hidden layer bends line → curves)")
-
-    # 2) Activation function figure
-    fig_activation = make_activation_figure(activation)
-
-    # 3) Network diagram with actual weights for hover
-    fig_network = make_network_diagram_figure(
-        input_dim=2, hidden_dim=width, output_dim=1,
-        params=params, activation=activation
+    fig_boundary.update_layout(
+        title=(
+            f"{dataset.title()} dataset | Architecture {' → '.join(str(size) for size in meta.get('layer_sizes', [2] + hidden_layer_sizes + [1]))}"
+        )
     )
 
-    # 4) Math explanation – neuron equation, per-neuron detail, parameter counting
-    n_in, n_h, n_out = 2, width, 1
-    num_params_W1 = n_in * n_h
-    num_params_b1 = n_h
-    num_params_W2 = n_h * n_out
-    num_params_b2 = n_out
-    total_params = num_params_W1 + num_params_b1 + num_params_W2 + num_params_b2
+    fig_activation = make_activation_figure(activation)
+    fig_network = make_network_diagram_figure(
+        input_dim=2,
+        hidden_layers=hidden_layer_sizes,
+        output_dim=1,
+        params=params, activation=activation
+    )
+    explanation = make_level2_summary_panel(params, activation)
+    metric_cards = make_level2_metrics_cards(metrics)
+    comparison_panel = make_level2_comparison_panel(compare_store, metrics)
+    curves_figure = make_level2_training_curves_figure(params.get('history', {}))
 
-    W1 = np.array(params['W1'])  # (H, 2)
-    b1 = np.array(params['b1'])  # (H, 1)
-    W2 = np.array(params['W2'])  # (1, H)
-    b2 = np.array(params['b2'])  # (1, 1)
-
-    # Per-neuron equations for the hidden layer
-    neuron_items = []
-    for j in range(n_h):
-        w_terms = ' + '.join(f'{W1[j, i]:+.2f}·x{i+1}' for i in range(n_in))
-        b_val = b1[j, 0]
-        neuron_items.append(
-            html.Li(f"h{j+1}: z = {w_terms} {b_val:+.2f},  a = {activation}(z)")
-        )
-
-    explanation = html.Div([
-        html.H5("Neuron equation"),
-        html.P("a = ρ(w⊤x + b)"),
-        html.P(f"where ρ = {activation}, composing a linear map (w⊤x + b) with a nonlinearity."),
-        html.Hr(),
-        html.H5("Hidden layer neurons"),
-        html.Ul(neuron_items, style={'fontSize': '11px', 'fontFamily': 'monospace'}),
-        html.Hr(),
-        html.H5("Parameter count"),
-        html.Ul([
-            html.Li(f"W¹: {n_h}×{n_in} = {num_params_W1} weights"),
-            html.Li(f"b¹: {n_h} biases"),
-            html.Li(f"W²: {n_out}×{n_h} = {num_params_W2} weights"),
-            html.Li(f"b²: {n_out} biases"),
-            html.Li(html.B(f"Total: {total_params} trainable parameters")),
-        ]),
-    ])
-
-    return fig_boundary, fig_activation, fig_network, explanation
+    return (
+        fig_boundary,
+        fig_activation,
+        fig_network,
+        explanation,
+        metric_cards,
+        comparison_panel,
+        curves_figure,
+    )
 
 #endregion
 
