@@ -15,8 +15,25 @@ except ImportError:
     State = dash_dependencies.State
     callback_context = dash.callback_context
 import numpy as np
+from code_execution import CodeExecutionBox
 
 from levels.level1.layout import level1_layout
+
+
+SANDBOX_EDITOR = CodeExecutionBox(
+    'sandbox',
+    ids={
+        'input': 'code-input',
+        'run': 'code-run',
+        'export': 'code-export',
+        'download': 'download-editor',
+        'output': 'editor-output',
+        'error': 'editor-error',
+        'plot': 'editor-plot',
+        'validation': 'code-validation',
+        'highlighted': 'code-highlighted',
+    },
+)
 #endregion
 
 #region layouts for test and home pages
@@ -478,41 +495,17 @@ def sandbox_layout():
         
         html.Div([
             html.Label("Python Code Editor:", style={"fontWeight": "bold"}),
-            
-            #code editor container
-            html.Div(
-                dcc.Textarea(
-                    id="code-input",
-                    value="print('Hello World')",
-                    style={
-                        "width": "100%",
-                        "height": "400px",
-                        "fontFamily": "Consolas, Monaco, monospace",
-                        "fontSize": "14px", 
-                        "lineHeight": "1.4"
-                        }
-                ),
-            ),
-
-            #controls html frontend
-
-            html.Div([
-                html.Button("Run Code", id="code-run", #to run the python code
-                       style={"width": "100%", "padding": "12px", 
-                              "fontSize": "16px", "marginTop": "10px"}),
-                
-                html.Button("Export Code", id="code-export", #to export the python code
-                        style={"width": "100%", "padding": "12px", 
-                              "fontSize": "16px", "marginTop": "10px"}),
-
-                dcc.Download(id="download-editor")
-            ], style={"marginBottom": "20px"}),
-           
-           #output html panels
-
-           html.Div(id="editor-output"),
-           html.Div(id="editor-error", style={"color": "#dc3545"}),
-           dcc.Graph(id="editor-plot")], style={"maxWidth": "1400px", "margin": "0 auto"})
+            SANDBOX_EDITOR.render(
+                default_code="print('Hello World')",
+                title=None,
+                run_label='Run Code',
+                export_label='Export Code',
+                show_export=True,
+                include_plot=True,
+                code_height='400px',
+                wrapper_style={'padding': '0', 'boxShadow': 'none', 'backgroundColor': 'transparent'},
+            )
+        ], style={"maxWidth": "1400px", "margin": "0 auto"})
 
 
     ])
@@ -526,7 +519,7 @@ SKILL_TREE_DATA = {
         {"id": "level2", "name": "Templates", "x": 1, "y": 0, "unlocked": False, "completed": False},
         {"id": "level3", "name": "Functions", "x": 2, "y": 0, "unlocked": False, "completed": False},
         {"id": "level4", "name": "Classes", "x": 1, "y": 1, "unlocked": False, "completed": False},
-        {"id": "level5", "name": "Optimizers", "x": 2, "y": 1, "unlocked": False, "completed": False},
+        {"id": "level5", "name": "Optimisers", "x": 2, "y": 1, "unlocked": False, "completed": False},
     ],
     "prereqs": {
         "level2": ["level1"],

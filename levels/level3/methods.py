@@ -72,7 +72,7 @@ def level3_deserialize_split(data):
 	)
 
 
-def level3_initialize_store(meta):
+def level3_initialise_store(meta):
 	X_full, y_full = load_toy_dataset(meta['dataset'])
 	X_train, X_test, y_train, y_test = train_test_split(
 		X_full,
@@ -113,7 +113,7 @@ def level3_model_matches(store, meta):
 	)
 
 
-def level3_initialize_model(store, meta):
+def level3_initialise_model(store, meta):
 	X_train, _, y_train, _, _, _ = level3_deserialize_split(store['data'])
 	model = init_level2_mlp(
 		input_dim=2,
@@ -149,7 +149,7 @@ def level3_dataset_preview_figure(X_train, X_test, y_train, y_test, dataset):
 		('Test class 1', X_test[y_test == 1], '#f97316', 'diamond-open'),
 	]
 
-	for label, points, color, symbol in split_specs:
+	for label, points, colour, symbol in split_specs:
 		if len(points) == 0:
 			continue
 		fig.add_trace(go.Scatter(
@@ -157,7 +157,7 @@ def level3_dataset_preview_figure(X_train, X_test, y_train, y_test, dataset):
 			y=points[:, 1],
 			mode='markers',
 			name=label,
-			marker=dict(size=8, color=color, symbol=symbol, line=dict(width=1, color='white')),
+			marker=dict(size=8, color=colour, symbol=symbol, line=dict(width=1, color='white')),
 		))
 
 	fig.update_layout(
@@ -219,14 +219,14 @@ def level3_hidden_space_figure(model, X_reference, y_reference, activation):
 	y_axis = last_hidden[:, 1] if last_hidden.shape[1] > 1 else np.zeros(last_hidden.shape[0])
 
 	fig = go.Figure()
-	for class_value, color in [(0, '#0f766e'), (1, '#b91c1c')]:
+	for class_value, colour in [(0, '#0f766e'), (1, '#b91c1c')]:
 		mask = y_reference == class_value
 		fig.add_trace(go.Scatter(
 			x=x_axis[mask],
 			y=y_axis[mask],
 			mode='markers',
 			name=f'Class {class_value}',
-			marker=dict(size=9, color=color, line=dict(width=1, color='white')),
+			marker=dict(size=9, color=colour, line=dict(width=1, color='white')),
 		))
 
 	fig.update_layout(
@@ -262,14 +262,14 @@ def level3_confusion_matrix_figure(confusion_values):
 def level3_misclassified_figure(X_test, y_test, pred_labels):
 	misclassified = pred_labels != y_test
 	fig = go.Figure()
-	for class_value, color in [(0, '#94a3b8'), (1, '#475569')]:
+	for class_value, colour in [(0, '#94a3b8'), (1, '#475569')]:
 		mask = y_test == class_value
 		fig.add_trace(go.Scatter(
 			x=X_test[mask, 0],
 			y=X_test[mask, 1],
 			mode='markers',
 			name=f'Test class {class_value}',
-			marker=dict(size=7, color=color),
+			marker=dict(size=7, color=colour),
 		))
 
 	if np.any(misclassified):

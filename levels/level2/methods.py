@@ -297,7 +297,7 @@ def make_network_diagram_figure(input_dim=2, hidden_layers=None, output_dim=1, p
     nodes_y = []
     labels = []
     hover_text = []
-    colors = []
+    colours = []
     edge_traces = []
     layer_coordinates = []
     annotations = []
@@ -307,13 +307,13 @@ def make_network_diagram_figure(input_dim=2, hidden_layers=None, output_dim=1, p
         layer_coordinates.append(y_positions)
         if layer_index == 0:
             layer_name = 'Input'
-            color = '#93c5fd'
+            colour = '#93c5fd'
         elif layer_index == len(layer_sizes) - 1:
             layer_name = 'Output'
-            color = '#fca5a5'
+            colour = '#fca5a5'
         else:
             layer_name = f'Hidden {layer_index}'
-            color = '#86efac'
+            colour = '#86efac'
 
         annotations.append(
             dict(
@@ -328,7 +328,7 @@ def make_network_diagram_figure(input_dim=2, hidden_layers=None, output_dim=1, p
         for node_index, y_position in enumerate(y_positions):
             nodes_x.append(layer_x_positions[layer_index])
             nodes_y.append(y_position)
-            colors.append(color)
+            colours.append(colour)
 
             if layer_index == 0:
                 labels.append(f'x{node_index + 1}')
@@ -355,14 +355,14 @@ def make_network_diagram_figure(input_dim=2, hidden_layers=None, output_dim=1, p
             for target_index, target_y in enumerate(target_y_positions):
                 if current_weights is not None:
                     weight_value = current_weights[target_index, source_index]
-                    edge_color = 'steelblue' if weight_value >= 0 else 'crimson'
+                    edge_colour = 'steelblue' if weight_value >= 0 else 'crimson'
                     edge_width = max(0.5, min(4.5, abs(weight_value) * 2.5))
                     edge_hover = (
                         f'Layer {layer_index + 1} weight[{target_index + 1},{source_index + 1}] = '
                         f'{weight_value:+.3f}'
                     )
                 else:
-                    edge_color = 'grey'
+                    edge_colour = 'grey'
                     edge_width = 1
                     edge_hover = 'Weight'
 
@@ -371,7 +371,7 @@ def make_network_diagram_figure(input_dim=2, hidden_layers=None, output_dim=1, p
                         x=[source_x, (source_x + target_x) / 2, target_x],
                         y=[source_y, (source_y + target_y) / 2, target_y],
                         mode='lines',
-                        line=dict(color=edge_color, width=edge_width),
+                        line=dict(color=edge_colour, width=edge_width),
                         hovertext=[None, edge_hover, None],
                         hoverinfo='text',
                         showlegend=False,
@@ -386,7 +386,7 @@ def make_network_diagram_figure(input_dim=2, hidden_layers=None, output_dim=1, p
         textposition='middle right',
         hovertext=hover_text,
         hoverinfo='text',
-        marker=dict(size=16, color=colors, line=dict(width=1, color='black')),
+        marker=dict(size=16, color=colours, line=dict(width=1, color='black')),
     )
 
     fig = go.Figure(data=edge_traces + [node_trace])

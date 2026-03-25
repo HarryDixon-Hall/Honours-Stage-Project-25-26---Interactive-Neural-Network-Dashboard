@@ -1,5 +1,7 @@
 from dash import dcc, html
 
+from code_execution import CodeExecutionBox
+
 
 LEVEL3_CELL_SNIPPETS = {
     1: (
@@ -52,78 +54,46 @@ LEVEL3_CELL_SNIPPETS = {
 }
 
 
+LEVEL3_CELL_EDITORS = {
+    cell_number: CodeExecutionBox(
+        f'level3-cell-{cell_number}',
+        ids={
+            'input': f'level3-cell-{cell_number}-code',
+            'run': button_id,
+            'output': f'level3-cell-{cell_number}-console',
+            'error': f'level3-cell-{cell_number}-error',
+            'validation': f'level3-cell-{cell_number}-validation',
+            'highlighted': f'level3-cell-{cell_number}-highlighted',
+            'plot': f'level3-cell-{cell_number}-plot',
+        },
+    )
+    for cell_number, button_id in {
+        1: 'level3-load-data-btn',
+        2: 'level3-define-model-btn',
+        3: 'level3-forward-btn',
+        4: 'level3-train-btn',
+        5: 'level3-inspect-btn',
+        6: 'level3-evaluate-btn',
+    }.items()
+}
+
+
 def _level3_code_cell(cell_number, title, description, button_id, button_text, controls=None):
     if controls is None:
         controls = []
 
-    return html.Div(
-        [
-            html.Div(
-                [
-                    html.Span(title, style={'fontWeight': '700', 'fontSize': '16px'}),
-                    html.Button(
-                        button_text,
-                        id=button_id,
-                        n_clicks=0,
-                        style={
-                            'backgroundColor': '#0f766e',
-                            'color': 'white',
-                            'border': 'none',
-                            'padding': '8px 12px',
-                            'borderRadius': '8px',
-                        },
-                    ),
-                ],
-                style={
-                    'display': 'flex',
-                    'justifyContent': 'space-between',
-                    'alignItems': 'center',
-                    'marginBottom': '10px',
-                },
-            ),
-            html.P(description, style={'fontSize': '13px', 'color': '#475569', 'marginBottom': '12px'}),
-            dcc.Textarea(
-                id=f'level3-cell-{cell_number}-code',
-                value=LEVEL3_CELL_SNIPPETS[cell_number],
-                style={
-                    'width': '100%',
-                    'height': '160px',
-                    'fontFamily': 'Consolas, Monaco, monospace',
-                    'fontSize': '13px',
-                    'lineHeight': '1.5',
-                    'backgroundColor': '#0f172a',
-                    'color': '#e2e8f0',
-                    'border': 'none',
-                    'borderRadius': '10px',
-                    'padding': '12px',
-                    'boxSizing': 'border-box',
-                    'marginBottom': '12px',
-                },
-            ),
-            html.Div(controls, style={'marginBottom': '12px'}),
-            html.Div(
-                'Run the cell to see console output.',
-                id=f'level3-cell-{cell_number}-console',
-                style={
-                    'minHeight': '54px',
-                    'backgroundColor': '#f8fafc',
-                    'border': '1px solid #dbeafe',
-                    'borderRadius': '10px',
-                    'padding': '12px',
-                    'fontFamily': 'Consolas, Monaco, monospace',
-                    'fontSize': '12px',
-                    'color': '#334155',
-                    'whiteSpace': 'pre-wrap',
-                },
-            ),
-        ],
-        style={
-            'backgroundColor': 'white',
-            'borderRadius': '16px',
-            'padding': '18px',
-            'boxShadow': '0 2px 10px rgba(15, 23, 42, 0.08)',
-            'marginBottom': '16px',
-        },
+    _ = button_id
+    return LEVEL3_CELL_EDITORS[cell_number].render(
+        default_code=LEVEL3_CELL_SNIPPETS[cell_number],
+        title=title,
+        description=description,
+        controls=controls,
+        run_label=button_text,
+        show_export=False,
+        include_plot=False,
+        code_height='160px',
+        output_placeholder='Run the cell to see console output.',
+        wrapper_style={'marginBottom': '16px'},
     )
 
 

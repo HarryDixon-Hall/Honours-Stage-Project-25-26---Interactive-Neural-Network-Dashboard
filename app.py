@@ -57,6 +57,7 @@ matplotlib.use('Agg') #for the png whic dash plotly can display
 
 #page layout imports
 from pagelayout import home_layout
+from pagelayout import SANDBOX_EDITOR
 from pagelayout import skilltree_layout
 from pagelayout import sandbox_layout
 
@@ -658,7 +659,7 @@ def train_visualise_or_reset(train_clicks,
         showlegend=False
     )
 
-    node_colors = [
+    node_colours = [
         '#60A5FA' if layer == 'Input'
         else '#A855F7' if layer == 'Hidden'
         else '#F97316'
@@ -673,7 +674,7 @@ def train_visualise_or_reset(train_clicks,
         textposition='middle right',
         marker=dict(
             size=18,
-            color=node_colors,
+            color=node_colours,
             line=dict(width=1, color='#333333')
         ),
         hoverinfo='text',
@@ -810,17 +811,16 @@ def execute_python_code(run_clicks, export_clicks, user_code):
 #callback for a custom syntax highlighter/validator to read python code from the user
 #how will i get the error message if there's a compile fail?
 @app.callback(
+    Output("code-validation", "children"),
     Output("code-highlighted", "children"),
     Input("code-input", "value"),
 )
 
 def syntax_highlighter(pythonCode):
-    if not pythonCode: #if there's no code in the text area it must be returned as an empty value
-        return ""
-    
-    #the following highlighter needs to be inline and using regex principles
-    #it will go character by character, no need to look at blank spaces unless necessary
-    #will this method include validation??
+    return (
+        SANDBOX_EDITOR.build_validation_message(pythonCode),
+        SANDBOX_EDITOR.build_highlighted_code(pythonCode),
+    )
 
 #endregion
 

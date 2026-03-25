@@ -34,8 +34,8 @@ from levels.level3.methods import (
     level3_deserialize_split,
     level3_forward_summary_children,
     level3_hidden_space_figure,
-    level3_initialize_model,
-    level3_initialize_store,
+    level3_initialise_model,
+    level3_initialise_store,
     level3_metrics_summary_children,
     level3_misclassified_figure,
     level3_model_matches,
@@ -43,6 +43,7 @@ from levels.level3.methods import (
     level3_training_log_children,
     make_level3_placeholder_figure,
 )
+from levels.level3.layout import LEVEL3_CELL_EDITORS
 
 
 def register_level3_callbacks(app):
@@ -81,24 +82,24 @@ def register_level3_callbacks(app):
         meta = level3_build_meta(dataset, depth, width, activation, epochs)
 
         if store is None or store.get('meta', {}).get('dataset') != dataset:
-            store = level3_initialize_store(meta)
+            store = level3_initialise_store(meta)
         else:
             store['meta'] = meta
 
         if trigger in (None, 'level3-load-data-btn'):
-            store = level3_initialize_store(meta)
+            store = level3_initialise_store(meta)
             store['cell_runs']['load_dataset'] = True
             return store
 
         store['cell_runs']['load_dataset'] = True
 
         if trigger == 'level3-define-model-btn':
-            store = level3_initialize_model(store, meta)
+            store = level3_initialise_model(store, meta)
             store['cell_runs']['define_model'] = True
             return store
 
         if store.get('model') is None or not level3_model_matches(store, meta):
-            store = level3_initialize_model(store, meta)
+            store = level3_initialise_model(store, meta)
         store['cell_runs']['define_model'] = True
 
         X_train, X_test, y_train, y_test, _, _ = level3_deserialize_split(store['data'])
@@ -383,4 +384,42 @@ def register_level3_callbacks(app):
 
         responses = [dash.no_update] * 6
         responses[cell_number - 1] = console_children
+        return tuple(responses)
+
+    @app.callback(
+        Output('level3-cell-1-validation', 'children'),
+        Output('level3-cell-1-highlighted', 'children'),
+        Output('level3-cell-2-validation', 'children'),
+        Output('level3-cell-2-highlighted', 'children'),
+        Output('level3-cell-3-validation', 'children'),
+        Output('level3-cell-3-highlighted', 'children'),
+        Output('level3-cell-4-validation', 'children'),
+        Output('level3-cell-4-highlighted', 'children'),
+        Output('level3-cell-5-validation', 'children'),
+        Output('level3-cell-5-highlighted', 'children'),
+        Output('level3-cell-6-validation', 'children'),
+        Output('level3-cell-6-highlighted', 'children'),
+        Input('level3-cell-1-code', 'value'),
+        Input('level3-cell-2-code', 'value'),
+        Input('level3-cell-3-code', 'value'),
+        Input('level3-cell-4-code', 'value'),
+        Input('level3-cell-5-code', 'value'),
+        Input('level3-cell-6-code', 'value'),
+    )
+    def update_level3_code_feedback(
+        cell_1_code,
+        cell_2_code,
+        cell_3_code,
+        cell_4_code,
+        cell_5_code,
+        cell_6_code,
+    ):
+        responses = []
+        for cell_number, code in enumerate(
+            [cell_1_code, cell_2_code, cell_3_code, cell_4_code, cell_5_code, cell_6_code],
+            start=1,
+        ):
+            editor = LEVEL3_CELL_EDITORS[cell_number]
+            responses.append(editor.build_validation_message(code))
+            responses.append(editor.build_highlighted_code(code))
         return tuple(responses)

@@ -42,7 +42,7 @@ def build_architecture_diagram(model, hidden_size):
 				x=[0, 1],
 				y=[input_nodes[input_index], hidden_nodes[hidden_index]],
 				mode='lines',
-				line=dict(width=1, color='gray'),
+				line=dict(width=1, color='grey'),
 				showlegend=False,
 				hoverinfo='skip',
 			))
