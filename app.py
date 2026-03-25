@@ -23,11 +23,11 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from code_execution import execute_python_snippet
-from dataload import load_dataset, get_dataset_stats
-from trainer import train_model
-from trainer import build_model
+from modelFactory.dataload import load_dataset, get_dataset_stats
+from modelFactory.trainer import train_model
+from modelFactory.trainer import build_model
 
-from models import SimpleNN
+from modelFactory.models import SimpleNN
 from levels.level1 import level1_layout, register_level1_callbacks
 from levels.level2 import (
     init_level2_mlp,
@@ -56,10 +56,9 @@ matplotlib.use('Agg') #for the png whic dash plotly can display
 #from models import ComplexNN
 
 #page layout imports
-from pagelayout import home_layout
-from pagelayout import SANDBOX_EDITOR
-from pagelayout import skilltree_layout
-from pagelayout import sandbox_layout
+from adaptiveLearning.gamification.skillTree import skilltree_layout
+from homePage.layout import home_layout
+from sandboxPage.layout import SANDBOX_EDITOR, sandbox_layout
 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
@@ -489,7 +488,7 @@ def train_visualise_or_reset(train_clicks,
                                 learning_rate=learning_rate,
                                 )
     
-    from models import SimpleNN
+    from modelFactory.models import SimpleNN
     np.random.seed(seed)
     val_tracking_model = SimpleNN(input_size=X_train.shape[1],
                          hidden_size=int(hidden_size),

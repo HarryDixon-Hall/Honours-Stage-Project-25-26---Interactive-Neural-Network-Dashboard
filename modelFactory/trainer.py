@@ -1,7 +1,7 @@
 #DECLARATION: CODE HERE IS ASSISTED BY https://www.perplexity.ai/ 04/12/25 - 22/03/26
-from models import LogisticRegression
-from models import SimpleNN
-from models import ComplexNN
+from modelFactory.models import LogisticRegression
+from modelFactory.models import SimpleNN
+from modelFactory.models import ComplexNN
 
 import numpy as np
 
