@@ -537,7 +537,7 @@ def skilltree_layout():
 
             dcc.Link([skill_box("Level 2", "Architecture Impact")], href="/level2"),       # row 4
 
-            dcc.Link([skill_box("Level 1", "Linear Decision Boundary Explorer")], href="/level1"), # row 5
+            dcc.Link([skill_box("Level 1", "Preconfigured FFNN Explorer")], href="/level1"), # row 5
         ])            
     ], style={
             "display": "grid",
@@ -555,161 +555,248 @@ def skill_box(title, subtitle):
 #endregion
 
 #region Level layouts
-"""
-def level1_layout():
-    return html.Div([
-        html.H1("Level 1: Hyperparameter Playground", style={'textAlign': 'center'}),
-        
-        # Right side of screen  = Controls + Code Preview
-        html.Div([
-            html.H3("Change Architecture Live"),
-            # sliders (Req 1.1.3)
-            html.Label("Hidden Layer Size:"), dcc.Slider(id='live-hidden-size', min=2, max=16, value=8,
-                                                        marks={i: str(i) for i in [2,4,8,12,16]}),
-            html.Label("Random Seed:"), dcc.Input(id='live-seed', type='number', value=42),
-            
-            # code preview (Req 3.1.6)
-            html.Label("Live Code Preview:"), 
-            html.Div(id='code-preview', children=[
-                dcc.Textarea(value="model = SimpleNN(4, 8, 3, seed=42)", 
-                           style={'width': '100%', 'height': 100, 'fontFamily': 'monospace'})
-            ]),
-            html.Button("Test Architecture", id='test-arch-btn')
-        ], style={'width': '45%', 'float': 'left'}),
-        
-        # right side of screen: this will be live visualisation from ui sliders (Req 3.1.5)
-        html.Div([
-            dcc.Graph(id='live-architecture'),      # Nodes + edges
-            dcc.Graph(id='live-weights-heatmap'),   # Parameter matrices
-            dcc.Graph(id='live-decision-boundary')  # Classification viz
-        ], style={'width': '55%', 'float': 'right'})
-    ])
-"""
+
+#i think here i should reduce the levels down to features rather than concepts
+
+##1. Level 1 - hyperparameter sliders with PRECONFIGURED model to show instant visual feedback
 def level1_layout():
     return html.Div(
         [
             html.H1(
-                "Level 1: Linear Decision Boundary Explorer",
-                style={'textAlign': 'center'}
+                "Level 1: Preconfigured FFNN Explorer",
+                style={
+                    'textAlign': 'center',
+                    'marginBottom': '8px'
+                }
             ),
-
-            # Parent flex container
+            html.P(
+                "Work with a fixed feed-forward network and see how dataset choice, activation, and training settings change the learned boundary.",
+                style={
+                    'textAlign': 'center',
+                    'maxWidth': '960px',
+                    'margin': '0 auto 20px auto',
+                    'color': '#4b5563'
+                }
+            ),
+            html.Div(
+                id='l1-metrics-cards',
+                style={
+                    'display': 'grid',
+                    'gridTemplateColumns': 'repeat(auto-fit, minmax(150px, 1fr))',
+                    'gap': '12px',
+                    'marginBottom': '18px'
+                }
+            ),
             html.Div(
                 [
-                    # Left side: controls
                     html.Div(
                         [
-                            html.H3("Data & Linear Model Controls"),
-
-                            html.Label("Dataset:"),
+                            html.H3("Control Panel", style={'marginTop': '0'}),
+                            html.P(
+                                "Level 1 keeps the model architecture fixed so the main focus stays on the ML pipeline: choose data, run training, and compare outcomes.",
+                                style={'fontSize': '14px', 'color': '#4b5563'}
+                            ),
+                            html.Label("Dataset", style={'fontWeight': '600'}),
                             dcc.Dropdown(
                                 id='l1-dataset',
                                 options=[
                                     {'label': 'Linearly Separable', 'value': 'linear'},
-                                    {'label': 'Not Linearly Separable (Moons)', 'value': 'moons'},
-                                    {'label': 'Not Linearly Separable (Circles)', 'value': 'circles'}
+                                    {'label': 'Moons', 'value': 'moons'},
+                                    {'label': 'Circles', 'value': 'circles'}
                                 ],
                                 value='linear',
-                                clearable=False
+                                clearable=False,
+                                style={'marginBottom': '14px'}
                             ),
-
-                            html.Hr(),
-
-                            html.Label("Weight w₁ (x-axis):"),
+                            html.Label("Hidden Activation", style={'fontWeight': '600'}),
+                            dcc.Dropdown(
+                                id='l1-activation',
+                                options=[
+                                    {'label': 'ReLU', 'value': 'relu'},
+                                    {'label': 'Tanh', 'value': 'tanh'},
+                                    {'label': 'Sigmoid', 'value': 'sigmoid'}
+                                ],
+                                value='tanh',
+                                clearable=False,
+                                style={'marginBottom': '14px'}
+                            ),
+                            html.Label("Epochs Per Run", style={'fontWeight': '600'}),
                             dcc.Slider(
-                                id='l1-w1',
-                                min=-5, max=5, step=0.1, value=1.0,
-                                marks={i: str(i) for i in range(-5, 6, 2)}
+                                id='l1-epochs',
+                                min=10,
+                                max=150,
+                                step=10,
+                                value=50,
+                                marks={10: '10', 50: '50', 100: '100', 150: '150'},
                             ),
-
-                            html.Label("Weight w₂ (y-axis):"),
-                            dcc.Slider(
-                                id='l1-w2',
-                                min=-5, max=5, step=0.1, value=1.0,
-                                marks={i: str(i) for i in range(-5, 6, 2)}
-                            ),
-
-                            html.Label("Bias b:"),
-                            dcc.Slider(
-                                id='l1-bias',
-                                min=-5, max=5, step=0.1, value=0.0,
-                                marks={i: str(i) for i in range(-5, 6, 2)}
-                            ),
-
-                            html.Hr(),
-
-                            html.Label("Learning Rate (for training step):"),
-                            dcc.Slider(
-                                id='l1-lr',
-                                min=0.001, max=1.0, step=0.001, value=0.1,
-                                marks={0.001: '0.001', 0.01: '0.01', 0.1: '0.1', 1.0: '1.0'}
-                            ),
-
-                            html.Div(
+                            html.Details(
                                 [
-                                    html.Button("Train One Step", id='l1-train-step', n_clicks=0),
-                                    html.Button(
-                                        "Reset Weights",
-                                        id='l1-reset',
-                                        n_clicks=0,
-                                        style={'marginLeft': '10px'}
+                                    html.Summary("Advanced Controls", style={'cursor': 'pointer', 'fontWeight': '600'}),
+                                    html.Div(
+                                        [
+                                            html.Label("Learning Rate", style={'fontWeight': '600', 'marginTop': '12px'}),
+                                            dcc.Slider(
+                                                id='l1-lr',
+                                                min=0.001,
+                                                max=0.1,
+                                                step=0.001,
+                                                value=0.02,
+                                                marks={0.001: '0.001', 0.02: '0.02', 0.05: '0.05', 0.1: '0.1'},
+                                                tooltip={'placement': 'bottom', 'always_visible': True},
+                                            ),
+                                        ],
+                                        style={'marginTop': '10px'}
                                     )
                                 ],
-                                style={'marginTop': '10px'}
+                                style={'marginTop': '18px', 'marginBottom': '18px'}
                             ),
-
-                            html.Hr(),
-
-                            html.Label("Current Linear Model:"),
-                            dcc.Textarea(
-                                id='l1-model-equation',
-                                value="sign(w1 * x + w2 * y + b)",
+                            html.Div(
+                                [
+                                    html.Button(
+                                        "Run Training",
+                                        id='l1-run-training',
+                                        n_clicks=0,
+                                        style={
+                                            'backgroundColor': '#0f766e',
+                                            'color': 'white',
+                                            'border': 'none',
+                                            'padding': '10px 16px',
+                                            'borderRadius': '8px'
+                                        }
+                                    ),
+                                    html.Button(
+                                        "Reset",
+                                        id='l1-reset',
+                                        n_clicks=0,
+                                        style={
+                                            'marginLeft': '10px',
+                                            'backgroundColor': '#e5e7eb',
+                                            'border': 'none',
+                                            'padding': '10px 16px',
+                                            'borderRadius': '8px'
+                                        }
+                                    )
+                                ],
+                                style={'marginBottom': '18px'}
+                            ),
+                            html.Div(
+                                id='l1-architecture-summary',
                                 style={
-                                    'width': '100%',
-                                    'height': 60,
-                                    'fontFamily': 'monospace'
+                                    'backgroundColor': '#f8fafc',
+                                    'border': '1px solid #dbeafe',
+                                    'borderRadius': '12px',
+                                    'padding': '16px',
+                                    'marginBottom': '18px'
                                 }
                             ),
+                            html.Div(
+                                [
+                                    html.H4("Prediction / Sample Inspector", style={'marginTop': '0'}),
+                                    html.Label("Sample Index", style={'fontWeight': '600'}),
+                                    dcc.Slider(id='l1-sample-index', min=0, max=299, step=1, value=0),
+                                    html.Div(
+                                        id='l1-sample-inspector',
+                                        style={
+                                            'marginTop': '14px',
+                                            'padding': '14px',
+                                            'backgroundColor': '#fff7ed',
+                                            'borderRadius': '12px',
+                                            'border': '1px solid #fed7aa'
+                                        }
+                                    )
+                                ],
+                                style={
+                                    'backgroundColor': 'white',
+                                    'borderRadius': '12px',
+                                    'padding': '16px',
+                                    'boxShadow': '0 2px 8px rgba(15, 23, 42, 0.08)'
+                                }
+                            )
                         ],
                         style={
-                            'flex': '0 0 35%',
-                            'padding': '0 20px',
+                            'flex': '0 0 32%',
+                            'padding': '20px',
+                            'backgroundColor': '#f8fafc',
+                            'borderRadius': '16px',
+                            'boxShadow': '0 2px 10px rgba(15, 23, 42, 0.08)',
                             'boxSizing': 'border-box'
                         }
                     ),
-
-                    # Right side: visualisations
                     html.Div(
                         [
-                            html.H3("Decision Boundary & Loss"),
-
-                            dcc.Graph(
-                                id='l1-decision-boundary',
-                                style={'height': '55vh'}
+                            html.Div(
+                                [
+                                    html.H3("Decision Boundary", style={'marginTop': '0'}),
+                                    dcc.Graph(
+                                        id='l1-decision-boundary',
+                                        style={'height': '58vh'}
+                                    )
+                                ],
+                                style={
+                                    'backgroundColor': 'white',
+                                    'borderRadius': '16px',
+                                    'padding': '18px',
+                                    'boxShadow': '0 2px 10px rgba(15, 23, 42, 0.08)',
+                                    'marginBottom': '16px'
+                                }
                             ),
-
-                            dcc.Graph(
-                                id='l1-loss-curve',
-                                style={'height': '30vh', 'marginTop': '10px'}
-                            ),
+                            html.Div(
+                                [
+                                    html.Div(
+                                        [
+                                            html.H3("Loss Curve", style={'marginTop': '0'}),
+                                            dcc.Graph(
+                                                id='l1-loss-curve',
+                                                style={'height': '28vh'}
+                                            )
+                                        ],
+                                        style={
+                                            'flex': '1 1 60%',
+                                            'backgroundColor': 'white',
+                                            'borderRadius': '16px',
+                                            'padding': '18px',
+                                            'boxShadow': '0 2px 10px rgba(15, 23, 42, 0.08)'
+                                        }
+                                    ),
+                                    html.Div(
+                                        [
+                                            html.H3("Architecture View", style={'marginTop': '0'}),
+                                            html.Div(id='l1-architecture-view')
+                                        ],
+                                        style={
+                                            'flex': '1 1 40%',
+                                            'backgroundColor': 'white',
+                                            'borderRadius': '16px',
+                                            'padding': '18px',
+                                            'boxShadow': '0 2px 10px rgba(15, 23, 42, 0.08)'
+                                        }
+                                    )
+                                ],
+                                style={
+                                    'display': 'flex',
+                                    'gap': '16px',
+                                    'flexWrap': 'wrap'
+                                }
+                            )
                         ],
                         style={
-                            'flex': '0 0 65%',
-                            'padding': '0 20px',
+                            'flex': '1',
+                            'paddingLeft': '20px',
                             'boxSizing': 'border-box'
                         }
-                    ),
+                    )
                 ],
                 style={
                     'display': 'flex',
-                    'flexDirection': 'row',
+                    'flexWrap': 'wrap',
                     'alignItems': 'flex-start'
                 }
             ),
+            dcc.Store(id='l1-training-store')
         ]
     )
 
-
+#2. level 2 - building a new model with sliders - MODEL BUILDER
 def level2_layout():
     return html.Div([
         html.H2(
@@ -793,6 +880,7 @@ def level2_layout():
         dcc.Store(id='level2-params-store'),
     ])
 
+#3. level 3 - building a model with multiple code cells (visualisation of intermediate outputs)
 def level3_layout():
     return html.Div([
         html.H2(
