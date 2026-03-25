@@ -1,4 +1,43 @@
-from levels.level3.callbacks import register_level1_callbacks
+from levels.level3.callbacks import register_level3_callbacks
 from levels.level3.layout import level3_layout
+from levels.level3.methods import (
+	level3_activation_heatmap_figure,
+	level3_build_meta,
+	level3_confusion_matrix_figure,
+	level3_dataset_preview_figure,
+	level3_dataset_summary_children,
+	level3_deserialize_split,
+	level3_forward_summary_children,
+	level3_hidden_space_figure,
+	level3_initialize_model,
+	level3_initialize_store,
+	level3_metrics_summary_children,
+	level3_misclassified_figure,
+	level3_model_matches,
+	level3_notebook_status_children,
+	level3_serialize_split,
+	level3_training_log_children,
+	make_level3_placeholder_figure,
+)
 
-__all__ = ['level1_layout', 'register_level1_callbacks']
+__all__ = [
+	'level3_layout',
+	'register_level3_callbacks',
+	'make_level3_placeholder_figure',
+	'level3_build_meta',
+	'level3_serialize_split',
+	'level3_deserialize_split',
+	'level3_initialize_store',
+	'level3_model_matches',
+	'level3_initialize_model',
+	'level3_dataset_preview_figure',
+	'level3_activation_heatmap_figure',
+	'level3_hidden_space_figure',
+	'level3_confusion_matrix_figure',
+	'level3_misclassified_figure',
+	'level3_forward_summary_children',
+	'level3_training_log_children',
+	'level3_metrics_summary_children',
+	'level3_dataset_summary_children',
+	'level3_notebook_status_children',
+]
