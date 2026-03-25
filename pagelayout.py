@@ -1032,359 +1032,331 @@ def level2_layout():
         dcc.Store(id='level2-compare-store'),
     ])
 
+def _level3_code_cell(title, description, code_value, button_id, button_text, controls=None):
+    if controls is None:
+        controls = []
+
+    return html.Div([
+        html.Div([
+            html.Span(title, style={'fontWeight': '700', 'fontSize': '16px'}),
+            html.Button(
+                button_text,
+                id=button_id,
+                n_clicks=0,
+                style={
+                    'backgroundColor': '#0f766e',
+                    'color': 'white',
+                    'border': 'none',
+                    'padding': '8px 12px',
+                    'borderRadius': '8px'
+                }
+            )
+        ], style={
+            'display': 'flex',
+            'justifyContent': 'space-between',
+            'alignItems': 'center',
+            'marginBottom': '10px'
+        }),
+        html.P(description, style={'fontSize': '13px', 'color': '#475569', 'marginBottom': '12px'}),
+        dcc.Textarea(
+            value=code_value,
+            readOnly=True,
+            style={
+                'width': '100%',
+                'height': '140px',
+                'fontFamily': 'Consolas, Monaco, monospace',
+                'fontSize': '13px',
+                'lineHeight': '1.5',
+                'backgroundColor': '#0f172a',
+                'color': '#e2e8f0',
+                'border': 'none',
+                'borderRadius': '10px',
+                'padding': '12px',
+                'boxSizing': 'border-box',
+                'marginBottom': '12px'
+            }
+        ),
+        html.Div(controls)
+    ], style={
+        'backgroundColor': 'white',
+        'borderRadius': '16px',
+        'padding': '18px',
+        'boxShadow': '0 2px 10px rgba(15, 23, 42, 0.08)',
+        'marginBottom': '16px'
+    })
+
+
+def _level3_output_card(title, children):
+    return html.Div([
+        html.H3(title, style={'marginTop': '0', 'marginBottom': '14px'}),
+        children,
+    ], style={
+        'backgroundColor': 'white',
+        'borderRadius': '16px',
+        'padding': '18px',
+        'boxShadow': '0 2px 10px rgba(15, 23, 42, 0.08)',
+        'height': '100%',
+        'boxSizing': 'border-box'
+    })
+
+
 #3. level 3 - building a model with multiple code cells (visualisation of intermediate outputs)
 def level3_layout():
     return html.Div([
         html.H2(
-            "Level 3 – Deeper Networks and Expressivity",
-            style={'textAlign': 'center', 'marginBottom': '10px'}
+            "Level 3 – Notebook Workflow for Building a Classifier",
+            style={'textAlign': 'center', 'marginBottom': '12px'}
         ),
 
         html.P(
-            "Stacking layers applies repeated space transformations. "
-            "More neurons and layers let the network approximate richer functions "
-            "(universal approximation). Use the sliders to watch piecewise-linear "
-            "approximations become more accurate.",
-            style={'textAlign': 'center', 'marginBottom': '20px', 'maxWidth': '800px',
-                   'margin': '0 auto 20px auto'}
+            "Move from dashboard controls into a notebook-like workflow. Each cell defines one part "
+            "of the classification pipeline, and every step exposes an intermediate output so you can "
+            "inspect the dataset, architecture, forward pass, training behaviour, hidden states, and evaluation.",
+            style={
+                'textAlign': 'center',
+                'margin': '0 auto 24px auto',
+                'maxWidth': '980px',
+                'color': '#4b5563'
+            }
         ),
 
-        # Controls row
         html.Div([
             html.Div([
-                html.H4("Target function"),
-                dcc.Dropdown(
-                    id='level3-target-dropdown',
-                    options=[
-                        {'label': 'sin(x)', 'value': 'sin'},
-                        {'label': 'abs(x)', 'value': 'abs'},
-                        {'label': 'x² (quadratic)', 'value': 'quadratic'},
-                        {'label': 'step function', 'value': 'step'},
-                        {'label': 'sawtooth', 'value': 'sawtooth'},
-                    ],
-                    value='sin',
-                    clearable=False
+                html.Div(
+                    id='level3-notebook-status',
+                    style={
+                        'backgroundColor': '#ecfeff',
+                        'border': '1px solid #a5f3fc',
+                        'borderRadius': '14px',
+                        'padding': '16px',
+                        'marginBottom': '16px',
+                        'fontSize': '13px',
+                        'color': '#155e75'
+                    }
                 ),
-
-                html.H4("Hidden width (neurons per layer)"),
-                dcc.Slider(
-                    id='level3-width-slider',
-                    min=1, max=32, step=1, value=8,
-                    marks={1: '1', 4: '4', 8: '8', 16: '16', 32: '32'}
+                _level3_code_cell(
+                    "1. Load Dataset",
+                    "Choose a toy classification dataset and preview the split before building the model.",
+                    "# Cell 1: Load dataset\n"
+                    "dataset_name = \"moons\"\n"
+                    "X, y = load_toy_dataset(dataset_name)\n"
+                    "X_train, X_test, y_train, y_test = train_test_split(\n"
+                    "    X, y, test_size=0.25, random_state=42, stratify=y\n"
+                    ")\n"
+                    "preview_dataset(X_train, X_test, y_train, y_test)",
+                    'level3-load-data-btn',
+                    'Run Cell 1',
+                    controls=[
+                        html.Label("Toy classification dataset", style={'fontWeight': '600'}),
+                        dcc.Dropdown(
+                            id='level3-dataset-dropdown',
+                            options=[
+                                {'label': 'Moons', 'value': 'moons'},
+                                {'label': 'Circles', 'value': 'circles'},
+                                {'label': 'Linear', 'value': 'linear'},
+                            ],
+                            value='moons',
+                            clearable=False
+                        )
+                    ]
                 ),
-
-                html.H4("Depth (number of hidden layers)"),
-                dcc.Slider(
-                    id='level3-depth-slider',
-                    min=1, max=6, step=1, value=1,
-                    marks={i: str(i) for i in range(1, 7)}
+                _level3_code_cell(
+                    "2. Define Model",
+                    "Set the hidden stack and activation inside the model-definition cell rather than using the whole page as a slider demo.",
+                    "# Cell 2: Define model\n"
+                    "hidden_layers = [6, 6]\n"
+                    "activation = \"tanh\"\n"
+                    "model = init_level2_mlp(\n"
+                    "    input_dim=2, hidden_layers=hidden_layers, output_dim=1\n"
+                    ")\n"
+                    "summarise_architecture(model, activation)",
+                    'level3-define-model-btn',
+                    'Run Cell 2',
+                    controls=[
+                        html.Label("Hidden layers", style={'fontWeight': '600'}),
+                        dcc.Slider(
+                            id='level3-depth-slider',
+                            min=1, max=5, step=1, value=2,
+                            marks={i: str(i) for i in range(1, 6)}
+                        ),
+                        html.Label("Neurons per hidden layer", style={'fontWeight': '600', 'marginTop': '12px'}),
+                        dcc.Slider(
+                            id='level3-width-slider',
+                            min=2, max=12, step=1, value=6,
+                            marks={2: '2', 4: '4', 8: '8', 12: '12'}
+                        ),
+                        html.Label("Activation function", style={'fontWeight': '600', 'marginTop': '12px'}),
+                        dcc.Dropdown(
+                            id='level3-activation-dropdown',
+                            options=[
+                                {'label': 'ReLU', 'value': 'relu'},
+                                {'label': 'Tanh', 'value': 'tanh'},
+                                {'label': 'Sigmoid', 'value': 'sigmoid'},
+                            ],
+                            value='tanh',
+                            clearable=False
+                        )
+                    ]
                 ),
-
-                html.H4("Activation function"),
-                dcc.Dropdown(
-                    id='level3-activation-dropdown',
-                    options=[
-                        {'label': 'ReLU', 'value': 'relu'},
-                        {'label': 'Tanh', 'value': 'tanh'},
-                        {'label': 'Sigmoid', 'value': 'sigmoid'},
-                    ],
-                    value='relu',
-                    clearable=False
+                _level3_code_cell(
+                    "3. Forward Pass",
+                    "Push one batch through the network and inspect tensor shapes and sample predictions before training.",
+                    "# Cell 3: Forward pass\n"
+                    "batch_X = X_train[:24]\n"
+                    "probs, cache = level2_forward_pass(batch_X, model, activation)\n"
+                    "print_shapes(cache)\n"
+                    "show_example_predictions(batch_X, probs)",
+                    'level3-forward-btn',
+                    'Run Cell 3'
                 ),
-
-                html.H4("Training epochs per click"),
-                dcc.Slider(
-                    id='level3-epochs-slider',
-                    min=50, max=500, step=50, value=200,
-                    marks={50: '50', 200: '200', 500: '500'}
+                _level3_code_cell(
+                    "4. Train Model",
+                    "Optimise the classifier for a chosen number of epochs and inspect how the boundary and loss change.",
+                    "# Cell 4: Train model\n"
+                    "epochs = 150\n"
+                    "model = train_level2_model(\n"
+                    "    X_train, y_train, model, activation=activation, epochs=epochs\n"
+                    ")\n"
+                    "plot_training_history(model['history'])",
+                    'level3-train-btn',
+                    'Run Cell 4',
+                    controls=[
+                        html.Label("Training epochs", style={'fontWeight': '600'}),
+                        dcc.Slider(
+                            id='level3-epochs-slider',
+                            min=50, max=400, step=50, value=150,
+                            marks={50: '50', 150: '150', 300: '300', 400: '400'}
+                        )
+                    ]
                 ),
+                _level3_code_cell(
+                    "5. Inspect Internals",
+                    "Expose hidden representations and per-layer activations once the model has meaningful state.",
+                    "# Cell 5: Inspect internals\n"
+                    "hidden_states = inspect_hidden_layers(model, X_test)\n"
+                    "plot_activation_heatmaps(hidden_states)\n"
+                    "plot_hidden_projection(hidden_states[-1], y_test)",
+                    'level3-inspect-btn',
+                    'Run Cell 5'
+                ),
+                _level3_code_cell(
+                    "6. Evaluate Model",
+                    "Measure final predictive quality and inspect where the network still makes mistakes.",
+                    "# Cell 6: Evaluate model\n"
+                    "metrics = evaluate_classifier(model, X_test, y_test)\n"
+                    "plot_confusion_matrix(metrics['confusion_matrix'])\n"
+                    "highlight_misclassified_points(X_test, y_test, metrics)",
+                    'level3-evaluate-btn',
+                    'Run Cell 6'
+                ),
+            ], style={
+                'flex': '0 0 38%',
+                'paddingRight': '20px',
+                'boxSizing': 'border-box'
+            }),
 
+            html.Div([
                 html.Div([
-                    html.Button('Randomize & Reset', id='level3-randomize-btn', n_clicks=0,
-                                style={'marginRight': '8px'}),
-                    html.Button('Train', id='level3-train-btn', n_clicks=0),
-                ], style={'marginTop': '12px'}),
+                    html.H3("Decision Boundary / Prediction Surface", style={'marginTop': '0'}),
+                    dcc.Graph(id='level3-boundary-graph', style={'height': '52vh'})
+                ], style={
+                    'backgroundColor': 'white',
+                    'borderRadius': '16px',
+                    'padding': '18px',
+                    'boxShadow': '0 2px 10px rgba(15, 23, 42, 0.08)',
+                    'marginBottom': '16px'
+                }),
+                html.Div([
+                    html.Div([
+                        html.H3("Loss Curve", style={'marginTop': '0'}),
+                        dcc.Graph(id='level3-loss-graph', style={'height': '30vh'})
+                    ], style={
+                        'flex': '1 1 42%',
+                        'backgroundColor': 'white',
+                        'borderRadius': '16px',
+                        'padding': '18px',
+                        'boxShadow': '0 2px 10px rgba(15, 23, 42, 0.08)'
+                    }),
+                    html.Div([
+                        html.H3("Per-Layer Activations", style={'marginTop': '0'}),
+                        dcc.Graph(id='level3-activations-graph', style={'height': '30vh'})
+                    ], style={
+                        'flex': '1 1 58%',
+                        'backgroundColor': 'white',
+                        'borderRadius': '16px',
+                        'padding': '18px',
+                        'boxShadow': '0 2px 10px rgba(15, 23, 42, 0.08)'
+                    }),
+                ], style={
+                    'display': 'flex',
+                    'gap': '16px',
+                    'flexWrap': 'wrap'
+                }),
+            ], style={
+                'flex': '1',
+                'boxSizing': 'border-box'
+            }),
+        ], style={
+            'display': 'flex',
+            'flexWrap': 'wrap',
+            'alignItems': 'flex-start',
+            'marginBottom': '22px'
+        }),
 
-            ], style={'width': '28%', 'display': 'inline-block',
-                      'verticalAlign': 'top', 'padding': '0 20px'}),
-
-            # Side-by-side: target vs approximation
-            html.Div([
-                dcc.Graph(id='level3-approx-graph', style={'height': '50vh'}),
-            ], style={'width': '70%', 'display': 'inline-block'}),
-        ]),
-
-        html.Hr(),
-
-        # Bottom row: network info + parameter count + loss curve
+        html.H3("Cell Outputs", style={'marginBottom': '14px'}),
         html.Div([
             html.Div([
-                html.H4("Network architecture summary"),
-                html.Div(id='level3-arch-summary'),
-            ], style={'width': '33%', 'display': 'inline-block',
-                      'verticalAlign': 'top', 'padding': '0 20px'}),
-
+                _level3_output_card(
+                    "Cell 1 Output – Dataset Preview",
+                    html.Div([
+                        dcc.Graph(id='level3-dataset-preview-graph', style={'height': '30vh'}),
+                        html.Div(id='level3-dataset-summary')
+                    ])
+                )
+            ], style={'flex': '1 1 48%', 'minWidth': '320px'}),
             html.Div([
-                html.H4("Training loss curve"),
-                dcc.Graph(id='level3-loss-graph'),
-            ], style={'width': '33%', 'display': 'inline-block'}),
-
+                _level3_output_card(
+                    "Cell 2 Output – Architecture",
+                    html.Div([
+                        dcc.Graph(id='level3-network-diagram-graph', style={'height': '30vh'}),
+                        html.Div(id='level3-arch-summary')
+                    ])
+                )
+            ], style={'flex': '1 1 48%', 'minWidth': '320px'}),
             html.Div([
-                html.H4("Per-layer activations"),
-                dcc.Graph(id='level3-activations-graph'),
-            ], style={'width': '33%', 'display': 'inline-block'}),
-        ]),
+                _level3_output_card(
+                    "Cell 3 Output – Forward Pass",
+                    html.Div(id='level3-forward-output')
+                )
+            ], style={'flex': '1 1 48%', 'minWidth': '320px'}),
+            html.Div([
+                _level3_output_card(
+                    "Cell 4 Output – Training Log",
+                    html.Div(id='level3-training-log')
+                )
+            ], style={'flex': '1 1 48%', 'minWidth': '320px'}),
+            html.Div([
+                _level3_output_card(
+                    "Cell 5 Output – Hidden Representations",
+                    dcc.Graph(id='level3-hidden-space-graph', style={'height': '34vh'})
+                )
+            ], style={'flex': '1 1 48%', 'minWidth': '320px'}),
+            html.Div([
+                _level3_output_card(
+                    "Cell 6 Output – Evaluation",
+                    html.Div([
+                        dcc.Graph(id='level3-confusion-matrix-graph', style={'height': '28vh'}),
+                        dcc.Graph(id='level3-misclassified-graph', style={'height': '28vh'}),
+                        html.Div(id='level3-metrics-summary')
+                    ])
+                )
+            ], style={'flex': '1 1 48%', 'minWidth': '320px'}),
+        ], style={
+            'display': 'flex',
+            'flexWrap': 'wrap',
+            'gap': '16px'
+        }),
 
-        # Store for model parameters and training history
         dcc.Store(id='level3-params-store'),
     ])
-
-def level4_layout():
-    return html.Div([
-        html.H2(
-            "Level 4 – Training via Loss and Backpropagation",
-            style={'textAlign': 'center', 'marginBottom': '10px'}
-        ),
-
-        html.P(
-            "Explore how networks learn: observe the loss surface, watch gradient "
-            "descent update weights, step through forward and backward passes, "
-            "and develop intuition for learning rate and over/under-fitting.",
-            style={'textAlign': 'center', 'marginBottom': '20px', 'maxWidth': '850px',
-                   'margin': '0 auto 20px auto'}
-        ),
-
-        # Top row: controls + decision boundary animation
-        html.Div([
-            # Left: controls
-            html.Div([
-                html.H4("Toy dataset"),
-                dcc.Dropdown(
-                    id='level4-dataset-dropdown',
-                    options=[
-                        {'label': 'Moons', 'value': 'moons'},
-                        {'label': 'Circles', 'value': 'circles'},
-                        {'label': 'Linear', 'value': 'linear'},
-                    ],
-                    value='moons', clearable=False
-                ),
-
-                html.H4("Hidden width"),
-                dcc.Slider(
-                    id='level4-width-slider',
-                    min=2, max=16, step=1, value=6,
-                    marks={2: '2', 4: '4', 8: '8', 12: '12', 16: '16'}
-                ),
-
-                html.H4("Activation function"),
-                dcc.Dropdown(
-                    id='level4-activation-dropdown',
-                    options=[
-                        {'label': 'ReLU', 'value': 'relu'},
-                        {'label': 'Tanh', 'value': 'tanh'},
-                        {'label': 'Sigmoid', 'value': 'sigmoid'},
-                    ],
-                    value='tanh', clearable=False
-                ),
-
-                html.H4("Learning rate"),
-                dcc.Slider(
-                    id='level4-lr-slider',
-                    min=-3, max=0, step=0.1, value=-1.5,
-                    marks={-3: '0.001', -2: '0.01', -1: '0.1', 0: '1.0'},
-                    tooltip={'placement': 'bottom', 'always_visible': True}
-                ),
-
-                html.H4("Train / validation split"),
-                dcc.Slider(
-                    id='level4-split-slider',
-                    min=0.1, max=0.5, step=0.05, value=0.2,
-                    marks={0.1: '10%', 0.2: '20%', 0.3: '30%', 0.5: '50%'}
-                ),
-
-                html.Div([
-                    html.Button('Reset & Randomize', id='level4-reset-btn', n_clicks=0,
-                                style={'marginRight': '8px'}),
-                    html.Button('Train 1 Epoch', id='level4-step-btn', n_clicks=0,
-                                style={'marginRight': '8px'}),
-                    html.Button('Train 50 Epochs', id='level4-train50-btn', n_clicks=0),
-                ], style={'marginTop': '12px'}),
-
-                html.Div(id='level4-epoch-counter',
-                         style={'marginTop': '8px', 'fontWeight': 'bold'}),
-
-            ], style={'width': '28%', 'display': 'inline-block',
-                      'verticalAlign': 'top', 'padding': '0 20px'}),
-
-            # Right: decision boundary
-            html.Div([
-                dcc.Graph(id='level4-boundary-graph', style={'height': '50vh'}),
-            ], style={'width': '70%', 'display': 'inline-block'}),
-        ]),
-
-        html.Hr(),
-
-        # Middle row: loss curves + gradient flow diagram
-        html.Div([
-            html.Div([
-                html.H4("Training & validation loss curves"),
-                dcc.Graph(id='level4-loss-graph'),
-            ], style={'width': '33%', 'display': 'inline-block'}),
-
-            html.Div([
-                html.H4("Training & validation accuracy"),
-                dcc.Graph(id='level4-accuracy-graph'),
-            ], style={'width': '33%', 'display': 'inline-block'}),
-
-            html.Div([
-                html.H4("Backprop gradient flow"),
-                dcc.Graph(id='level4-gradient-graph'),
-            ], style={'width': '33%', 'display': 'inline-block'}),
-        ]),
-
-        html.Hr(),
-
-        # Bottom row: step-through explanation
-        html.Div([
-            html.Div([
-                html.H4("Forward / Backward pass walkthrough"),
-                html.Div(id='level4-pass-explanation'),
-            ], style={'width': '50%', 'display': 'inline-block',
-                      'verticalAlign': 'top', 'padding': '0 20px'}),
-
-            html.Div([
-                html.H4("Fitting status & insights"),
-                html.Div(id='level4-fit-status'),
-            ], style={'width': '50%', 'display': 'inline-block',
-                      'verticalAlign': 'top', 'padding': '0 20px'}),
-        ]),
-
-        # Stores
-        dcc.Store(id='level4-params-store'),
-    ])
-
-def level5_layout():
-    return html.Div([
-        html.H2(
-            "Level 5 \u2013 Hidden Representations and Feature Spaces",
-            style={'textAlign': 'center', 'marginBottom': '10px'}
-        ),
-
-        html.P(
-            "Watch what hidden layers actually do: each layer re-maps the data into a new "
-            "feature space. Slide through layers to see the input data morph until the "
-            "final hidden layer makes the classes linearly separable.",
-            style={'textAlign': 'center', 'marginBottom': '20px', 'maxWidth': '850px',
-                   'margin': '0 auto 20px auto'}
-        ),
-
-        # ── top row: controls + feature-space scatter ──
-        html.Div([
-            # Left column: controls
-            html.Div([
-                html.H4("Toy dataset"),
-                dcc.Dropdown(
-                    id='level5-dataset-dropdown',
-                    options=[
-                        {'label': 'Moons', 'value': 'moons'},
-                        {'label': 'Circles', 'value': 'circles'},
-                        {'label': 'Linear', 'value': 'linear'},
-                    ],
-                    value='moons', clearable=False
-                ),
-
-                html.H4("Network depth (hidden layers)"),
-                dcc.Slider(
-                    id='level5-depth-slider',
-                    min=1, max=5, step=1, value=3,
-                    marks={i: str(i) for i in range(1, 6)}
-                ),
-
-                html.H4("Hidden width"),
-                dcc.Slider(
-                    id='level5-width-slider',
-                    min=2, max=16, step=1, value=6,
-                    marks={2: '2', 4: '4', 8: '8', 12: '12', 16: '16'}
-                ),
-
-                html.H4("Activation function"),
-                dcc.Dropdown(
-                    id='level5-activation-dropdown',
-                    options=[
-                        {'label': 'ReLU', 'value': 'relu'},
-                        {'label': 'Tanh', 'value': 'tanh'},
-                        {'label': 'Sigmoid', 'value': 'sigmoid'},
-                    ],
-                    value='tanh', clearable=False
-                ),
-
-                html.Div([
-                    html.Button('Reset & Randomize', id='level5-reset-btn', n_clicks=0,
-                                style={'marginRight': '8px'}),
-                    html.Button('Train 50 Epochs', id='level5-train50-btn', n_clicks=0,
-                                style={'marginRight': '8px'}),
-                    html.Button('Train 200 Epochs', id='level5-train200-btn', n_clicks=0),
-                ], style={'marginTop': '12px'}),
-
-                html.Div(id='level5-epoch-counter',
-                         style={'marginTop': '8px', 'fontWeight': 'bold'}),
-
-                html.Hr(),
-                html.H4("Layer slider"),
-                html.P("Slide to see the data after each layer:",
-                       style={'fontSize': '12px'}),
-                dcc.Slider(
-                    id='level5-layer-slider',
-                    min=0, max=3, step=1, value=0,
-                    marks={0: 'Input'},
-                    tooltip={'placement': 'bottom', 'always_visible': True}
-                ),
-
-            ], style={'width': '28%', 'display': 'inline-block',
-                      'verticalAlign': 'top', 'padding': '0 20px'}),
-
-            # Right column: feature-space scatter
-            html.Div([
-                html.H4("Feature-space view (layer embedding)",
-                        style={'textAlign': 'center'}),
-                dcc.Graph(id='level5-feature-graph', style={'height': '55vh'}),
-            ], style={'width': '70%', 'display': 'inline-block'}),
-        ]),
-
-        html.Hr(),
-
-        # ── middle row: decision boundary + loss curve ──
-        html.Div([
-            html.Div([
-                html.H4("Decision boundary (input space)"),
-                dcc.Graph(id='level5-boundary-graph'),
-            ], style={'width': '50%', 'display': 'inline-block'}),
-
-            html.Div([
-                html.H4("Training loss curve"),
-                dcc.Graph(id='level5-loss-graph'),
-            ], style={'width': '50%', 'display': 'inline-block'}),
-        ]),
-
-        html.Hr(),
-
-        # ── bottom row: interpretability explanation ──
-        html.Div([
-            html.Div([
-                html.H4("What is happening at this layer?"),
-                html.Div(id='level5-layer-explanation'),
-            ], style={'width': '50%', 'display': 'inline-block',
-                      'verticalAlign': 'top', 'padding': '0 20px'}),
-
-            html.Div([
-                html.H4("Linear separability check"),
-                html.Div(id='level5-separability-info'),
-            ], style={'width': '50%', 'display': 'inline-block',
-                      'verticalAlign': 'top', 'padding': '0 20px'}),
-        ]),
-
-        # Stores
-        dcc.Store(id='level5-params-store'),
-    ])
-
 #endregion

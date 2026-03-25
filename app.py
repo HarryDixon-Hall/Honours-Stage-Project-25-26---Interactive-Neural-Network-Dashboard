@@ -12,6 +12,7 @@ except ImportError:
     State = dash_dependencies.State
     callback_context = dash.callback_context
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import matplotlib
 matplotlib.use('Agg')  # Dash-safe
 from sklearn.linear_model import LogisticRegression
@@ -44,8 +45,6 @@ from pagelayout import sandbox_layout
 from pagelayout import level1_layout
 from pagelayout import level2_layout
 from pagelayout import level3_layout
-from pagelayout import level4_layout
-from pagelayout import level5_layout
 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
@@ -1726,291 +1725,628 @@ def update_level2_views(params, compare_store):
 #====DECLARATION: CODE HERE IS ASSISTED BY Copilot (GPT-5.4) 22/03/26 - 23/04/26====
 #region MODEL FACTORY: Level 3 callbacks/methods to illustrate a deeper network structure (why is depth helpful) - WORK IN PROGRESS
 
-def level3_target_function(x, name):
-    """Return y values for the chosen 1-D target function."""
-    if name == 'sin':
-        return np.sin(x)
-    elif name == 'abs':
-        return np.abs(x)
-    elif name == 'quadratic':
-        return x ** 2
-    elif name == 'step':
-        return (x >= 0).astype(float)
-    elif name == 'sawtooth':
-        return x - np.floor(x)
-    return np.sin(x)
+def make_level3_placeholder_figure(title, message):
+    fig = go.Figure()
+    fig.add_annotation(
+        text=message,
+        x=0.5,
+        y=0.5,
+        xref='paper',
+        yref='paper',
+        showarrow=False,
+        font=dict(size=14, color='#475569')
+    )
+    fig.update_layout(
+        title=title,
+        xaxis=dict(visible=False),
+        yaxis=dict(visible=False),
+        margin=dict(l=20, r=20, t=50, b=20),
+        plot_bgcolor='#f8fafc',
+        paper_bgcolor='white'
+    )
+    return fig
 
 
-def init_deep_mlp(input_dim, hidden_width, depth, output_dim=1):
-    """Initialise a variable-depth MLP with Xavier scaling."""
-    rng = np.random.default_rng()
-    params = {'depth': depth, 'width': hidden_width}
-
-    # First hidden layer
-    fan_in = input_dim
-    params['W0'] = rng.normal(0, 1.0 / np.sqrt(fan_in),
-                              size=(hidden_width, fan_in)).tolist()
-    params['b0'] = np.zeros(hidden_width).tolist()
-
-    # Additional hidden layers
-    for d in range(1, depth):
-        fan_in = hidden_width
-        params[f'W{d}'] = rng.normal(0, 1.0 / np.sqrt(fan_in),
-                                     size=(hidden_width, fan_in)).tolist()
-        params[f'b{d}'] = np.zeros(hidden_width).tolist()
-
-    # Output layer
-    fan_in = hidden_width
-    params[f'W{depth}'] = rng.normal(0, 1.0 / np.sqrt(fan_in),
-                                     size=(output_dim, fan_in)).tolist()
-    params[f'b{depth}'] = np.zeros(output_dim).tolist()
-
-    params['loss_history'] = []
-    return params
+def level3_build_meta(dataset, depth, width, activation, epochs):
+    hidden_layer_sizes = [width] * depth
+    return {
+        'dataset': dataset,
+        'depth': depth,
+        'width': width,
+        'hidden_layer_sizes': hidden_layer_sizes,
+        'activation': activation,
+        'epochs': epochs,
+        'layer_sizes': [2] + hidden_layer_sizes + [1],
+    }
 
 
-def deep_mlp_forward(x_col, params, activation, return_intermediates=False):
-    """
-    Forward pass through a variable-depth MLP.
-    x_col: (N, 1)  returns (N, 1) output and optionally layer activations.
-    """
-    depth = params['depth']
-    A = x_col.T  # (1, N)
-
-    intermediates = []
-
-    for d in range(depth):
-        W = np.array(params[f'W{d}'])
-        b = np.array(params[f'b{d}']).reshape(-1, 1)
-        Z = W @ A + b
-        A = activation_forward(Z, activation)
-        if return_intermediates:
-            intermediates.append(A.copy())
-
-    # Output layer (linear)
-    W_out = np.array(params[f'W{depth}'])
-    b_out = np.array(params[f'b{depth}']).reshape(-1, 1)
-    out = W_out @ A + b_out  # (1, N)
-
-    if return_intermediates:
-        return out.T, intermediates      # (N, 1), list of (width, N)
-    return out.T                          # (N, 1)
+def level3_serialize_split(X_train, X_test, y_train, y_test, X_full, y_full):
+    return {
+        'X_train': X_train.tolist(),
+        'X_test': X_test.tolist(),
+        'y_train': y_train.tolist(),
+        'y_test': y_test.tolist(),
+        'X_full': X_full.tolist(),
+        'y_full': y_full.tolist(),
+    }
 
 
-def train_deep_mlp(x_train, y_train, params, activation, epochs=200, lr=0.01):
-    """Train the deep MLP with simple GD on MSE loss.  Returns updated params."""
-    depth = params['depth']
-    N = x_train.shape[0]
-    loss_history = list(params.get('loss_history', []))
+def level3_deserialize_split(data):
+    return (
+        np.array(data['X_train'], dtype=np.float64),
+        np.array(data['X_test'], dtype=np.float64),
+        np.array(data['y_train'], dtype=np.int32),
+        np.array(data['y_test'], dtype=np.int32),
+        np.array(data['X_full'], dtype=np.float64),
+        np.array(data['y_full'], dtype=np.int32),
+    )
 
-    for _ in range(epochs):
-        # --- forward ---
-        As = [x_train.T]          # A[0] = input (1, N)
-        Zs = []
 
-        A = As[0]
-        for d in range(depth):
-            W = np.array(params[f'W{d}'])
-            b = np.array(params[f'b{d}']).reshape(-1, 1)
-            Z = W @ A + b
-            Zs.append(Z)
-            A = activation_forward(Z, activation)
-            As.append(A)
+def level3_initialize_store(meta):
+    X_full, y_full = load_toy_dataset(meta['dataset'])
+    X_train, X_test, y_train, y_test = train_test_split(
+        X_full,
+        y_full,
+        test_size=0.25,
+        random_state=42,
+        stratify=y_full,
+    )
+    return {
+        'meta': meta,
+        'data': level3_serialize_split(X_train, X_test, y_train, y_test, X_full, y_full),
+        'model': None,
+        'cell_runs': {
+            'load_dataset': False,
+            'define_model': False,
+            'forward_pass': False,
+            'train_model': False,
+            'inspect': False,
+            'evaluate': False,
+        },
+        'forward_summary': None,
+        'training_logs': [],
+        'evaluation': None,
+        'inspect_ran': False,
+    }
 
-        W_out = np.array(params[f'W{depth}'])
-        b_out = np.array(params[f'b{depth}']).reshape(-1, 1)
-        Z_out = W_out @ A + b_out          # (1, N)
-        y_pred = Z_out                     # linear output
 
-        # MSE loss
-        diff = y_pred - y_train.T           # (1, N)
-        loss = float(np.mean(diff ** 2))
-        loss_history.append(loss)
+def level3_model_matches(store, meta):
+    model = store.get('model')
+    if model is None:
+        return False
 
-        # --- backward ---
-        dZ = 2.0 * diff / N                # (1, N)
+    model_meta = model.get('meta', {})
+    return (
+        model_meta.get('hidden_layer_sizes') == meta['hidden_layer_sizes']
+        and model_meta.get('activation') == meta['activation']
+        and model_meta.get('dataset') == meta['dataset']
+    )
 
-        # Output layer grads
-        dW_out = dZ @ As[depth].T           # (1, width)
-        db_out = np.sum(dZ, axis=1, keepdims=True)
 
-        dA = W_out.T @ dZ                  # (width, N)
+def level3_initialize_model(store, meta):
+    X_train, _, y_train, _, _, _ = level3_deserialize_split(store['data'])
+    model = init_level2_mlp(
+        input_dim=2,
+        hidden_layers=meta['hidden_layer_sizes'],
+        output_dim=1,
+    )
+    model['meta'] = {
+        'hidden_layers': meta['depth'],
+        'neurons_per_layer': meta['width'],
+        'hidden_layer_sizes': meta['hidden_layer_sizes'],
+        'activation': meta['activation'],
+        'dataset': meta['dataset'],
+        'layer_sizes': meta['layer_sizes'],
+    }
+    model = level2_set_baseline_history(X_train, y_train, model, meta['activation'], l2=1e-4)
+    store['model'] = model
+    store['forward_summary'] = None
+    store['evaluation'] = None
+    store['inspect_ran'] = False
+    store['cell_runs']['forward_pass'] = False
+    store['cell_runs']['train_model'] = False
+    store['cell_runs']['inspect'] = False
+    store['cell_runs']['evaluate'] = False
+    return store
 
-        # Update output layer
-        W_out -= lr * dW_out
-        b_out -= lr * db_out
-        params[f'W{depth}'] = W_out.tolist()
-        params[f'b{depth}'] = b_out.flatten().tolist()
 
-        # Hidden layers (reverse)
-        for d in reversed(range(depth)):
-            dZ_h = activation_backward(dA, Zs[d], activation)
-            W = np.array(params[f'W{d}'])
-            b = np.array(params[f'b{d}']).reshape(-1, 1)
+def level3_dataset_preview_figure(X_train, X_test, y_train, y_test, dataset):
+    fig = go.Figure()
+    split_specs = [
+        ('Train class 0', X_train[y_train == 0], '#0f766e', 'circle'),
+        ('Train class 1', X_train[y_train == 1], '#b91c1c', 'circle'),
+        ('Test class 0', X_test[y_test == 0], '#14b8a6', 'diamond-open'),
+        ('Test class 1', X_test[y_test == 1], '#f97316', 'diamond-open'),
+    ]
 
-            dW = dZ_h @ As[d].T
-            db = np.sum(dZ_h, axis=1, keepdims=True)
+    for label, points, color, symbol in split_specs:
+        if len(points) == 0:
+            continue
+        fig.add_trace(go.Scatter(
+            x=points[:, 0],
+            y=points[:, 1],
+            mode='markers',
+            name=label,
+            marker=dict(size=8, color=color, symbol=symbol, line=dict(width=1, color='white')),
+        ))
 
-            dA = W.T @ dZ_h
+    fig.update_layout(
+        title=f"Dataset preview: {dataset.title()} split into train/test batches",
+        xaxis_title='x1',
+        yaxis_title='x2',
+        margin=dict(l=30, r=10, t=50, b=30),
+        legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='left', x=0),
+    )
+    return fig
 
-            W -= lr * dW
-            b -= lr * db
-            params[f'W{d}'] = W.tolist()
-            params[f'b{d}'] = b.flatten().tolist()
 
-    params['loss_history'] = loss_history
-    return params
+def level3_activation_heatmap_figure(model, X_reference, activation):
+    _, cache = level2_forward_pass(X_reference, model, activation)
+    hidden_activations = cache['activations'][1:-1]
+    if not hidden_activations:
+        return make_level3_placeholder_figure('Per-layer activations', 'Define a model with at least one hidden layer.')
+
+    fig = make_subplots(
+        rows=len(hidden_activations),
+        cols=1,
+        shared_xaxes=True,
+        vertical_spacing=0.08,
+        subplot_titles=[f'Hidden layer {index + 1}' for index in range(len(hidden_activations))]
+    )
+
+    for index, activation_matrix in enumerate(hidden_activations, start=1):
+        z_values = activation_matrix[:min(12, activation_matrix.shape[0]), :min(80, activation_matrix.shape[1])]
+        fig.add_trace(
+            go.Heatmap(
+                z=z_values,
+                colorscale='RdBu',
+                zmid=0,
+                showscale=(index == 1),
+                colorbar=dict(title='Activation') if index == 1 else None,
+            ),
+            row=index,
+            col=1,
+        )
+        fig.update_yaxes(title_text='Neuron', row=index, col=1)
+
+    fig.update_xaxes(title_text='Sample index', row=len(hidden_activations), col=1)
+    fig.update_layout(
+        title='Per-layer activations across a held-out batch',
+        height=max(280, 220 * len(hidden_activations)),
+        margin=dict(l=40, r=10, t=60, b=30),
+    )
+    return fig
+
+
+def level3_hidden_space_figure(model, X_reference, y_reference, activation):
+    _, cache = level2_forward_pass(X_reference, model, activation)
+    hidden_activations = cache['activations'][1:-1]
+    if not hidden_activations:
+        return make_level3_placeholder_figure('Hidden-space projection', 'Run Cell 2 to define hidden layers.')
+
+    last_hidden = hidden_activations[-1].T
+    x_axis = last_hidden[:, 0]
+    y_axis = last_hidden[:, 1] if last_hidden.shape[1] > 1 else np.zeros(last_hidden.shape[0])
+
+    fig = go.Figure()
+    for class_value, color in [(0, '#0f766e'), (1, '#b91c1c')]:
+        mask = y_reference == class_value
+        fig.add_trace(go.Scatter(
+            x=x_axis[mask],
+            y=y_axis[mask],
+            mode='markers',
+            name=f'Class {class_value}',
+            marker=dict(size=9, color=color, line=dict(width=1, color='white')),
+        ))
+
+    fig.update_layout(
+        title='Last hidden layer projection (neurons 1 and 2)',
+        xaxis_title='Hidden dimension 1',
+        yaxis_title='Hidden dimension 2',
+        margin=dict(l=30, r=10, t=50, b=30),
+    )
+    return fig
+
+
+def level3_confusion_matrix_figure(confusion_values):
+    labels = ['Class 0', 'Class 1']
+    fig = go.Figure(data=go.Heatmap(
+        z=confusion_values,
+        x=labels,
+        y=labels,
+        text=confusion_values,
+        texttemplate='%{text}',
+        textfont={'size': 14},
+        colorscale='Blues',
+        hovertemplate='True: %{y}<br>Pred: %{x}<br>Count: %{z}<extra></extra>',
+    ))
+    fig.update_layout(
+        title='Confusion matrix on the evaluation split',
+        xaxis_title='Predicted label',
+        yaxis_title='True label',
+        margin=dict(l=80, r=20, t=55, b=40),
+    )
+    return fig
+
+
+def level3_misclassified_figure(X_test, y_test, pred_labels):
+    misclassified = pred_labels != y_test
+    fig = go.Figure()
+    for class_value, color in [(0, '#94a3b8'), (1, '#475569')]:
+        mask = y_test == class_value
+        fig.add_trace(go.Scatter(
+            x=X_test[mask, 0],
+            y=X_test[mask, 1],
+            mode='markers',
+            name=f'Test class {class_value}',
+            marker=dict(size=7, color=color),
+        ))
+
+    if np.any(misclassified):
+        fig.add_trace(go.Scatter(
+            x=X_test[misclassified, 0],
+            y=X_test[misclassified, 1],
+            mode='markers',
+            name='Misclassified',
+            marker=dict(size=11, color='#ef4444', symbol='x', line=dict(width=2)),
+        ))
+
+    fig.update_layout(
+        title='Misclassified evaluation samples',
+        xaxis_title='x1',
+        yaxis_title='x2',
+        margin=dict(l=30, r=10, t=50, b=30),
+    )
+    return fig
+
+
+def level3_forward_summary_children(forward_summary):
+    if not forward_summary:
+        return html.Div('Run Cell 3 to inspect tensor shapes and example predictions.', style={'color': '#64748b'})
+
+    example_rows = [
+        html.Tr([
+            html.Td(f"({example['x1']:.2f}, {example['x2']:.2f})"),
+            html.Td(str(example['target'])),
+            html.Td(f"{example['probability']:.3f}"),
+        ])
+        for example in forward_summary['examples']
+    ]
+
+    return html.Div([
+        html.P(f"Batch shape: {tuple(forward_summary['batch_shape'])}"),
+        html.P(f"Output shape: {tuple(forward_summary['output_shape'])}"),
+        html.Ul([
+            html.Li(f"Hidden layer {index + 1}: {tuple(shape)}")
+            for index, shape in enumerate(forward_summary['hidden_shapes'])
+        ], style={'fontFamily': 'monospace', 'fontSize': '12px'}),
+        html.Table([
+            html.Thead(html.Tr([html.Th('Input sample'), html.Th('Target'), html.Th('Predicted p(class=1)')])),
+            html.Tbody(example_rows),
+        ], style={'width': '100%', 'fontSize': '12px'})
+    ])
+
+
+def level3_training_log_children(training_logs):
+    if not training_logs:
+        return html.Div('Run Cell 4 to train the classifier and capture a notebook-style training log.', style={'color': '#64748b'})
+
+    return html.Ul([
+        html.Li(
+            f"Run {entry['run_number']}: epochs={entry['epochs']}, train loss={entry['train_loss']:.4f}, "
+            f"train acc={entry['train_accuracy'] * 100:.1f}%, test loss={entry['test_loss']:.4f}, "
+            f"test acc={entry['test_accuracy'] * 100:.1f}%"
+        )
+        for entry in reversed(training_logs)
+    ], style={'paddingLeft': '18px', 'fontSize': '12px'})
+
+
+def level3_metrics_summary_children(evaluation):
+    if not evaluation:
+        return html.Div('Run Cell 6 to compute confusion, metrics, and misclassified samples.', style={'color': '#64748b'})
+
+    precision = evaluation['precision']
+    recall = evaluation['recall']
+    f1 = evaluation['f1']
+    support = evaluation['support']
+    rows = []
+    for index in range(len(precision)):
+        rows.append(html.Tr([
+            html.Td(f'Class {index}'),
+            html.Td(f"{precision[index]:.2f}"),
+            html.Td(f"{recall[index]:.2f}"),
+            html.Td(f"{f1[index]:.2f}"),
+            html.Td(str(support[index])),
+        ]))
+
+    return html.Div([
+        html.P(f"Accuracy: {evaluation['metrics']['accuracy'] * 100:.1f}%"),
+        html.P(f"Loss: {evaluation['metrics']['loss']:.4f}"),
+        html.P(f"Misclassified points: {evaluation['misclassified_count']} / {evaluation['sample_count']}"),
+        html.Table([
+            html.Thead(html.Tr([
+                html.Th('Class'), html.Th('Precision'), html.Th('Recall'), html.Th('F1'), html.Th('Support')
+            ])),
+            html.Tbody(rows)
+        ], style={'width': '100%', 'fontSize': '12px'})
+    ])
+
+
+def level3_dataset_summary_children(X_train, X_test, y_train, y_test, meta):
+    return html.Div([
+        html.P(f"Dataset: {meta['dataset'].title()}"),
+        html.P(f"Train split: {X_train.shape[0]} samples | Test split: {X_test.shape[0]} samples"),
+        html.P(f"Class balance (train): class 0 = {int(np.sum(y_train == 0))}, class 1 = {int(np.sum(y_train == 1))}"),
+        html.P(f"Feature space: 2-D input, {meta['depth']} hidden layer(s), {meta['width']} neuron(s) per hidden layer"),
+    ], style={'fontSize': '12px'})
+
+
+def level3_notebook_status_children(store):
+    if store is None or not store['cell_runs']['load_dataset']:
+        return html.Div('Start with Cell 1 to load a dataset and preview the classification split.')
+    if not store['cell_runs']['define_model']:
+        return html.Div('Dataset loaded. Next run Cell 2 to define the network before inspecting any activations.')
+    if not store['cell_runs']['forward_pass']:
+        return html.Div('Model defined. Cell 3 is the next useful step if you want to inspect tensor shapes before training.')
+    if not store['cell_runs']['train_model']:
+        return html.Div('Forward pass captured. Run Cell 4 to optimise the model and update the boundary.')
+    if not store['cell_runs']['inspect']:
+        return html.Div('Training complete. Run Cell 5 to examine hidden representations and per-layer activations.')
+    if not store['cell_runs']['evaluate']:
+        return html.Div('Inspection complete. Run Cell 6 to compute evaluation metrics and misclassified points.')
+    return html.Div('All six notebook steps have been executed. Change a configuration and rerun the relevant cell to compare behaviours.')
+
 
 @app.callback(
     Output('level3-params-store', 'data'),
-    Input('level3-randomize-btn', 'n_clicks'),
+    Input('level3-load-data-btn', 'n_clicks'),
+    Input('level3-define-model-btn', 'n_clicks'),
+    Input('level3-forward-btn', 'n_clicks'),
     Input('level3-train-btn', 'n_clicks'),
-    State('level3-width-slider', 'value'),
+    Input('level3-inspect-btn', 'n_clicks'),
+    Input('level3-evaluate-btn', 'n_clicks'),
+    State('level3-dataset-dropdown', 'value'),
     State('level3-depth-slider', 'value'),
+    State('level3-width-slider', 'value'),
     State('level3-activation-dropdown', 'value'),
-    State('level3-target-dropdown', 'value'),
     State('level3-epochs-slider', 'value'),
     State('level3-params-store', 'data'),
 )
-def update_level3_params(n_rand, n_train, width, depth, activation,
-                         target, epochs, params):
+def update_level3_params(n_load, n_define, n_forward, n_train, n_inspect, n_evaluate,
+                         dataset, depth, width, activation, epochs, store):
     ctx = dash.callback_context
     trigger = ctx.triggered[0]['prop_id'].split('.')[0] if ctx.triggered else None
+    meta = level3_build_meta(dataset, depth, width, activation, epochs)
 
-    # Initialise on first visit or explicit randomize
-    if params is None or trigger == 'level3-randomize-btn':
-        params = init_deep_mlp(input_dim=1, hidden_width=width, depth=depth)
+    if store is None or store.get('meta', {}).get('dataset') != dataset:
+        store = level3_initialize_store(meta)
+    else:
+        store['meta'] = meta
 
-    # Train
-    if trigger == 'level3-train-btn':
-        x_train = np.linspace(-2 * np.pi, 2 * np.pi, 400).reshape(-1, 1)
-        y_train = level3_target_function(x_train.flatten(), target).reshape(-1, 1)
-        params = train_deep_mlp(x_train, y_train, params, activation,
-                                epochs=epochs, lr=0.005)
+    if trigger in (None, 'level3-load-data-btn'):
+        store = level3_initialize_store(meta)
+        store['cell_runs']['load_dataset'] = True
+        return store
 
-    # Store meta for the view callback
-    params['meta'] = {
-        'width': width, 'depth': depth,
-        'activation': activation, 'target': target,
-    }
-    return params
+    store['cell_runs']['load_dataset'] = True
+
+    if trigger == 'level3-define-model-btn':
+        store = level3_initialize_model(store, meta)
+        store['cell_runs']['define_model'] = True
+        return store
+
+    if store.get('model') is None or not level3_model_matches(store, meta):
+        store = level3_initialize_model(store, meta)
+    store['cell_runs']['define_model'] = True
+
+    X_train, X_test, y_train, y_test, _, _ = level3_deserialize_split(store['data'])
+
+    if trigger == 'level3-forward-btn':
+        batch_X = X_train[:24]
+        batch_y = y_train[:24]
+        predictions, cache = level2_forward_pass(batch_X, store['model'], meta['activation'])
+        hidden_shapes = [list(activation_matrix.shape) for activation_matrix in cache['activations'][1:-1]]
+        store['forward_summary'] = {
+            'batch_shape': list(batch_X.shape),
+            'hidden_shapes': hidden_shapes,
+            'output_shape': list(predictions.shape),
+            'examples': [
+                {
+                    'x1': batch_X[index, 0],
+                    'x2': batch_X[index, 1],
+                    'target': int(batch_y[index]),
+                    'probability': float(predictions[index, 0]),
+                }
+                for index in range(min(5, batch_X.shape[0]))
+            ],
+        }
+        store['cell_runs']['forward_pass'] = True
+
+    elif trigger == 'level3-train-btn':
+        store['model'] = train_level2_model(
+            X_train,
+            y_train,
+            store['model'],
+            activation=meta['activation'],
+            epochs=meta['epochs'],
+            lr=0.08,
+            l2=1e-4,
+        )
+        train_metrics = level2_evaluate_metrics(X_train, y_train, store['model'], meta['activation'], l2=1e-4)
+        test_metrics = level2_evaluate_metrics(X_test, y_test, store['model'], meta['activation'], l2=1e-4)
+        store['training_logs'].append({
+            'run_number': len(store['training_logs']) + 1,
+            'epochs': meta['epochs'],
+            'train_loss': train_metrics['loss'],
+            'train_accuracy': train_metrics['accuracy'],
+            'test_loss': test_metrics['loss'],
+            'test_accuracy': test_metrics['accuracy'],
+        })
+        store['cell_runs']['train_model'] = True
+
+    elif trigger == 'level3-inspect-btn':
+        store['inspect_ran'] = True
+        store['cell_runs']['inspect'] = True
+
+    elif trigger == 'level3-evaluate-btn':
+        predictions, _ = level2_forward_pass(X_test, store['model'], meta['activation'])
+        pred_labels = (predictions.flatten() >= 0.5).astype(np.int32)
+        confusion_values = confusion_matrix(y_test, pred_labels, labels=[0, 1])
+        precision, recall, f1, support = precision_recall_fscore_support(
+            y_test,
+            pred_labels,
+            labels=[0, 1],
+            zero_division=0,
+        )
+        metrics = level2_evaluate_metrics(X_test, y_test, store['model'], meta['activation'], l2=1e-4)
+        store['evaluation'] = {
+            'metrics': metrics,
+            'confusion_matrix': confusion_values.tolist(),
+            'pred_labels': pred_labels.tolist(),
+            'precision': precision.tolist(),
+            'recall': recall.tolist(),
+            'f1': f1.tolist(),
+            'support': support.tolist(),
+            'misclassified_count': int(np.sum(pred_labels != y_test)),
+            'sample_count': int(y_test.shape[0]),
+        }
+        store['cell_runs']['evaluate'] = True
+
+    return store
 
 
 @app.callback(
-    Output('level3-approx-graph', 'figure'),
+    Output('level3-boundary-graph', 'figure'),
     Output('level3-loss-graph', 'figure'),
     Output('level3-activations-graph', 'figure'),
+    Output('level3-dataset-preview-graph', 'figure'),
+    Output('level3-dataset-summary', 'children'),
+    Output('level3-network-diagram-graph', 'figure'),
     Output('level3-arch-summary', 'children'),
+    Output('level3-forward-output', 'children'),
+    Output('level3-training-log', 'children'),
+    Output('level3-hidden-space-graph', 'figure'),
+    Output('level3-confusion-matrix-graph', 'figure'),
+    Output('level3-misclassified-graph', 'figure'),
+    Output('level3-metrics-summary', 'children'),
+    Output('level3-notebook-status', 'children'),
     Input('level3-params-store', 'data'),
 )
-def update_level3_views(params):
-    if params is None:
-        raise dash.exceptions.PreventUpdate
-
-    meta = params.get('meta', {})
-    width = meta.get('width', 8)
-    depth = meta.get('depth', 1)
-    activation = meta.get('activation', 'relu')
-    target = meta.get('target', 'sin')
-
-    x_plot = np.linspace(-2 * np.pi, 2 * np.pi, 500).reshape(-1, 1)
-    y_target = level3_target_function(x_plot.flatten(), target)
-
-    # Network prediction + intermediate activations
-    y_pred, intermediates = deep_mlp_forward(x_plot, params, activation,
-                                             return_intermediates=True)
-    y_pred = y_pred.flatten()
-
-    # 1) Side-by-side target vs approximation
-    fig_approx = go.Figure()
-    fig_approx.add_trace(go.Scatter(
-        x=x_plot.flatten(), y=y_target, mode='lines',
-        name='Target f(x)', line=dict(color='black', width=2, dash='dash')
-    ))
-    fig_approx.add_trace(go.Scatter(
-        x=x_plot.flatten(), y=y_pred, mode='lines',
-        name='Network output', line=dict(color='crimson', width=2)
-    ))
-    fig_approx.update_layout(
-        title=f"Universal approximation: {target}(x) vs network "
-              f"(depth={depth}, width={width}, act={activation})",
-        xaxis_title="x", yaxis_title="y",
-        legend=dict(x=0.01, y=0.99),
-        margin=dict(l=40, r=10, t=40, b=30),
+def update_level3_views(store):
+    boundary_placeholder = make_level3_placeholder_figure(
+        'Decision boundary / prediction surface',
+        'Run Cell 2 to define a classifier and render its decision surface.'
+    )
+    loss_placeholder = make_level3_placeholder_figure(
+        'Loss curve',
+        'Run Cell 4 to train the model and record optimisation history.'
+    )
+    activation_placeholder = make_level3_placeholder_figure(
+        'Per-layer activations',
+        'Run Cell 5 to inspect hidden activations after defining the model.'
+    )
+    dataset_placeholder = make_level3_placeholder_figure(
+        'Dataset preview',
+        'Run Cell 1 to load a toy classification dataset.'
+    )
+    model_placeholder = make_level3_placeholder_figure(
+        'Architecture diagram',
+        'Run Cell 2 to define the hidden stack and output layer.'
+    )
+    hidden_placeholder = make_level3_placeholder_figure(
+        'Hidden-space projection',
+        'Run Cell 5 to inspect hidden representations.'
+    )
+    eval_placeholder = make_level3_placeholder_figure(
+        'Evaluation',
+        'Run Cell 6 to compute confusion and evaluation diagnostics.'
     )
 
-    # 2) Loss curve
-    loss_history = params.get('loss_history', [])
-    fig_loss = go.Figure()
-    if loss_history:
-        fig_loss.add_trace(go.Scatter(
-            y=loss_history, mode='lines',
-            name='MSE Loss', line=dict(color='steelblue')
-        ))
-    fig_loss.update_layout(
-        title="Training loss (MSE)",
-        xaxis_title="Epoch", yaxis_title="Loss",
-        margin=dict(l=40, r=10, t=40, b=30),
-    )
-
-    # 3) Per-layer activations plot (show first 5 neurons of each layer)
-    fig_acts = go.Figure()
-    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b']
-    for layer_idx, act_matrix in enumerate(intermediates):
-        n_show = min(5, act_matrix.shape[0])
-        for neuron in range(n_show):
-            fig_acts.add_trace(go.Scatter(
-                x=x_plot.flatten(),
-                y=act_matrix[neuron, :],
-                mode='lines',
-                name=f'L{layer_idx+1} n{neuron+1}',
-                line=dict(width=1, color=colors[layer_idx % len(colors)]),
-                opacity=0.7,
-                showlegend=(neuron == 0),
-                legendgroup=f'layer{layer_idx}',
-            ))
-    fig_acts.update_layout(
-        title="Hidden neuron activations per layer",
-        xaxis_title="x", yaxis_title="activation",
-        margin=dict(l=40, r=10, t=40, b=30),
-    )
-
-    # 4) Architecture summary
-    total_params = 0
-    layer_info = []
-    prev_dim = 1  # input dim
-    for d in range(depth):
-        n_w = prev_dim * width
-        n_b = width
-        total_params += n_w + n_b
-        layer_info.append(
-            html.Li(f"Hidden {d+1}: {prev_dim} → {width} "
-                     f"({n_w} weights + {n_b} biases)")
+    if store is None:
+        return (
+            boundary_placeholder,
+            loss_placeholder,
+            activation_placeholder,
+            dataset_placeholder,
+            html.Div('Run Cell 1 to create the dataset preview.', style={'color': '#64748b'}),
+            model_placeholder,
+            html.Div('Run Cell 2 to generate the architecture summary.', style={'color': '#64748b'}),
+            level3_forward_summary_children(None),
+            level3_training_log_children([]),
+            hidden_placeholder,
+            eval_placeholder,
+            eval_placeholder,
+            level3_metrics_summary_children(None),
+            level3_notebook_status_children(None),
         )
-        prev_dim = width
-    # Output layer
-    n_w = prev_dim * 1
-    n_b = 1
-    total_params += n_w + n_b
-    layer_info.append(
-        html.Li(f"Output: {prev_dim} → 1 ({n_w} weights + {n_b} bias)")
+
+    meta = store['meta']
+    X_train, X_test, y_train, y_test, X_full, y_full = level3_deserialize_split(store['data'])
+    dataset_preview = level3_dataset_preview_figure(X_train, X_test, y_train, y_test, meta['dataset'])
+    dataset_summary = level3_dataset_summary_children(X_train, X_test, y_train, y_test, meta)
+    notebook_status = level3_notebook_status_children(store)
+
+    boundary_fig = boundary_placeholder
+    loss_fig = loss_placeholder
+    activations_fig = activation_placeholder
+    network_fig = model_placeholder
+    arch_summary = html.Div('Run Cell 2 to generate the architecture summary.', style={'color': '#64748b'})
+    hidden_space_fig = hidden_placeholder
+    confusion_fig = eval_placeholder
+    misclassified_fig = eval_placeholder
+
+    model = store.get('model')
+    if model is not None:
+        boundary_fig = make_decision_boundary_figure(X_full, y_full, model, meta['activation'])
+        if store['cell_runs']['train_model']:
+            boundary_fig.update_layout(title=f"Trained decision boundary after {model.get('epoch', 0)} epochs")
+        else:
+            boundary_fig.update_layout(title='Initial decision surface from the current model definition')
+
+        history = model.get('history', {})
+        if history.get('loss'):
+            loss_fig = make_level2_training_curves_figure(history)
+            loss_fig.update_layout(title='Training loss and accuracy from Cell 4')
+
+        network_fig = make_network_diagram_figure(
+            input_dim=2,
+            hidden_layers=meta['hidden_layer_sizes'],
+            output_dim=1,
+            params=model,
+            activation=meta['activation'],
+        )
+        arch_summary = make_level2_summary_panel(model, meta['activation'])
+
+        if store['inspect_ran']:
+            activations_fig = level3_activation_heatmap_figure(model, X_test, meta['activation'])
+            hidden_space_fig = level3_hidden_space_figure(model, X_test, y_test, meta['activation'])
+
+    forward_output = level3_forward_summary_children(store.get('forward_summary'))
+    training_log = level3_training_log_children(store.get('training_logs', []))
+
+    evaluation = store.get('evaluation')
+    if evaluation is not None:
+        confusion_fig = level3_confusion_matrix_figure(evaluation['confusion_matrix'])
+        pred_labels = np.array(evaluation['pred_labels'], dtype=np.int32)
+        misclassified_fig = level3_misclassified_figure(X_test, y_test, pred_labels)
+    metrics_summary = level3_metrics_summary_children(evaluation)
+
+    return (
+        boundary_fig,
+        loss_fig,
+        activations_fig,
+        dataset_preview,
+        dataset_summary,
+        network_fig,
+        arch_summary,
+        forward_output,
+        training_log,
+        hidden_space_fig,
+        confusion_fig,
+        misclassified_fig,
+        metrics_summary,
+        notebook_status,
     )
-
-    summary = html.Div([
-        html.P(f"Input: 1 feature (x)"),
-        html.P(f"Architecture: {depth} hidden layer{'s' if depth > 1 else ''}, "
-               f"{width} neurons each, activation = {activation}"),
-        html.Ul(layer_info, style={'fontSize': '12px', 'fontFamily': 'monospace'}),
-        html.P(html.B(f"Total trainable parameters: {total_params}")),
-        html.Hr(),
-        html.P("Insight: as width or depth increases, the network can represent "
-               "increasingly complex functions — this is the universal approximation "
-               "theorem in action. ReLU networks build piecewise-linear fits; "
-               "tanh/sigmoid can produce smoother curves.",
-               style={'fontSize': '12px', 'fontStyle': 'italic'}),
-    ])
-
-    return fig_approx, fig_loss, fig_acts, summary
 
 #endregion
 
