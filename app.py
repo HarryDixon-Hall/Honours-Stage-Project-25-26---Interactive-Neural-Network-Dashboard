@@ -27,6 +27,7 @@ from trainer import train_model
 from trainer import build_model
 
 from models import SimpleNN
+from levels.level1.callbacks import register_level1_callbacks
 
 import io
 import base64
@@ -46,6 +47,8 @@ from pagelayout import level1_layout
 from pagelayout import level2_layout
 from pagelayout import level3_layout
 
+from pagelayout import level4_layout
+from pagelayout import level5_layout
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
 
@@ -125,6 +128,8 @@ SAFE_PYTHON_ENV = {
 app = dash.Dash(__name__)
 
 app.config.suppress_callback_exceptions = True #to prevent callback errors from the teacher page for the dataset/model selection
+
+register_level1_callbacks(app)
 
 app.layout = html.Div([
     # Fixed top navigation bar
@@ -865,211 +870,6 @@ def syntax_highlighter(pythonCode):
     #the following highlighter needs to be inline and using regex principles
     #it will go character by character, no need to look at blank spaces unless necessary
     #will this method include validation??
-
-#endregion
-
-#====DELCARATION: CODE HERE IS ASSISTED BY Copilot (GPT-5.4) 22/03/26 - 23/04/26====
-#region MODEL FACTORY: Level 1 callbacks/methods (linear classifiers and 2d decision boundary visualisation) - WORK IN PROGRESS
-
-# callback to show 2d decision boundary which dynamically changes with hidden layer slider
-@app.callback(
-    [Output('live-architecture', 'figure'), Output('live-weights-heatmap', 'figure'),
-     Output('code-preview', 'children')],
-    [Input('live-hidden-size', 'value'), Input('live-seed', 'value')]
-)
-def update_live_visualisations(hidden_size, seed):
-    # FIX 1: Load Iris data locally (no global dependency)
-    from dataload import loaddataset
-    Xtrain, _, ytrain, _, meta = loaddataset('iris')
-    
-    # FIX 2: Build model (no Xtrain needed for architecture viz)
-    import numpy as np
-    np.random.seed(seed or 42)
-    model = SimpleNN(4, hidden_size, 3)  # Iris: 4 features → 3 classes
-    
-    # 3. ARCHITECTURE DIAGRAM (works without training)
-    arch_fig = build_architecture_diagram(model, hidden_size)
-    
-    # 4. WEIGHT HEATMAPS 
-    weight_fig = go.Figure()
-    weight_fig.add_trace(go.Heatmap(z=model.W1, colorscale='RdBu', zmid=0))
-    weight_fig.update_layout(title=f"W1 Weights (4×{hidden_size})")
-    
-    # 5. CODE PREVIEW
-    code_preview = html.Textarea(
-        value=f"model = SimpleNN(4, {hidden_size}, 3, seed={seed})",
-        style={'width': '100%', 'height': 100}
-    )
-    
-    return arch_fig, weight_fig, code_preview
-
-def build_architecture_diagram(model, hidden_size):
-    fig = go.Figure()
-    
-    # Nodes: Input(4) → Hidden(N) → Output(3)
-    x_nodes = [0, 1, 2]  # Layers
-    input_nodes = [i/5 for i in range(4)]
-    hidden_nodes = [i/16 for i in range(hidden_size)]  
-    output_nodes = [i/3 for i in range(3)]
-    
-    # Add nodes
-    fig.add_trace(go.Scatter(x=[0]*4, y=input_nodes, mode='markers+text',
-                           marker=dict(size=20, color='blue'), 
-                           text=[f'I{i+1}' for i in range(4)],
-                           name='Input'))
-    fig.add_trace(go.Scatter(x=[1]*hidden_size, y=hidden_nodes, mode='markers+text',
-                           marker=dict(size=15, color='orange'),
-                           text=[f'H{i+1}' for i in range(hidden_size)],
-                           name='Hidden'))
-    fig.add_trace(go.Scatter(x=[2]*3, y=output_nodes, mode='markers+text',
-                           marker=dict(size=20, color='green'),
-                           text=['O1','O2','O3'], name='Output'))
-    
-    # Edges (all connections)
-    for i in range(4):
-        for j in range(hidden_size):
-            fig.add_trace(go.Scatter(x=[0,1], y=[input_nodes[i], hidden_nodes[j]], 
-                                   mode='lines', line=dict(width=1, color='gray'),
-                                   showlegend=False, hoverinfo='skip'))
-    
-    fig.update_layout(title=f"Live Architecture: 4 → {hidden_size} → 3",
-                     xaxis=dict(showgrid=False, range=[-0.2, 2.2]),
-                     yaxis=dict(showgrid=False, range=[-0.2, 1.2]),
-                     height=400, showlegend=False)
-    return fig
-
-# a self contained boundary decision for level 1
-from sklearn.decomposition import PCA
-
-def plot_decision_boundary(model, Xtrain_sample):
-    """Req 3.1.5: Live decision boundary from current model params"""
-    # PCA to 2D for visualization (Iris: 4→2 dims)
-    pca = PCA(n_components=2)
-    X_2d = pca.fit_transform(Xtrain_sample[:100])  # Sample for speed
-    
-    # Predict on 2D grid
-    h = 0.02
-    x_min, x_max = X_2d[:, 0].min() - 0.5, X_2d[:, 0].max() + 0.5
-    y_min, y_max = X_2d[:, 1].min() - 0.5, X_2d[:, 1].max() + 0.5
-    xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
-                         np.arange(y_min, y_max, h))
-    
-    # Predict on grid (model expects 4D input → pad with zeros)
-    grid_input = np.c_[xx.ravel(), yy.ravel(), np.zeros((xx.ravel().shape[0], 2))]
-    Z = model.forward(grid_input)  # Your SimpleNN.forward()
-    Z = np.argmax(Z, axis=1).reshape(xx.shape)
-    
-    # Plot
-    fig = go.Figure(data=go.Heatmap(
-        z=Z, x=xx[0], y=yy[:,0], colorscale='RdYlBu', hoverongaps=False
-    ))
-    fig.update_layout(title="Live Decision Boundary (PCA Projection)",
-                      xaxis_title="PC1", yaxis_title="PC2", height=350)
-    return fig
-
-#callback for 2d decision boundary of level 1
-def generate_data(dataset: str):
-    """
-    Return (X, y) for a 2D toy dataset.
-
-    X: (n_samples, 2), y: (n_samples,)
-    """
-    if dataset == 'linear':
-        # Two linearly separable blobs
-        X, y = make_blobs(
-            n_samples=300,
-            centers=[(-2, -2), (2, 2)],
-            cluster_std=0.8,
-            random_state=42
-        )
-    elif dataset == 'moons':
-        X, y = make_moons(
-            n_samples=300,
-            noise=0.2,
-            random_state=42
-        )  # two interleaving half-circles[web:55][web:59]
-    elif dataset == 'circles':
-        X, y = make_circles(
-            n_samples=300,
-            noise=0.1,
-            factor=0.4,
-            random_state=42
-        )  # concentric circles[web:53][web:59]
-    else:
-        # Fallback: simple blobs
-        X, y = make_blobs(
-            n_samples=300,
-            centers=[(-2, -2), (2, 2)],
-            cluster_std=0.8,
-            random_state=42
-        )
-
-    return X, y
-
-@app.callback(
-    Output('l1-decision-boundary', 'figure'),
-    [
-        Input('l1-dataset', 'value'),
-        Input('l1-w1', 'value'),
-        Input('l1-w2', 'value'),
-        Input('l1-bias', 'value'),
-    ]
-)
-def update_decision_boundary(dataset, w1, w2, b):
-    # 1. Get data
-    X, y = generate_data(dataset)  # X: (n, 2), y: (n,)
-    x1 = X[:, 0]
-    x2 = X[:, 1]
-
-    # 2. Base scatter plot
-    fig = go.Figure()
-
-    fig.add_trace(
-        go.Scatter(
-            x=x1[y == 0],
-            y=x2[y == 0],
-            mode='markers',
-            name='Class 0',
-            marker=dict(color='blue', size=8, opacity=0.7),
-        )
-    )
-    fig.add_trace(
-        go.Scatter(
-            x=x1[y == 1],
-            y=x2[y == 1],
-            mode='markers',
-            name='Class 1',
-            marker=dict(color='red', size=8, opacity=0.7),
-        )
-    )
-
-    # 3. Decision boundary line (if w2 != 0)
-    x_min, x_max = x1.min() - 0.5, x1.max() + 0.5
-
-    if abs(w2) > 1e-6:
-        xs = np.linspace(x_min, x_max, 100)
-        ys = -(w1 * xs + b) / w2
-
-        fig.add_trace(
-            go.Scatter(
-                x=xs,
-                y=ys,
-                mode='lines',
-                name='Decision boundary',
-                line=dict(color='black', width=2),
-            )
-        )
-
-    fig.update_layout(
-        xaxis_title='x₁',
-        yaxis_title='x₂',
-        xaxis=dict(range=[x_min, x_max]),
-        yaxis=dict(scaleanchor='x', scaleratio=1),  # keep aspect ratio square
-        legend=dict(x=0.02, y=0.98),
-        margin=dict(l=40, r=10, t=40, b=40),
-    )
-
-    return fig
 
 #endregion
 
