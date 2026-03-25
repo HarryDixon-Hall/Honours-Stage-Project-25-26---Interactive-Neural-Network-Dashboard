@@ -1,0 +1,4 @@
+[
+  "pytests/test_dataload_pytest.py::test_get_dataset_stats_returns_expected_counts",
+  "pytests/test_dataload_pytest.py::test_load_dataset_iris_returns_consistent_shapes"
+]
