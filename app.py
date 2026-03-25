@@ -47,8 +47,6 @@ from pagelayout import level1_layout
 from pagelayout import level2_layout
 from pagelayout import level3_layout
 
-from pagelayout import level4_layout
-from pagelayout import level5_layout
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
 
