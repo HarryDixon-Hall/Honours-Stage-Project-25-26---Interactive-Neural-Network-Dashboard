@@ -1,6 +1,6 @@
-from levels.level2.callbacks import register_level2_callbacks
-from levels.level2.layout import level2_layout
-from levels.level2.methods import (
+from pages.levels.level2.callbacks import register_level2_callbacks
+from pages.levels.level2.layout import level2_layout
+from pages.levels.level2.methods import (
 	init_level2_mlp,
 	level2_evaluate_metrics,
 	level2_forward_pass,

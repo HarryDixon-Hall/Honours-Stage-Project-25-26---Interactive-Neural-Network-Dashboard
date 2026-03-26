@@ -11,9 +11,9 @@ except ImportError:
 import numpy as np
 import plotly.graph_objects as go
 
-from dataload import load_dataset
-from models import SimpleNN
-from levels.level1.methods import build_architecture_diagram, generate_data
+from modelFactory.dataload import load_dataset
+from modelFactory.models import SimpleNN
+from pages.levels.level1.methods import build_architecture_diagram, generate_data
 
 
 def register_level1_callbacks(app):

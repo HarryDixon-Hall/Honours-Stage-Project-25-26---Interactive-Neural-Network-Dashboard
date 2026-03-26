@@ -1,6 +1,6 @@
 import numpy as np
 
-from dataload import get_dataset_stats, load_dataset
+from modelFactory.dataload import get_dataset_stats, load_dataset
 
 
 def test_get_dataset_stats_returns_expected_counts():

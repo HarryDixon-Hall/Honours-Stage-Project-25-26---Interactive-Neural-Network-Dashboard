@@ -5,7 +5,7 @@ from plotly.subplots import make_subplots
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import train_test_split
 
-from levels.level2 import (
+from pages.levels.level2 import (
 	init_level2_mlp,
 	level2_evaluate_metrics,
 	level2_forward_pass,

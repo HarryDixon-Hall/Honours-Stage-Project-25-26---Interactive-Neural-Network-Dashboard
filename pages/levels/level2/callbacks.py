@@ -10,7 +10,7 @@ except ImportError:
     Output = dash_dependencies.Output
     State = dash_dependencies.State
 
-from levels.level2.methods import (
+from pages.levels.level2.methods import (
     init_level2_mlp,
     level2_evaluate_metrics,
     level2_set_baseline_history,

@@ -22,14 +22,14 @@ import plotly.tools as tls
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from code_execution import execute_python_snippet
+from pySecProgramming.code_execution import execute_python_snippet
 from modelFactory.dataload import load_dataset, get_dataset_stats
 from modelFactory.trainer import train_model
 from modelFactory.trainer import build_model
 
 from modelFactory.models import SimpleNN
-from levels.level1 import level1_layout, register_level1_callbacks
-from levels.level2 import (
+from pages.levels.level1 import level1_layout, register_level1_callbacks
+from pages.levels.level2 import (
     init_level2_mlp,
     level2_evaluate_metrics,
     level2_forward_pass,
@@ -43,7 +43,7 @@ from levels.level2 import (
     register_level2_callbacks,
     train_level2_model,
 )
-from levels.level3 import level3_layout, register_level3_callbacks
+from pages.levels.level3 import level3_layout, register_level3_callbacks
 
 import io
 import base64
@@ -57,8 +57,8 @@ matplotlib.use('Agg') #for the png whic dash plotly can display
 
 #page layout imports
 from adaptiveLearning.gamification.skillTree import skilltree_layout
-from homePage.layout import home_layout
-from sandboxPage.layout import SANDBOX_EDITOR, sandbox_layout
+from pages.homePage.layout import home_layout
+from pages.sandboxPage.layout import SANDBOX_EDITOR, sandbox_layout
 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, precision_recall_fscore_support

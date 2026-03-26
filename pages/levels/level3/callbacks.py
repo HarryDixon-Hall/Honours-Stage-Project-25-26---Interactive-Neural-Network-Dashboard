@@ -14,8 +14,8 @@ except ImportError:
 import numpy as np
 from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
 
-from code_execution import execute_python_snippet
-from levels.level2 import (
+from pySecProgramming.code_execution import execute_python_snippet
+from pages.levels.level2 import (
     level2_evaluate_metrics,
     level2_forward_pass,
     make_decision_boundary_figure,
@@ -24,7 +24,7 @@ from levels.level2 import (
     make_network_diagram_figure,
     train_level2_model,
 )
-from levels.level3.methods import (
+from pages.levels.level3.methods import (
     build_level3_execution_environment,
     level3_activation_heatmap_figure,
     level3_build_meta,
@@ -43,7 +43,7 @@ from levels.level3.methods import (
     level3_training_log_children,
     make_level3_placeholder_figure,
 )
-from levels.level3.layout import LEVEL3_CELL_EDITORS
+from pages.levels.level3.layout import LEVEL3_CELL_EDITORS
 
 
 def register_level3_callbacks(app):

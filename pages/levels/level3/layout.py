@@ -1,6 +1,6 @@
 from dash import dcc, html
 
-from code_execution import CodeExecutionBox
+from pySecProgramming.code_execution import CodeExecutionBox
 
 
 LEVEL3_CELL_SNIPPETS = {

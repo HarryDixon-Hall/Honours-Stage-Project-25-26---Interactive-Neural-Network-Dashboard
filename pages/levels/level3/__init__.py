@@ -1,6 +1,6 @@
-from levels.level3.callbacks import register_level3_callbacks
-from levels.level3.layout import level3_layout
-from levels.level3.methods import (
+from pages.levels.level3.callbacks import register_level3_callbacks
+from pages.levels.level3.layout import level3_layout
+from pages.levels.level3.methods import (
 	build_level3_execution_environment,
 	level3_activation_heatmap_figure,
 	level3_build_meta,
