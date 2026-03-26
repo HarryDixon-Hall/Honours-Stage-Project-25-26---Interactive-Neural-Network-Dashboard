@@ -149,15 +149,18 @@ app.layout = html.Div([
     html.Div([
         html.H3("Neural Network Dashboard (WORK IN PROGRESS)", 
                 style={'margin': '0 20px', 'display': 'inline-block'}),
-        html.Img(
-        src="/assets/construction_man.gif",
-        style={
-            "width": "100px", 
-            "height": "100px",
-            "display": "block",
-            "borderRadius": "50%"
-        }
-    ),
+        html.Div([
+            html.Img(src="/assets/construction_man.gif", style={"width": "100px", "height": "100px", "borderRadius": "50%"}),
+            html.Img(src="/assets/empire-state.gif", style={"width": "100px", "height": "100px", "borderRadius": "50%"}),
+            html.Img(src="/assets/injective-ninjas.gif", style={"width": "100px", "height": "100px", "borderRadius": "50%"}),
+            html.Img(src="/assets/mxstery.gif", style={"width": "100px", "height": "100px", "borderRadius": "50%"}),
+            html.Img(src="/assets/крутой.gif", style={"width": "100px", "height": "100px", "borderRadius": "50%"}),
+        ], style={
+            'display': 'flex',
+            'flexDirection': 'row',
+            'alignItems': 'center',
+            'gap': '10px',
+        }),
         html.Div([
             dcc.Link("Home", href="/home", 
                     style={'padding': '10px 15px', 'display': 'inline-block', 

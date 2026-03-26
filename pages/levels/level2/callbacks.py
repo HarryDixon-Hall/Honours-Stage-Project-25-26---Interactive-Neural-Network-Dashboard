@@ -37,8 +37,8 @@ SPEED_TO_INTERVAL = {
     'fast': 180,
 }
 STAGE_SEQUENCE = ('forward', 'loss', 'backward', 'update')
-VISIBLE_WRAPPER_STYLE = {'flex': '1 1 200px'}
-HIDDEN_WRAPPER_STYLE = {'flex': '1 1 200px', 'display': 'none'}
+VISIBLE_WRAPPER_STYLE = {'flex': '1 1 110px', 'minWidth': '110px'}
+HIDDEN_WRAPPER_STYLE = {'flex': '1 1 110px', 'minWidth': '110px', 'display': 'none'}
 
 
 def _copy_serialized_weights(weights):
@@ -423,6 +423,7 @@ def register_level2_callbacks(app):
         Output('level2-decision-boundary-graph', 'figure'),
         Output('level2-boundary-explanation', 'children'),
         Output('level2-activation-graph', 'figure'),
+        Output('level2-model-status', 'children'),
         Output('level2-epoch-live', 'children'),
         Output('level2-training-stage-panel', 'children'),
         Input('level2-params-store', 'data'),
@@ -485,63 +486,36 @@ def register_level2_callbacks(app):
         running = bool(training_state.get('running'))
         play_speed = training_state.get('play_speed', 'normal')
         if running:
-            status_label = 'Running'
+            model_status = 'Training'
             status_color = '#0f766e'
-        elif paused:
-            status_label = 'Paused'
-            status_color = '#b45309'
+        elif metrics['epoch'] == 0 and current_stage == 'idle':
+            model_status = 'Ready'
+            status_color = '#1d4ed8'
         else:
-            status_label = 'Stopped'
-            status_color = '#475569'
-        epoch_panel = [
-            html.Div([
-                html.Div('Live Epoch Count', style={'fontSize': '12px', 'textTransform': 'uppercase', 'letterSpacing': '0.08em', 'color': '#64748b'}),
-                html.Div(str(metrics['epoch']), style={'fontSize': '28px', 'fontWeight': '700', 'color': '#0f172a'}),
-            ]),
-            html.Div([
-                html.Div('Status', style={'fontSize': '12px', 'textTransform': 'uppercase', 'letterSpacing': '0.08em', 'color': '#64748b'}),
-                html.Div(status_label, style={'fontSize': '16px', 'fontWeight': '700', 'color': status_color}),
-                html.Div(f'Learning rate {learning_rate:.2f}', style={'fontSize': '12px', 'color': '#64748b', 'marginTop': '4px'}),
-                html.Div(f'Epoch timeline {epoch_in_progress}', style={'fontSize': '12px', 'color': '#64748b', 'marginTop': '4px'}),
-                html.Div(f'Training mode {mode}', style={'fontSize': '12px', 'color': '#64748b', 'marginTop': '4px'}),
-                html.Div(f'Play speed {play_speed}', style={'fontSize': '12px', 'color': '#64748b', 'marginTop': '4px'}),
-                html.Div(f'Current stage {current_stage}', style={'fontSize': '12px', 'color': '#64748b', 'marginTop': '4px'}),
-                html.Div(f'Previous stage {previous_stage}', style={'fontSize': '12px', 'color': '#64748b', 'marginTop': '4px'}),
-                html.Div(f'Next stage {next_stage}', style={'fontSize': '12px', 'color': '#64748b', 'marginTop': '4px'}),
-                html.Div(
-                    (
-                        'Animation shows a probe sample flowing through the current network.'
-                        if activation_snapshot
-                        else 'Animation snapshot unavailable.'
-                    ),
-                    style={'fontSize': '12px', 'color': '#64748b', 'marginTop': '4px'},
+            model_status = 'Idle'
+            status_color = '#b45309'
+
+        model_status_panel = [
+            html.Div('Model Status', style={'fontSize': '11px', 'textTransform': 'uppercase', 'letterSpacing': '0.08em', 'color': '#64748b', 'marginBottom': '4px'}),
+            html.Div(model_status, style={'fontSize': '21px', 'fontWeight': '700', 'color': status_color, 'marginBottom': '2px'}),
+            html.Div(
+                'Training is active.' if running else (
+                    'Model initialised.' if model_status == 'Ready' else f'Holding at {current_stage}.'
                 ),
-                html.Div(
-                    'Semi-auto mode walks a cached epoch timeline with Previous Stage and Next Stage. Auto mode locks those buttons and advances the same timeline continuously.' if mode == 'semiauto' else 'Auto mode locks manual stepping and advances the cached forward, loss, backward, and update stages continuously before starting the next epoch.',
-                    style={'fontSize': '12px', 'color': '#64748b', 'marginTop': '4px'},
-                ),
-            ]),
+                style={'fontSize': '11px', 'color': '#64748b', 'lineHeight': '1.35'},
+            ),
         ]
 
-        stage_details = {
-            'forward': (
-                f"Probe sample {probe_index + 1} moving through the network."
-                if activation_snapshot else 'Preparing probe sample activations.'
-            ),
-            'loss': (
-                f"Train loss for the current epoch step: {pending_loss:.4f}."
-                if pending_loss is not None else 'Comparing prediction with the target label.'
-            ),
-            'backward': (
-                'Gradient norms: ' + ', '.join(f'L{index + 1}={value:.3f}' for index, value in enumerate(gradient_norms))
-                if gradient_norms else 'Backpropagating error signals through the network.'
-            ),
-            'update': f'Applying gradient descent with learning rate {learning_rate:.2f}.',
-        }
+        epoch_panel = [
+            html.Div('Epoch Count', style={'fontSize': '11px', 'textTransform': 'uppercase', 'letterSpacing': '0.08em', 'color': '#64748b', 'marginBottom': '4px'}),
+            html.Div(str(metrics['epoch']), style={'fontSize': '24px', 'fontWeight': '700', 'color': '#0f172a', 'lineHeight': '1.05'}),
+            html.Div(f'Current timeline epoch {epoch_in_progress}', style={'fontSize': '11px', 'color': '#64748b', 'marginTop': '3px'}),
+        ]
+
         stage_panel = make_level2_training_stage_panel(
             current_stage=current_stage,
             epoch=metrics['epoch'],
-            stage_details=stage_details,
+            stage_details=None,
         )
 
         return (
@@ -551,6 +525,7 @@ def register_level2_callbacks(app):
             fig_boundary,
             boundary_explanation,
             fig_activation,
+            model_status_panel,
             epoch_panel,
             stage_panel,
         )

@@ -858,45 +858,32 @@ def make_level2_training_stage_panel(current_stage='idle', epoch=0, stage_detail
         ('backward', 'Backward Pass'),
         ('update', 'Parameter Update'),
     ]
-    details = stage_details or {}
-
-    cards = []
+    chips = []
     for stage_key, stage_label in stage_sequence:
         is_active = stage_key == current_stage
-        cards.append(
-            html.Div([
-                html.Div(stage_label, style={
-                    'fontSize': '12px',
-                    'textTransform': 'uppercase',
-                    'letterSpacing': '0.08em',
-                    'color': STAGE_ACCENT[stage_key] if is_active else '#64748b',
+        chips.append(
+            html.Div(
+                stage_label.split()[0],
+                style={
+                    'padding': '8px 10px',
+                    'borderRadius': '12px',
+                    'border': f"1px solid {STAGE_ACCENT[stage_key] if is_active else '#dbeafe'}",
+                    'backgroundColor': STAGE_ACCENT[stage_key] if is_active else '#ffffff',
+                    'color': '#ffffff' if is_active else '#64748b',
+                    'fontSize': '11px',
                     'fontWeight': '700',
-                    'marginBottom': '6px',
-                }),
-                html.Div(
-                    details.get(stage_key, 'Waiting'),
-                    style={
-                        'fontSize': '12px',
-                        'color': '#334155',
-                        'lineHeight': '1.5',
-                    },
-                ),
-            ], style={
-                'padding': '12px 14px',
-                'borderRadius': '14px',
-                'border': f"2px solid {STAGE_ACCENT[stage_key] if is_active else '#dbeafe'}",
-                'backgroundColor': '#ffffff' if is_active else '#f8fafc',
-                'boxShadow': '0 6px 16px rgba(15, 23, 42, 0.06)' if is_active else 'none',
-                'transform': 'translateY(-2px)' if is_active else 'none',
-            }))
+                    'textTransform': 'uppercase',
+                    'letterSpacing': '0.06em',
+                    'textAlign': 'center',
+                    'minWidth': '70px',
+                },
+            )
+        )
 
     return html.Div([
-        html.Div(f'Epoch {epoch} Training Timeline', style={'fontWeight': '700', 'marginBottom': '10px', 'color': '#0f172a'}),
-        html.Div(cards, style={
-            'display': 'grid',
-            'gridTemplateColumns': 'repeat(auto-fit, minmax(150px, 1fr))',
-            'gap': '10px',
-        }),
+        html.Div('Epoch Stage', style={'fontSize': '11px', 'textTransform': 'uppercase', 'letterSpacing': '0.08em', 'color': '#64748b', 'marginBottom': '4px'}),
+        html.Div(f'Epoch {epoch + (0 if current_stage == "idle" else 1)}', style={'fontSize': '16px', 'fontWeight': '700', 'color': '#0f172a', 'marginBottom': '8px'}),
+        html.Div(chips, style={'display': 'flex', 'gap': '8px', 'flexWrap': 'wrap'}),
     ])
 
 
@@ -1013,58 +1000,52 @@ def make_level2_training_curves_figure(history):
 
 
 def make_level2_output_panel(metrics, dataset_name):
-    card_style = {
-        'backgroundColor': '#f8fafc',
-        'borderRadius': '14px',
-        'padding': '14px 16px',
-        'border': '1px solid #dbeafe',
-    }
     label_style = {
-        'fontSize': '12px',
+        'fontSize': '10px',
         'textTransform': 'uppercase',
         'letterSpacing': '0.08em',
         'color': '#64748b',
-        'marginBottom': '6px',
+        'marginBottom': '2px',
     }
-    value_style = {'fontSize': '24px', 'fontWeight': '700', 'color': '#0f172a'}
+    value_style = {'fontSize': '18px', 'fontWeight': '700', 'color': '#0f172a'}
+    item_style = {
+        'paddingBottom': '8px',
+        'marginBottom': '8px',
+        'borderBottom': '1px solid #dbeafe',
+    }
 
     return html.Div([
         html.Div(
-            f'{dataset_name.title()} is being treated as a binary classification dataset.',
+            'Metrics',
             style={
-                'marginBottom': '14px',
-                'color': '#334155',
+                'fontSize': '12px',
+                'fontSize': '11px',
+                'textTransform': 'uppercase',
+                'letterSpacing': '0.08em',
+                'color': '#64748b',
                 'fontWeight': '600',
+                'marginBottom': '4px',
             }
         ),
+        html.Div(dataset_name.title(), style={'fontSize': '12px', 'fontWeight': '600', 'color': '#334155', 'marginBottom': '8px'}),
         html.Div([
             html.Div([
                 html.Div('Train Accuracy', style=label_style),
                 html.Div(f"{metrics['train_accuracy'] * 100:.1f}%", style=value_style),
-            ], style=card_style),
+            ], style=item_style),
             html.Div([
                 html.Div('Train Loss', style=label_style),
                 html.Div(f"{metrics['train_loss']:.4f}", style=value_style),
-            ], style=card_style),
+            ], style=item_style),
             html.Div([
                 html.Div('Test Accuracy', style=label_style),
                 html.Div(f"{metrics['test_accuracy'] * 100:.1f}%", style=value_style),
-            ], style=card_style),
+            ], style=item_style),
             html.Div([
                 html.Div('Test Loss', style=label_style),
                 html.Div(f"{metrics['test_loss']:.4f}", style=value_style),
-            ], style=card_style),
-        ], style={
-            'display': 'grid',
-            'gridTemplateColumns': 'repeat(auto-fit, minmax(150px, 1fr))',
-            'gap': '12px',
-        }),
-        html.Div([
-            html.Div('Epochs trained', style=label_style),
-            html.Div(str(metrics['epoch']), style={'fontWeight': '700', 'fontSize': '18px'}),
-            html.Div('Parameters', style={**label_style, 'marginTop': '10px'}),
-            html.Div(str(metrics['parameter_count']), style={'fontWeight': '700', 'fontSize': '18px'}),
-        ], style={'marginTop': '14px', 'color': '#334155'}),
+            ], style={'marginBottom': '0'}),
+        ]),
     ])
 
 
