@@ -24,15 +24,11 @@ def skilltree_layout():
                     style={'textAlign': 'center', 'marginBottom': '20px'}),
 
         html.Div([
-            dcc.Link([skill_box("Level 5", "Hidden Representations & Feature Spaces")], href="/level5"),      # row 1
+            dcc.Link([skill_box("Level 3", "Build a FNN model by Code")], href="/level3"),       # row 1
 
-            dcc.Link([skill_box("Level 4", "Training via Loss & Backprop")], href="/level4"),         # row 2
+            dcc.Link([skill_box("Level 2", "Build a FNN model by UI")], href="/level2"),       # row 2
 
-            dcc.Link([skill_box("Level 3", "Deeper Networks & Expressivity")], href="/level3"),       # row 3
-
-            dcc.Link([skill_box("Level 2", "Architecture Impact")], href="/level2"),       # row 4
-
-            dcc.Link([skill_box("Level 1", "Preconfigured FFNN Explorer")], href="/level1"), # row 5
+            dcc.Link([skill_box("Level 1", "Preconfigured FFNN Explorer")], href="/level1"), # row 3
         ])            
     ], style={
             "display": "grid",

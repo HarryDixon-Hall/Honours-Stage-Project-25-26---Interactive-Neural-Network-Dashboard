@@ -774,10 +774,6 @@ def display_decision(pathname): #this is a basic page selector before it gets tr
         return level2_layout()
     elif pathname == "/level3":
         return level3_layout()
-    elif pathname == "/level4":
-        return level4_layout()
-    elif pathname == "/level5":
-        return level5_layout()
     else:
         return home_layout()
 
