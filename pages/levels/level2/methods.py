@@ -1,6 +1,6 @@
 import numpy as np
 import plotly.graph_objects as go
-from dash import html
+from dash import dcc, html
 from sklearn.datasets import make_circles, make_classification, make_moons
 from sklearn.model_selection import train_test_split
 
@@ -164,6 +164,259 @@ def level2_parameter_count(params):
     return int(sum(weight.size + bias.size for weight, bias in zip(weights, biases)))
 
 
+def _format_vector(values, max_items=4, precision=3):
+    if values is None:
+        return '[]'
+
+    flat = np.array(values, dtype=np.float64).ravel().tolist()
+    shown = flat[:max_items]
+    suffix = ', ...' if len(flat) > max_items else ''
+    return '[' + ', '.join(f'{value:+.{precision}f}' for value in shown) + suffix + ']'
+
+
+def _build_trace_step(stage_key, title, equations, is_visible, is_active):
+    if not is_visible:
+        return None
+
+    accent = STAGE_ACCENT.get(stage_key, STAGE_ACCENT['idle'])
+    border_color = accent if is_active else '#dbeafe'
+    background_color = '#ffffff' if is_active else '#f8fafc'
+    text_color = accent if is_active else '#334155'
+
+    return html.Div([
+        html.Div(title, style={
+            'fontSize': '11px',
+            'textTransform': 'uppercase',
+            'letterSpacing': '0.08em',
+            'fontWeight': '700',
+            'color': accent,
+            'marginBottom': '6px',
+        }),
+        html.Div([
+            (
+                dcc.Markdown(
+                    equation['content'],
+                    mathjax=True,
+                    style={
+                        'fontSize': '11px',
+                        'lineHeight': '1.45',
+                        'color': text_color,
+                        'marginBottom': '4px',
+                    },
+                )
+                if equation.get('kind') == 'math' else
+                html.Div(
+                    equation['content'],
+                    style={
+                        'fontSize': '11px',
+                        'lineHeight': '1.4',
+                        'color': '#475569',
+                        'marginBottom': '4px',
+                        'fontFamily': 'monospace',
+                        'whiteSpace': 'pre-wrap',
+                    },
+                )
+            )
+            for equation in equations
+        ]),
+    ], style={
+        'padding': '10px 12px',
+        'borderRadius': '12px',
+        'borderLeft': f'3px solid {accent}',
+        'borderTop': f'1px solid {border_color}',
+        'borderRight': f'1px solid {border_color}',
+        'borderBottom': f'1px solid {border_color}',
+        'backgroundColor': background_color,
+    })
+
+
+def _make_trace_stage_marker(current_stage):
+    stage_sequence = [
+        ('forward', 'Forward'),
+        ('loss', 'Loss'),
+        ('backward', 'Backward'),
+        ('update', 'Update'),
+    ]
+
+    marker_items = []
+    for stage_index, (stage_key, stage_label) in enumerate(stage_sequence):
+        is_active = stage_key == current_stage
+        marker_items.append(
+            html.Div([
+                html.Div(style={
+                    'width': '10px',
+                    'height': '10px',
+                    'borderRadius': '999px',
+                    'backgroundColor': STAGE_ACCENT[stage_key] if is_active else '#cbd5e1',
+                    'border': f"2px solid {STAGE_ACCENT[stage_key] if is_active else '#cbd5e1'}",
+                    'marginBottom': '4px',
+                }),
+                html.Div(stage_label, style={
+                    'fontSize': '10px',
+                    'fontWeight': '700',
+                    'color': STAGE_ACCENT[stage_key] if is_active else '#64748b',
+                    'textTransform': 'uppercase',
+                    'letterSpacing': '0.05em',
+                    'textAlign': 'center',
+                }),
+            ], style={
+                'display': 'flex',
+                'flexDirection': 'column',
+                'alignItems': 'center',
+                'minWidth': '58px',
+            })
+        )
+
+        if stage_index < len(stage_sequence) - 1:
+            marker_items.append(
+                html.Div(style={
+                    'flex': '0 0 18px',
+                    'height': '2px',
+                    'backgroundColor': STAGE_ACCENT[stage_key] if is_active else '#cbd5e1',
+                    'alignSelf': 'flex-start',
+                    'marginTop': '5px',
+                })
+            )
+
+    return html.Div(marker_items, style={
+        'display': 'flex',
+        'alignItems': 'flex-start',
+        'gap': '0',
+        'marginBottom': '10px',
+        'overflowX': 'auto',
+    })
+
+
+def _make_level2_trace_panel(
+    params,
+    activation,
+    dataset_bundle,
+    probe_index,
+    current_stage,
+    pending_loss,
+    pending_gradients,
+    gradient_norms,
+    learning_rate,
+    previous_weights,
+):
+    if current_stage == 'idle':
+        return html.Div([
+            html.Div('Mathematical Trace', style={
+                'fontSize': '11px',
+                'textTransform': 'uppercase',
+                'letterSpacing': '0.08em',
+                'fontWeight': '700',
+                'color': '#64748b',
+                'marginBottom': '6px',
+            }),
+            html.Div(
+                'Start training to build an epoch trace through forward, loss, backward, and update.',
+                style={'fontSize': '11px', 'color': '#64748b', 'lineHeight': '1.4'},
+            ),
+        ], style={
+            'backgroundColor': '#f8fafc',
+            'border': '1px solid #dbeafe',
+            'borderRadius': '12px',
+            'padding': '10px 12px',
+        })
+
+    safe_probe_index = int(probe_index) % max(1, dataset_bundle['X_train'].shape[0])
+    probe_features = dataset_bundle['X_train'][safe_probe_index:safe_probe_index + 1]
+    probe_target = int(dataset_bundle['y_train'][safe_probe_index])
+    predictions, cache = level2_forward_pass(probe_features, params, activation)
+    output_vector = predictions[:, 0]
+    targets = level2_make_targets(np.array([probe_target]), output_vector.shape[0])[:, 0]
+    first_hidden_z = cache['pre_activations'][0][:, 0] if cache['pre_activations'] else np.array([])
+    first_hidden_a = cache['activations'][1][:, 0] if len(cache['activations']) > 1 else np.array([])
+    output_z = cache['pre_activations'][-1][:, 0] if cache['pre_activations'] else np.array([])
+    output_delta = output_vector - targets
+
+    if output_vector.shape[0] == 1:
+        eps = 1e-8
+        sample_loss = -(
+            probe_target * np.log(output_vector[0] + eps)
+            + (1 - probe_target) * np.log(1 - output_vector[0] + eps)
+        )
+        loss_symbolic = r'$$\mathcal{L} = -\left(y\log(\hat{y}) + (1-y)\log(1-\hat{y})\right)$$'
+    else:
+        eps = 1e-8
+        sample_loss = -np.sum(targets * np.log(output_vector + eps))
+        loss_symbolic = r'$$\mathcal{L} = -\sum_i y_i \log(\hat{y}_i)$$'
+
+    forward_equations = [
+        {'kind': 'math', 'content': r'$$a^{[0]} = x_{probe}$$'},
+        {'kind': 'text', 'content': f'input approx {_format_vector(probe_features[0], max_items=5)}'},
+        {'kind': 'math', 'content': r'$$z^{[1]} = W^{[1]}a^{[0]} + b^{[1]}$$'},
+        {'kind': 'text', 'content': f'z[1] approx {_format_vector(first_hidden_z)}'},
+        {'kind': 'math', 'content': fr'$$a^{{[1]}} = {activation}(z^{{[1]}})$$'},
+        {'kind': 'text', 'content': f'a[1] approx {_format_vector(first_hidden_a)}'},
+        {'kind': 'math', 'content': r'$$\hat{y} = a^{[L]}$$'},
+        {'kind': 'text', 'content': f'z[L] approx {_format_vector(output_z)} ; y_hat approx {_format_vector(output_vector)}'},
+    ]
+    loss_equations = [
+        {'kind': 'math', 'content': loss_symbolic},
+        {'kind': 'text', 'content': f'y approx {_format_vector(targets)} ; y_hat approx {_format_vector(output_vector)}'},
+        {'kind': 'math', 'content': fr'$$\mathcal{{L}}_{{probe}} \approx {sample_loss:.4f}$$'},
+        {
+            'kind': 'math',
+            'content': (
+                fr'$$\mathcal{{L}}_{{epoch}} \approx {pending_loss:.4f}$$'
+                if pending_loss is not None else r'$$\mathcal{L}_{epoch}\;\text{pending}$$'
+            ),
+        },
+    ]
+    backward_equations = [
+        {'kind': 'math', 'content': r'$$\delta^{[L]} = \hat{y} - y$$'},
+        {'kind': 'text', 'content': f'delta[L] approx {_format_vector(output_delta)}'},
+        {'kind': 'math', 'content': r'$$\frac{\partial \mathcal{L}}{\partial W^{[l]}} = \delta^{[l]}(a^{[l-1]})^T$$'},
+        {'kind': 'math', 'content': r'$$\frac{\partial \mathcal{L}}{\partial b^{[l]}} = \delta^{[l]}$$'},
+        (
+            {'kind': 'text', 'content': 'gradient norms ' + ', '.join(f'L{index + 1}={value:.3f}' for index, value in enumerate(gradient_norms or []))}
+            if gradient_norms else {'kind': 'text', 'content': 'gradient norms pending'}
+        ),
+    ]
+
+    update_equations = [
+        {'kind': 'math', 'content': r'$$W^{[l]} \leftarrow W^{[l]} - \eta \frac{\partial \mathcal{L}}{\partial W^{[l]}}$$'},
+        {'kind': 'math', 'content': fr'$$\eta = {learning_rate:.3f}$$'},
+    ]
+    if previous_weights and pending_gradients:
+        old_weight = float(previous_weights[0][0][0])
+        gradient_value = float(pending_gradients['weight_gradients'][0][0][0])
+        new_weight = float(params['weights'][0][0][0])
+        update_equations.append(
+            {'kind': 'text', 'content': f'w_new = {old_weight:+.4f} - {learning_rate:.3f} * ({gradient_value:+.4f}) = {new_weight:+.4f}'}
+        )
+    else:
+        update_equations.append({'kind': 'text', 'content': 'weight update is shown after the update stage is applied'})
+
+    current_index = ('forward', 'loss', 'backward', 'update').index(current_stage)
+    steps = [
+        _build_trace_step('forward', 'Forward Trace', forward_equations, current_index >= 0, current_stage == 'forward'),
+        _build_trace_step('loss', 'Loss Trace', loss_equations, current_index >= 1, current_stage == 'loss'),
+        _build_trace_step('backward', 'Backward Trace', backward_equations, current_index >= 2, current_stage == 'backward'),
+        _build_trace_step('update', 'Update Trace', update_equations, current_index >= 3, current_stage == 'update'),
+    ]
+
+    return html.Div([
+        html.Div('Epoch Mathematical Trace', style={
+            'fontSize': '11px',
+            'textTransform': 'uppercase',
+            'letterSpacing': '0.08em',
+            'fontWeight': '700',
+            'color': '#64748b',
+            'marginBottom': '8px',
+        }),
+        _make_trace_stage_marker(current_stage),
+        html.Div([step for step in steps if step is not None], style={'display': 'grid', 'gap': '8px'}),
+    ], style={
+        'backgroundColor': '#f8fafc',
+        'border': '1px solid #dbeafe',
+        'borderRadius': '12px',
+        'padding': '10px 12px',
+    })
+
+
 def _copy_serialized_weights(weights):
     return [[list(row) for row in layer] for layer in weights]
 
@@ -221,26 +474,24 @@ def level2_forward_pass(X, params, activation):
     weights, biases = level2_deserialize_params(params)
     activations = [X.T]
     pre_activations = []
-    current_activation = X.T
 
-    for weight, bias in zip(weights[:-1], biases[:-1]):
-        z_values = weight @ current_activation + bias
+    for layer_index in range(len(weights) - 1):
+        z_values = weights[layer_index] @ activations[-1] + biases[layer_index]
         pre_activations.append(z_values)
-        current_activation = activation_forward(z_values, activation)
-        activations.append(current_activation)
+        activations.append(activation_forward(z_values, activation))
 
-    z_output = weights[-1] @ current_activation + biases[-1]
-    output = output_forward(z_output)
-    pre_activations.append(z_output)
-    activations.append(output)
+    output_z = weights[-1] @ activations[-1] + biases[-1]
+    pre_activations.append(output_z)
+    predictions = output_forward(output_z)
+    activations.append(predictions)
 
-    return output, {
+    return predictions, {
         'activations': activations,
         'pre_activations': pre_activations,
     }
 
 
-def make_level2_activation_snapshot(dataset_bundle, params, activation, probe_index=0):
+def make_level2_activation_snapshot(dataset_bundle, params, activation='tanh', probe_index=0):
     X_train = dataset_bundle['X_train']
     X_train_raw = dataset_bundle['X_train_raw']
     y_train = dataset_bundle['y_train']
@@ -793,31 +1044,6 @@ def make_network_diagram_figure(
     )
 
     fig = go.Figure(data=edge_traces + [node_trace])
-    if activation_snapshot:
-        probe_raw = activation_snapshot['probe_raw']
-        prediction_vector = activation_snapshot['prediction_vector']
-        if len(prediction_vector) == 1:
-            prediction_text = f"p(class 1)={prediction_vector[0]:.3f}"
-        else:
-            prediction_text = ', '.join(f'p{index}={value:.3f}' for index, value in enumerate(prediction_vector))
-
-        annotations.append(
-            dict(
-                x=0.5,
-                y=-0.12,
-                xref='paper',
-                yref='paper',
-                text=(
-                    f"Probe sample #{activation_snapshot['probe_index'] + 1}: "
-                    f"(x1={probe_raw[0]:+.2f}, x2={probe_raw[1]:+.2f}) | "
-                    f"target={activation_snapshot['probe_label']} | "
-                    f"predicted={activation_snapshot['predicted_label']} | "
-                    f"confidence={activation_snapshot['confidence']:.3f} | {prediction_text}"
-                ),
-                showarrow=False,
-                font=dict(size=11, color='#334155'),
-            )
-        )
 
     fig.update_layout(
         title='Central FNN architecture view' + (' - animated while training' if is_training else ''),
@@ -999,7 +1225,53 @@ def make_level2_training_curves_figure(history):
     return fig
 
 
-def make_level2_output_panel(metrics, dataset_name):
+def _make_metric_sparkline(history_values, color, value_range=None):
+    cleaned_values = [float(value) for value in (history_values or [])]
+    if not cleaned_values:
+        cleaned_values = [0.0]
+
+    if len(cleaned_values) == 1:
+        cleaned_values = [cleaned_values[0], cleaned_values[0]]
+
+    x_values = list(range(len(cleaned_values)))
+    y_min = min(cleaned_values)
+    y_max = max(cleaned_values)
+    if value_range is not None:
+        y_axis_range = list(value_range)
+    elif abs(y_max - y_min) < 1e-9:
+        padding = 0.05 if abs(y_max) < 1e-9 else max(0.02, abs(y_max) * 0.05)
+        y_axis_range = [y_min - padding, y_max + padding]
+    else:
+        padding = (y_max - y_min) * 0.12
+        y_axis_range = [y_min - padding, y_max + padding]
+
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x=x_values,
+            y=cleaned_values,
+            mode='lines',
+            line=dict(color=color, width=1.5),
+            hoverinfo='skip',
+            showlegend=False,
+        )
+    )
+    fig.update_layout(
+        margin=dict(l=0, r=0, t=0, b=0),
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        xaxis=dict(visible=False, fixedrange=True),
+        yaxis=dict(visible=False, fixedrange=True, range=y_axis_range),
+        height=20,
+    )
+    return dcc.Graph(
+        figure=fig,
+        config={'displayModeBar': False, 'staticPlot': True},
+        style={'width': '78px', 'height': '20px', 'minWidth': '78px'},
+    )
+
+
+def make_level2_output_panel(metrics, dataset_name, history=None):
     label_style = {
         'fontSize': '10px',
         'textTransform': 'uppercase',
@@ -1007,12 +1279,21 @@ def make_level2_output_panel(metrics, dataset_name):
         'color': '#64748b',
         'marginBottom': '2px',
     }
-    value_style = {'fontSize': '18px', 'fontWeight': '700', 'color': '#0f172a'}
+    value_style = {'fontSize': '18px', 'fontWeight': '700', 'color': '#0f172a', 'lineHeight': '1'}
     item_style = {
-        'paddingBottom': '8px',
-        'marginBottom': '8px',
+        'paddingBottom': '7px',
+        'marginBottom': '7px',
         'borderBottom': '1px solid #dbeafe',
     }
+
+    history = history or {}
+
+    metric_rows = [
+        ('Train Accuracy', f"{metrics['train_accuracy'] * 100:.1f}%", '#0f766e', history.get('train_accuracy', []), (0.0, 1.0)),
+        ('Train Loss', f"{metrics['train_loss']:.4f}", '#dc2626', history.get('train_loss', []), None),
+        ('Test Accuracy', f"{metrics['test_accuracy'] * 100:.1f}%", '#2563eb', history.get('test_accuracy', []), (0.0, 1.0)),
+        ('Test Loss', f"{metrics['test_loss']:.4f}", '#f97316', history.get('test_loss', []), None),
+    ]
 
     return html.Div([
         html.Div(
@@ -1030,26 +1311,34 @@ def make_level2_output_panel(metrics, dataset_name):
         html.Div(dataset_name.title(), style={'fontSize': '12px', 'fontWeight': '600', 'color': '#334155', 'marginBottom': '8px'}),
         html.Div([
             html.Div([
-                html.Div('Train Accuracy', style=label_style),
-                html.Div(f"{metrics['train_accuracy'] * 100:.1f}%", style=value_style),
-            ], style=item_style),
-            html.Div([
-                html.Div('Train Loss', style=label_style),
-                html.Div(f"{metrics['train_loss']:.4f}", style=value_style),
-            ], style=item_style),
-            html.Div([
-                html.Div('Test Accuracy', style=label_style),
-                html.Div(f"{metrics['test_accuracy'] * 100:.1f}%", style=value_style),
-            ], style=item_style),
-            html.Div([
-                html.Div('Test Loss', style=label_style),
-                html.Div(f"{metrics['test_loss']:.4f}", style=value_style),
-            ], style={'marginBottom': '0'}),
+                html.Div(label, style=label_style),
+                html.Div([
+                    html.Div(value, style=value_style),
+                    _make_metric_sparkline(series, color, value_range=value_range),
+                ], style={
+                    'display': 'flex',
+                    'alignItems': 'center',
+                    'justifyContent': 'space-between',
+                    'gap': '8px',
+                }),
+            ], style=(item_style if index < len(metric_rows) - 1 else {'marginBottom': '0'}))
+            for index, (label, value, color, series, value_range) in enumerate(metric_rows)
         ]),
     ])
 
 
-def make_level2_summary_panel(params, activation):
+def make_level2_summary_panel(
+    params,
+    activation,
+    dataset_bundle=None,
+    probe_index=0,
+    current_stage='idle',
+    pending_loss=None,
+    pending_gradients=None,
+    gradient_norms=None,
+    learning_rate=0.08,
+    previous_weights=None,
+):
     meta = params.get('meta', {})
     input_dim = meta.get('input_dim', 2)
     hidden_layers = meta.get('hidden_layer_sizes', [6, 6])
@@ -1074,7 +1363,7 @@ def make_level2_summary_panel(params, activation):
             )
         )
 
-    return html.Div([
+    architecture_summary = html.Div([
         html.Div(
             f"Architecture: {' -> '.join(str(size) for size in layer_sizes)}",
             style={'fontWeight': '700', 'marginBottom': '10px'},
@@ -1092,4 +1381,26 @@ def make_level2_summary_panel(params, activation):
             style={'fontSize': '13px', 'color': '#475569', 'marginBottom': '10px'},
         ),
         html.Ul(layer_items, style={'paddingLeft': '18px', 'marginBottom': '0'}),
+    ])
+
+    if dataset_bundle is None:
+        return architecture_summary
+
+    trace_panel = _make_level2_trace_panel(
+        params,
+        activation,
+        dataset_bundle,
+        probe_index,
+        current_stage,
+        pending_loss,
+        pending_gradients,
+        gradient_norms,
+        learning_rate,
+        previous_weights,
+    )
+
+    return html.Div([
+        architecture_summary,
+        html.Div(style={'height': '10px'}),
+        trace_panel,
     ])

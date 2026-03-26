@@ -1,18 +1,30 @@
+import ast
+
 import numpy as np
 import plotly.graph_objects as go
 from dash import html
 from plotly.subplots import make_subplots
 from sklearn.metrics import confusion_matrix
-from sklearn.model_selection import train_test_split
 
 from pages.levels.level2 import (
+	build_level2_dataset,
 	init_level2_mlp,
 	level2_evaluate_metrics,
 	level2_forward_pass,
 	level2_set_baseline_history,
-	load_toy_dataset,
 	train_level2_model,
 )
+
+
+DEFAULT_LEVEL3_META = {
+	'dataset': 'moons',
+	'input_dim': 2,
+	'hidden_layer_sizes': [6, 6],
+	'activation': 'tanh',
+	'epochs': 120,
+	'learning_rate': 0.08,
+	'output_dim': 1,
+}
 
 
 def make_level3_placeholder_figure(title, message):
@@ -37,53 +49,124 @@ def make_level3_placeholder_figure(title, message):
 	return fig
 
 
-def level3_build_meta(dataset, depth, width, activation, epochs):
-	hidden_layer_sizes = [width] * depth
-	return {
-		'dataset': dataset,
-		'depth': depth,
-		'width': width,
-		'hidden_layer_sizes': hidden_layer_sizes,
-		'activation': activation,
-		'epochs': epochs,
-		'layer_sizes': [2] + hidden_layer_sizes + [1],
-	}
+def _safe_literal_assignments(code):
+	assignments = {}
+	if not code:
+		return assignments
+
+	try:
+		parsed = ast.parse(code)
+	except SyntaxError:
+		return assignments
+
+	for node in parsed.body:
+		if not isinstance(node, ast.Assign) or len(node.targets) != 1:
+			continue
+		target = node.targets[0]
+		if not isinstance(target, ast.Name):
+			continue
+		try:
+			assignments[target.id] = ast.literal_eval(node.value)
+		except Exception:
+			continue
+	return assignments
 
 
-def level3_serialize_split(X_train, X_test, y_train, y_test, X_full, y_full):
-	return {
-		'X_train': X_train.tolist(),
-		'X_test': X_test.tolist(),
-		'y_train': y_train.tolist(),
-		'y_test': y_test.tolist(),
-		'X_full': X_full.tolist(),
-		'y_full': y_full.tolist(),
-	}
+def _normalise_dataset(value):
+	if isinstance(value, str) and value in {'moons', 'circles', 'linear'}:
+		return value
+	return DEFAULT_LEVEL3_META['dataset']
 
 
-def level3_deserialize_split(data):
-	return (
-		np.array(data['X_train'], dtype=np.float64),
-		np.array(data['X_test'], dtype=np.float64),
-		np.array(data['y_train'], dtype=np.int32),
-		np.array(data['y_test'], dtype=np.int32),
-		np.array(data['X_full'], dtype=np.float64),
-		np.array(data['y_full'], dtype=np.int32),
+def _normalise_activation(value):
+	if isinstance(value, str) and value in {'relu', 'tanh', 'sigmoid'}:
+		return value
+	return DEFAULT_LEVEL3_META['activation']
+
+
+def _normalise_hidden_layers(value):
+	if isinstance(value, int):
+		return [max(2, min(16, int(value)))]
+	if isinstance(value, (list, tuple)):
+		cleaned = []
+		for item in value:
+			if isinstance(item, (int, float)):
+				cleaned.append(max(2, min(16, int(item))))
+		if cleaned:
+			return cleaned[:4]
+	return list(DEFAULT_LEVEL3_META['hidden_layer_sizes'])
+
+
+def _normalise_positive_int(value, default_value, min_value, max_value):
+	if isinstance(value, (int, float)):
+		return max(min_value, min(max_value, int(value)))
+	return default_value
+
+
+def _normalise_positive_float(value, default_value, min_value, max_value):
+	if isinstance(value, (int, float)):
+		return max(min_value, min(max_value, float(value)))
+	return default_value
+
+
+def level3_extract_meta_from_code(cell_1_code, cell_2_code, cell_4_code):
+	cell_1_assignments = _safe_literal_assignments(cell_1_code)
+	cell_2_assignments = _safe_literal_assignments(cell_2_code)
+	cell_4_assignments = _safe_literal_assignments(cell_4_code)
+
+	dataset = _normalise_dataset(cell_1_assignments.get('dataset_name'))
+	hidden_layer_sizes = _normalise_hidden_layers(cell_2_assignments.get('hidden_layers'))
+	activation = _normalise_activation(cell_2_assignments.get('activation'))
+	input_dim = _normalise_positive_int(
+		cell_2_assignments.get('input_dim', DEFAULT_LEVEL3_META['input_dim']),
+		DEFAULT_LEVEL3_META['input_dim'],
+		2,
+		8,
 	)
+	output_dim = _normalise_positive_int(
+		cell_2_assignments.get('output_dim', DEFAULT_LEVEL3_META['output_dim']),
+		DEFAULT_LEVEL3_META['output_dim'],
+		1,
+		1,
+	)
+	epochs = _normalise_positive_int(
+		cell_4_assignments.get('epochs', DEFAULT_LEVEL3_META['epochs']),
+		DEFAULT_LEVEL3_META['epochs'],
+		1,
+		400,
+	)
+	learning_rate = _normalise_positive_float(
+		cell_4_assignments.get('learning_rate', DEFAULT_LEVEL3_META['learning_rate']),
+		DEFAULT_LEVEL3_META['learning_rate'],
+		0.001,
+		1.0,
+	)
+
+	return level3_build_meta(dataset, hidden_layer_sizes, activation, epochs, learning_rate, input_dim, output_dim)
+
+
+def level3_build_meta(dataset, hidden_layer_sizes, activation, epochs, learning_rate, input_dim=2, output_dim=1):
+	hidden_layers = _normalise_hidden_layers(hidden_layer_sizes)
+	return {
+		'dataset': _normalise_dataset(dataset),
+		'input_dim': _normalise_positive_int(input_dim, 2, 2, 8),
+		'hidden_layer_sizes': hidden_layers,
+		'activation': _normalise_activation(activation),
+		'epochs': _normalise_positive_int(epochs, DEFAULT_LEVEL3_META['epochs'], 1, 400),
+		'learning_rate': _normalise_positive_float(learning_rate, DEFAULT_LEVEL3_META['learning_rate'], 0.001, 1.0),
+		'output_dim': 1,
+		'depth': len(hidden_layers),
+		'layer_sizes': [input_dim] + hidden_layers + [output_dim],
+	}
+
+
+def level3_build_dataset(meta):
+	return build_level2_dataset(meta['dataset'], input_dim=meta['input_dim'])
 
 
 def level3_initialise_store(meta):
-	X_full, y_full = load_toy_dataset(meta['dataset'])
-	X_train, X_test, y_train, y_test = train_test_split(
-		X_full,
-		y_full,
-		test_size=0.25,
-		random_state=42,
-		stratify=y_full,
-	)
 	return {
 		'meta': meta,
-		'data': level3_serialize_split(X_train, X_test, y_train, y_test, X_full, y_full),
 		'model': None,
 		'cell_runs': {
 			'load_dataset': False,
@@ -110,25 +193,27 @@ def level3_model_matches(store, meta):
 		model_meta.get('hidden_layer_sizes') == meta['hidden_layer_sizes']
 		and model_meta.get('activation') == meta['activation']
 		and model_meta.get('dataset') == meta['dataset']
+		and model_meta.get('input_dim') == meta['input_dim']
 	)
 
 
 def level3_initialise_model(store, meta):
-	X_train, _, y_train, _, _, _ = level3_deserialize_split(store['data'])
+	dataset_bundle = level3_build_dataset(meta)
 	model = init_level2_mlp(
-		input_dim=2,
+		input_dim=meta['input_dim'],
 		hidden_layers=meta['hidden_layer_sizes'],
-		output_dim=1,
+		output_dim=meta['output_dim'],
 	)
 	model['meta'] = {
-		'hidden_layers': meta['depth'],
-		'neurons_per_layer': meta['width'],
 		'hidden_layer_sizes': meta['hidden_layer_sizes'],
 		'activation': meta['activation'],
 		'dataset': meta['dataset'],
+		'input_dim': meta['input_dim'],
+		'output_dim': meta['output_dim'],
+		'learning_rate': meta['learning_rate'],
 		'layer_sizes': meta['layer_sizes'],
 	}
-	model = level2_set_baseline_history(X_train, y_train, model, meta['activation'], l2=1e-4)
+	model = level2_set_baseline_history(dataset_bundle, model, meta['activation'], l2=1e-4)
 	store['model'] = model
 	store['forward_summary'] = None
 	store['evaluation'] = None
@@ -140,13 +225,13 @@ def level3_initialise_model(store, meta):
 	return store
 
 
-def level3_dataset_preview_figure(X_train, X_test, y_train, y_test, dataset):
+def level3_dataset_preview_figure(dataset_bundle):
 	fig = go.Figure()
 	split_specs = [
-		('Train class 0', X_train[y_train == 0], '#0f766e', 'circle'),
-		('Train class 1', X_train[y_train == 1], '#b91c1c', 'circle'),
-		('Test class 0', X_test[y_test == 0], '#14b8a6', 'diamond-open'),
-		('Test class 1', X_test[y_test == 1], '#f97316', 'diamond-open'),
+		('Train class 0', dataset_bundle['X_train_raw'][dataset_bundle['y_train'] == 0], '#0f766e', 'circle'),
+		('Train class 1', dataset_bundle['X_train_raw'][dataset_bundle['y_train'] == 1], '#b91c1c', 'circle'),
+		('Test class 0', dataset_bundle['X_test_raw'][dataset_bundle['y_test'] == 0], '#14b8a6', 'diamond-open'),
+		('Test class 1', dataset_bundle['X_test_raw'][dataset_bundle['y_test'] == 1], '#f97316', 'diamond-open'),
 	]
 
 	for label, points, colour, symbol in split_specs:
@@ -161,7 +246,7 @@ def level3_dataset_preview_figure(X_train, X_test, y_train, y_test, dataset):
 		))
 
 	fig.update_layout(
-		title=f'Dataset preview: {dataset.title()} split into train/test batches',
+		title=f"Dataset preview: {dataset_bundle['dataset_name'].title()} split into train/test batches",
 		xaxis_title='x1',
 		yaxis_title='x2',
 		margin=dict(l=30, r=10, t=50, b=30),
@@ -212,7 +297,7 @@ def level3_hidden_space_figure(model, X_reference, y_reference, activation):
 	_, cache = level2_forward_pass(X_reference, model, activation)
 	hidden_activations = cache['activations'][1:-1]
 	if not hidden_activations:
-		return make_level3_placeholder_figure('Hidden-space projection', 'Run Cell 2 to define hidden layers.')
+		return make_level3_placeholder_figure('Hidden-space projection', 'Run Cell 5 to inspect hidden layers.')
 
 	last_hidden = hidden_activations[-1].T
 	x_axis = last_hidden[:, 0]
@@ -259,7 +344,9 @@ def level3_confusion_matrix_figure(confusion_values):
 	return fig
 
 
-def level3_misclassified_figure(X_test, y_test, pred_labels):
+def level3_misclassified_figure(dataset_bundle, pred_labels):
+	X_test = dataset_bundle['X_test_raw']
+	y_test = dataset_bundle['y_test']
 	misclassified = pred_labels != y_test
 	fig = go.Figure()
 	for class_value, colour in [(0, '#94a3b8'), (1, '#475569')]:
@@ -332,9 +419,9 @@ def level3_training_log_children(training_logs):
 
 	return html.Ul([
 		html.Li(
-			f"Run {entry['run_number']}: epochs={entry['epochs']}, train loss={entry['train_loss']:.4f}, "
-			f"train acc={entry['train_accuracy'] * 100:.1f}%, test loss={entry['test_loss']:.4f}, "
-			f"test acc={entry['test_accuracy'] * 100:.1f}%"
+			f"Run {entry['run_number']}: epochs={entry['epochs']}, lr={entry['learning_rate']:.3f}, "
+			f"train loss={entry['train_loss']:.4f}, train acc={entry['train_accuracy'] * 100:.1f}%, "
+			f"test loss={entry['test_loss']:.4f}, test acc={entry['test_accuracy'] * 100:.1f}%"
 		)
 		for entry in reversed(training_logs)
 	], style={'paddingLeft': '18px', 'fontSize': '12px'})
@@ -344,6 +431,7 @@ def level3_metrics_summary_children(evaluation):
 	if not evaluation:
 		return html.Div('Run Cell 6 to compute confusion, metrics, and misclassified samples.', style={'color': '#64748b'})
 
+	metrics = evaluation['metrics']
 	precision = evaluation['precision']
 	recall = evaluation['recall']
 	f1 = evaluation['f1']
@@ -359,8 +447,10 @@ def level3_metrics_summary_children(evaluation):
 		]))
 
 	return html.Div([
-		html.P(f"Accuracy: {evaluation['metrics']['accuracy'] * 100:.1f}%"),
-		html.P(f"Loss: {evaluation['metrics']['loss']:.4f}"),
+		html.P(f"Train accuracy: {metrics['train_accuracy'] * 100:.1f}%"),
+		html.P(f"Test accuracy: {metrics['test_accuracy'] * 100:.1f}%"),
+		html.P(f"Train loss: {metrics['train_loss']:.4f}"),
+		html.P(f"Test loss: {metrics['test_loss']:.4f}"),
 		html.P(f"Misclassified points: {evaluation['misclassified_count']} / {evaluation['sample_count']}"),
 		html.Table([
 			html.Thead(html.Tr([
@@ -371,12 +461,21 @@ def level3_metrics_summary_children(evaluation):
 	])
 
 
-def level3_dataset_summary_children(X_train, X_test, y_train, y_test, meta):
+def level3_dataset_summary_children(dataset_bundle, meta):
 	return html.Div([
 		html.P(f"Dataset: {meta['dataset'].title()}"),
-		html.P(f'Train split: {X_train.shape[0]} samples | Test split: {X_test.shape[0]} samples'),
-		html.P(f'Class balance (train): class 0 = {int(np.sum(y_train == 0))}, class 1 = {int(np.sum(y_train == 1))}'),
-		html.P(f"Feature space: 2-D input, {meta['depth']} hidden layer(s), {meta['width']} neuron(s) per hidden layer"),
+		html.P(
+			f"Train split: {dataset_bundle['X_train'].shape[0]} samples | "
+			f"Test split: {dataset_bundle['X_test'].shape[0]} samples"
+		),
+		html.P(
+			f"Class balance (train): class 0 = {int(np.sum(dataset_bundle['y_train'] == 0))}, "
+			f"class 1 = {int(np.sum(dataset_bundle['y_train'] == 1))}"
+		),
+		html.P(
+			f"Feature space: {meta['input_dim']} engineered input(s), "
+			f"hidden stack {meta['hidden_layer_sizes']}, output dim {meta['output_dim']}"
+		),
 	], style={'fontSize': '12px'})
 
 
@@ -384,39 +483,69 @@ def level3_notebook_status_children(store):
 	if store is None or not store['cell_runs']['load_dataset']:
 		return html.Div('Start with Cell 1 to load a dataset and preview the classification split.')
 	if not store['cell_runs']['define_model']:
-		return html.Div('Dataset loaded. Next run Cell 2 to define the network before inspecting any activations.')
+		return html.Div('Dataset loaded. Next run Cell 2 to define the network architecture from code.')
 	if not store['cell_runs']['forward_pass']:
-		return html.Div('Model defined. Cell 3 is the next useful step if you want to inspect tensor shapes before training.')
+		return html.Div('Model defined. Run Cell 3 to inspect tensor shapes before training.')
 	if not store['cell_runs']['train_model']:
-		return html.Div('Forward pass captured. Run Cell 4 to optimise the model and update the boundary.')
+		return html.Div('Forward pass captured. Run Cell 4 to train with your code-defined epochs and learning rate.')
 	if not store['cell_runs']['inspect']:
-		return html.Div('Training complete. Run Cell 5 to examine hidden representations and per-layer activations.')
+		return html.Div('Training complete. Run Cell 5 to inspect hidden representations and activations.')
 	if not store['cell_runs']['evaluate']:
 		return html.Div('Inspection complete. Run Cell 6 to compute evaluation metrics and misclassified points.')
-	return html.Div('All six notebook steps have been executed. Change a configuration and rerun the relevant cell to compare behaviours.')
+	return html.Div('All six notebook steps have been executed. Edit a code cell and rerun the affected step to compare behaviours.')
 
 
-def build_level3_execution_environment(cell_number, dataset, depth, width, activation, epochs):
-	hidden_layers = [width] * depth
-	X, y = load_toy_dataset(dataset)
-	X_train, X_test, y_train, y_test = train_test_split(
-		X,
-		y,
-		test_size=0.25,
-		random_state=42,
-		stratify=y,
+def level3_model_status_children(store):
+	if store is None or store.get('model') is None:
+		status = 'Waiting for model definition'
+		color = '#64748b'
+		detail = 'Cell 2 defines the current network architecture.'
+	else:
+		cell_runs = store.get('cell_runs', {})
+		if cell_runs.get('train_model'):
+			status = 'Model trained'
+			color = '#0f766e'
+			detail = f"Epochs completed: {store['model'].get('epoch', 0)}"
+		else:
+			status = 'Model ready'
+			color = '#1d4ed8'
+			detail = 'Architecture initialised and ready for forward / train steps.'
+
+	return html.Div([
+		html.Div('Model Status', style={'fontSize': '10px', 'textTransform': 'uppercase', 'letterSpacing': '0.08em', 'color': '#64748b', 'marginBottom': '4px'}),
+		html.Div(status, style={'fontSize': '19px', 'fontWeight': '700', 'color': color, 'marginBottom': '4px'}),
+		html.Div(detail, style={'fontSize': '12px', 'color': '#475569'}),
+	])
+
+
+def level3_execution_live_children(store):
+	if store is None:
+		completed = 0
+	else:
+		completed = sum(1 for value in store.get('cell_runs', {}).values() if value)
+
+	return html.Div([
+		html.Div('Notebook Progress', style={'fontSize': '10px', 'textTransform': 'uppercase', 'letterSpacing': '0.08em', 'color': '#64748b', 'marginBottom': '4px'}),
+		html.Div(f'{completed} / 6 cells run', style={'fontSize': '19px', 'fontWeight': '700', 'color': '#0f172a', 'marginBottom': '4px'}),
+		html.Div('Level 3 uses code cells to drive the same visuals Level 2 exposes through direct controls.', style={'fontSize': '12px', 'color': '#475569'}),
+	])
+
+
+def build_level3_execution_environment(cell_number, meta):
+	dataset_bundle = level3_build_dataset(meta)
+	model = init_level2_mlp(
+		input_dim=meta['input_dim'],
+		hidden_layers=meta['hidden_layer_sizes'],
+		output_dim=meta['output_dim'],
 	)
-
-	model = init_level2_mlp(input_dim=2, hidden_layers=hidden_layers, output_dim=1)
-	model = level2_set_baseline_history(X_train, y_train, model, activation, l2=1e-4)
+	model = level2_set_baseline_history(dataset_bundle, model, meta['activation'], l2=1e-4)
 	if cell_number >= 4:
 		model = train_level2_model(
-			X_train,
-			y_train,
+			dataset_bundle,
 			model,
-			activation=activation,
-			epochs=epochs,
-			lr=0.08,
+			activation=meta['activation'],
+			epochs=meta['epochs'],
+			lr=meta['learning_rate'],
 			l2=1e-4,
 		)
 
@@ -438,20 +567,26 @@ def build_level3_execution_environment(cell_number, dataset, depth, width, activ
 		},
 		'np': np,
 		'confusion_matrix': confusion_matrix,
-		'load_toy_dataset': load_toy_dataset,
+		'build_level2_dataset': build_level2_dataset,
 		'init_level2_mlp': init_level2_mlp,
 		'level2_forward_pass': level2_forward_pass,
 		'level2_evaluate_metrics': level2_evaluate_metrics,
+		'level2_set_baseline_history': level2_set_baseline_history,
 		'train_level2_model': train_level2_model,
-		'dataset_name': dataset,
-		'hidden_layers': hidden_layers,
-		'activation': activation,
-		'epochs': epochs,
-		'X': X,
-		'y': y,
-		'X_train': X_train,
-		'X_test': X_test,
-		'y_train': y_train,
-		'y_test': y_test,
+		'dataset_name': meta['dataset'],
+		'input_dim': meta['input_dim'],
+		'hidden_layers': meta['hidden_layer_sizes'],
+		'activation': meta['activation'],
+		'epochs': meta['epochs'],
+		'learning_rate': meta['learning_rate'],
+		'dataset_bundle': dataset_bundle,
+		'X': dataset_bundle['X_raw'],
+		'y': dataset_bundle['y'],
+		'X_train': dataset_bundle['X_train'],
+		'X_test': dataset_bundle['X_test'],
+		'X_train_raw': dataset_bundle['X_train_raw'],
+		'X_test_raw': dataset_bundle['X_test_raw'],
+		'y_train': dataset_bundle['y_train'],
+		'y_test': dataset_bundle['y_test'],
 		'model': model,
 	}

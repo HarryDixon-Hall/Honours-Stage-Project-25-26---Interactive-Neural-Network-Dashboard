@@ -477,8 +477,19 @@ def register_level2_callbacks(app):
             stage_name=current_stage,
             gradient_snapshot=pending_gradients,
         )
-        explanation = make_level2_summary_panel(params, activation)
-        output_summary = make_level2_output_panel(metrics, dataset)
+        explanation = make_level2_summary_panel(
+            params,
+            activation,
+            dataset_bundle=dataset_bundle,
+            probe_index=probe_index,
+            current_stage=current_stage,
+            pending_loss=pending_loss,
+            pending_gradients=pending_gradients,
+            gradient_norms=gradient_norms,
+            learning_rate=learning_rate,
+            previous_weights=previous_weights,
+        )
+        output_summary = make_level2_output_panel(metrics, dataset, params.get('history', {}))
         fig_boundary = make_decision_boundary_figure(dataset_bundle, params, activation)
         boundary_explanation = make_level2_boundary_explanation(dataset, activation_snapshot)
         fig_activation = make_activation_figure(activation)
