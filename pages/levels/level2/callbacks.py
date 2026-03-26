@@ -17,6 +17,7 @@ from pages.levels.level2.methods import (
     init_level2_mlp,
     level2_evaluate_metrics,
     make_level2_activation_snapshot,
+    make_level2_boundary_explanation,
     level2_set_baseline_history,
     make_activation_figure,
     make_decision_boundary_figure,
@@ -28,6 +29,11 @@ from pages.levels.level2.methods import (
 
 
 MAX_LEVEL2_EPOCHS = 200
+SPEED_TO_INTERVAL = {
+    'slow': 700,
+    'normal': 350,
+    'fast': 180,
+}
 VISIBLE_WRAPPER_STYLE = {'flex': '1 1 200px'}
 HIDDEN_WRAPPER_STYLE = {'flex': '1 1 200px', 'display': 'none'}
 
@@ -88,6 +94,7 @@ def register_level2_callbacks(app):
         Output('level2-training-store', 'data'),
         Output('level2-train-toggle-btn', 'children'),
         Output('level2-train-interval', 'disabled'),
+        Output('level2-train-interval', 'interval'),
         Input('level2-train-toggle-btn', 'n_clicks'),
         Input('level2-reset-btn', 'n_clicks'),
         Input('level2-train-interval', 'n_intervals'),
@@ -101,6 +108,7 @@ def register_level2_callbacks(app):
         Input('level2-activation-dropdown', 'value'),
         Input('level2-dataset-dropdown', 'value'),
         Input('level2-learning-rate-slider', 'value'),
+        Input('level2-play-speed-control', 'value'),
         State('level2-params-store', 'data'),
         State('level2-training-store', 'data'),
     )
@@ -118,6 +126,7 @@ def register_level2_callbacks(app):
         activation,
         dataset,
         learning_rate,
+        play_speed,
         params,
         training_store,
     ):
@@ -134,6 +143,7 @@ def register_level2_callbacks(app):
         ]
         safe_output_dim = _safe_int(output_dim, 1, 2, 1)
         safe_learning_rate = _safe_float(learning_rate, 0.01, 0.2, 0.08)
+        safe_play_speed = play_speed if play_speed in SPEED_TO_INTERVAL else 'normal'
         training_state = training_store or {'running': False, 'probe_index': 0, 'previous_weights': None}
         running = bool(training_state.get('running'))
 
@@ -176,6 +186,7 @@ def register_level2_callbacks(app):
                 'max_epochs': MAX_LEVEL2_EPOCHS,
                 'probe_index': 0,
                 'previous_weights': None,
+                'play_speed': safe_play_speed,
             }
         elif trigger == 'level2-train-toggle-btn':
             running = not running
@@ -202,17 +213,20 @@ def register_level2_callbacks(app):
             'max_epochs': MAX_LEVEL2_EPOCHS,
             'probe_index': training_state.get('probe_index', 0),
             'previous_weights': training_state.get('previous_weights'),
+            'play_speed': safe_play_speed,
         }
         button_label = 'Stop Training' if running else 'Start Training'
         interval_disabled = not running
+        interval_ms = SPEED_TO_INTERVAL[safe_play_speed]
 
-        return params, training_state, button_label, interval_disabled
+        return params, training_state, button_label, interval_disabled, interval_ms
 
     @app.callback(
         Output('level2-network-diagram-graph', 'figure'),
         Output('level2-math-explanation', 'children'),
         Output('level2-output-summary', 'children'),
         Output('level2-decision-boundary-graph', 'figure'),
+        Output('level2-boundary-explanation', 'children'),
         Output('level2-activation-graph', 'figure'),
         Output('level2-epoch-live', 'children'),
         Input('level2-params-store', 'data'),
@@ -256,9 +270,11 @@ def register_level2_callbacks(app):
         explanation = make_level2_summary_panel(params, activation)
         output_summary = make_level2_output_panel(metrics, dataset)
         fig_boundary = make_decision_boundary_figure(dataset_bundle, params, activation)
+        boundary_explanation = make_level2_boundary_explanation(dataset, activation_snapshot)
         fig_activation = make_activation_figure(activation)
 
         running = bool(training_state.get('running'))
+        play_speed = training_state.get('play_speed', 'normal')
         epoch_panel = [
             html.Div([
                 html.Div('Live Epoch Count', style={'fontSize': '12px', 'textTransform': 'uppercase', 'letterSpacing': '0.08em', 'color': '#64748b'}),
@@ -268,6 +284,7 @@ def register_level2_callbacks(app):
                 html.Div('Status', style={'fontSize': '12px', 'textTransform': 'uppercase', 'letterSpacing': '0.08em', 'color': '#64748b'}),
                 html.Div('Running' if running else 'Stopped', style={'fontSize': '16px', 'fontWeight': '700', 'color': '#0f766e' if running else '#475569'}),
                 html.Div(f'Learning rate {learning_rate:.2f}', style={'fontSize': '12px', 'color': '#64748b', 'marginTop': '4px'}),
+                html.Div(f'Play speed {play_speed}', style={'fontSize': '12px', 'color': '#64748b', 'marginTop': '4px'}),
                 html.Div(
                     (
                         'Animation shows a probe sample flowing through the current network.'
@@ -284,6 +301,7 @@ def register_level2_callbacks(app):
             explanation,
             output_summary,
             fig_boundary,
+            boundary_explanation,
             fig_activation,
             epoch_panel,
         )

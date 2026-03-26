@@ -16,6 +16,10 @@ FEATURE_NAMES = [
     'x1 - x2',
 ]
 
+CLASS_0_COLOR = '#2563eb'
+CLASS_1_COLOR = '#f97316'
+CLASS_NEUTRAL_COLOR = '#f1f5f9'
+
 
 def load_toy_dataset(name, n_samples=320, noise=0.2, random_state=0):
     if name == 'moons':
@@ -440,7 +444,11 @@ def make_decision_boundary_figure(dataset_bundle, params, activation, grid_step=
             z=z_values,
             showscale=False,
             contours=dict(showlines=False),
-            colorscale='RdBu',
+            colorscale=[
+                [0.0, CLASS_0_COLOR],
+                [0.5, CLASS_NEUTRAL_COLOR],
+                [1.0, CLASS_1_COLOR],
+            ],
             opacity=0.6,
             hoverinfo='skip',
         )
@@ -452,12 +460,13 @@ def make_decision_boundary_figure(dataset_bundle, params, activation, grid_step=
             mode='markers',
             name='Train split',
             marker=dict(
-                color=dataset_bundle['y_train'],
-                colorscale='Viridis',
+                color=[CLASS_0_COLOR if label == 0 else CLASS_1_COLOR for label in dataset_bundle['y_train']],
                 size=8,
                 line=dict(width=1, color='#0f172a'),
                 symbol='circle',
             ),
+            customdata=dataset_bundle['y_train'],
+            hovertemplate='Train sample<br>x1=%{x:.2f}<br>x2=%{y:.2f}<br>class=%{customdata}<extra></extra>',
         )
     )
     fig.add_trace(
@@ -467,12 +476,13 @@ def make_decision_boundary_figure(dataset_bundle, params, activation, grid_step=
             mode='markers',
             name='Test split',
             marker=dict(
-                color=dataset_bundle['y_test'],
-                colorscale='Viridis',
+                color=[CLASS_0_COLOR if label == 0 else CLASS_1_COLOR for label in dataset_bundle['y_test']],
                 size=9,
                 line=dict(width=1, color='#0f172a'),
                 symbol='diamond',
             ),
+            customdata=dataset_bundle['y_test'],
+            hovertemplate='Test sample<br>x1=%{x:.2f}<br>x2=%{y:.2f}<br>class=%{customdata}<extra></extra>',
         )
     )
     fig.update_layout(
@@ -630,7 +640,7 @@ def make_network_diagram_figure(
                     weight_delta = 0.0
                     if previous_layer_weights is not None:
                         weight_delta = weight_value - previous_layer_weights[target_index, source_index]
-                    edge_colour = '#2563eb' if weight_value >= 0 else '#dc2626'
+                    edge_colour = CLASS_1_COLOR if weight_value >= 0 else CLASS_0_COLOR
                     edge_width = max(0.6, min(5.5, abs(weight_value) * 2.2 + abs(weight_delta) * 14.0))
                     edge_dash = 'solid'
                     if abs(weight_delta) >= 0.03:
@@ -715,6 +725,61 @@ def make_network_diagram_figure(
         paper_bgcolor='#ffffff',
     )
     return fig
+
+
+def make_level2_boundary_explanation(dataset_name, activation_snapshot=None):
+    probe_text = 'The architecture animation uses one probe sample from the training split at a time.'
+    if activation_snapshot:
+        probe_text = (
+            f"The current animation probe is sample #{activation_snapshot['probe_index'] + 1}, "
+            f"with true class {activation_snapshot['probe_label']} and predicted class {activation_snapshot['predicted_label']}."
+        )
+
+    chip_style = {
+        'display': 'inline-flex',
+        'alignItems': 'center',
+        'gap': '8px',
+        'marginRight': '14px',
+        'marginBottom': '10px',
+        'fontSize': '12px',
+        'color': '#334155',
+    }
+    swatch_style = lambda color: {
+        'width': '14px',
+        'height': '14px',
+        'borderRadius': '999px',
+        'backgroundColor': color,
+        'border': '1px solid #0f172a',
+    }
+
+    return html.Div([
+        html.Div('How To Read The Decision Boundary', style={'fontWeight': '700', 'marginBottom': '10px', 'color': '#0f172a'}),
+        html.Div([
+            html.Div([html.Span(style=swatch_style(CLASS_0_COLOR)), html.Span('Blue marks class 0')], style=chip_style),
+            html.Div([html.Span(style=swatch_style(CLASS_1_COLOR)), html.Span('Orange marks class 1')], style=chip_style),
+        ]),
+        html.P(
+            f'The background shading shows the model prediction over the full input space for the {dataset_name} dataset. Blue regions are areas the network currently leans toward class 0, orange regions lean toward class 1, and pale regions are less certain near the decision boundary.',
+            style={'fontSize': '13px', 'color': '#475569', 'marginBottom': '8px', 'lineHeight': '1.6'},
+        ),
+        html.P(
+            'Circular points are training samples and diamond points are test samples. Their colour shows the true class label, while their position shows where that example lives in the original 2D dataset.',
+            style={'fontSize': '13px', 'color': '#475569', 'marginBottom': '8px', 'lineHeight': '1.6'},
+        ),
+        html.P(
+            'The animated FNN architecture is learning a mapping from those 2D points into hidden features. As the weights change, the architecture view updates and the decision-boundary background changes because the network is changing which regions of the plane it assigns to each class.',
+            style={'fontSize': '13px', 'color': '#475569', 'marginBottom': '8px', 'lineHeight': '1.6'},
+        ),
+        html.P(
+            probe_text,
+            style={'fontSize': '13px', 'color': '#475569', 'marginBottom': '0', 'lineHeight': '1.6'},
+        ),
+    ], style={
+        'backgroundColor': '#f8fafc',
+        'border': '1px solid #dbeafe',
+        'borderRadius': '14px',
+        'padding': '14px 16px',
+    })
 
 
 def make_level2_training_curves_figure(history):

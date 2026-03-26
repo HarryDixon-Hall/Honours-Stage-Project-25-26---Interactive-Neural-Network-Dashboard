@@ -150,6 +150,21 @@ def level2_layout():
                             marks={0.01: '0.01', 0.05: '0.05', 0.1: '0.10', 0.15: '0.15', 0.2: '0.20'},
                         ),
                     ], style={'marginBottom': '10px'}),
+                    html.Div([
+                        html.Label('Animation Speed', style=LABEL_STYLE),
+                        dcc.RadioItems(
+                            id='level2-play-speed-control',
+                            options=[
+                                {'label': 'Slow', 'value': 'slow'},
+                                {'label': 'Normal', 'value': 'normal'},
+                                {'label': 'Fast', 'value': 'fast'},
+                            ],
+                            value='normal',
+                            inline=True,
+                            labelStyle={'marginRight': '16px', 'fontWeight': '600', 'color': '#334155'},
+                            inputStyle={'marginRight': '6px'},
+                        ),
+                    ], style={'marginBottom': '10px'}),
                     html.Div(
                         'A higher learning rate moves faster but can overshoot the best boundary. A lower rate is steadier but slower.',
                         style={'fontSize': '12px', 'color': '#64748b', 'lineHeight': '1.5'}
@@ -276,6 +291,7 @@ def level2_layout():
                     ),
                     html.Div(id='level2-output-summary', style={'marginBottom': '18px'}),
                     dcc.Graph(id='level2-decision-boundary-graph', style={'height': '44vh'}),
+                    html.Div(id='level2-boundary-explanation', style={'marginTop': '16px'}),
                 ], style=CARD_STYLE),
                 html.Div([
                     html.H3('Activation Function Visualisation', style={'marginTop': '0', 'marginBottom': '10px'}),
