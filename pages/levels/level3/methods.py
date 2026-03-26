@@ -109,34 +109,37 @@ def _normalise_positive_float(value, default_value, min_value, max_value):
 	return default_value
 
 
-def level3_extract_meta_from_code(cell_1_code, cell_2_code, cell_4_code):
+def level3_extract_meta_from_code(cell_1_code, cell_2_code, cell_3_code, cell_4_code, cell_5_code, cell_6_code):
 	cell_1_assignments = _safe_literal_assignments(cell_1_code)
 	cell_2_assignments = _safe_literal_assignments(cell_2_code)
+	cell_3_assignments = _safe_literal_assignments(cell_3_code)
 	cell_4_assignments = _safe_literal_assignments(cell_4_code)
+	cell_5_assignments = _safe_literal_assignments(cell_5_code)
+	cell_6_assignments = _safe_literal_assignments(cell_6_code)
 
 	dataset = _normalise_dataset(cell_1_assignments.get('dataset_name'))
-	hidden_layer_sizes = _normalise_hidden_layers(cell_2_assignments.get('hidden_layers'))
-	activation = _normalise_activation(cell_2_assignments.get('activation'))
 	input_dim = _normalise_positive_int(
 		cell_2_assignments.get('input_dim', DEFAULT_LEVEL3_META['input_dim']),
 		DEFAULT_LEVEL3_META['input_dim'],
 		2,
 		8,
 	)
+	activation = _normalise_activation(cell_3_assignments.get('activation'))
+	hidden_layer_sizes = _normalise_hidden_layers(cell_4_assignments.get('hidden_layers'))
 	output_dim = _normalise_positive_int(
-		cell_2_assignments.get('output_dim', DEFAULT_LEVEL3_META['output_dim']),
+		cell_5_assignments.get('output_dim', DEFAULT_LEVEL3_META['output_dim']),
 		DEFAULT_LEVEL3_META['output_dim'],
 		1,
 		1,
 	)
 	epochs = _normalise_positive_int(
-		cell_4_assignments.get('epochs', DEFAULT_LEVEL3_META['epochs']),
+		cell_6_assignments.get('epochs', DEFAULT_LEVEL3_META['epochs']),
 		DEFAULT_LEVEL3_META['epochs'],
 		1,
 		400,
 	)
 	learning_rate = _normalise_positive_float(
-		cell_4_assignments.get('learning_rate', DEFAULT_LEVEL3_META['learning_rate']),
+		cell_6_assignments.get('learning_rate', DEFAULT_LEVEL3_META['learning_rate']),
 		DEFAULT_LEVEL3_META['learning_rate'],
 		0.001,
 		1.0,
@@ -170,16 +173,13 @@ def level3_initialise_store(meta):
 		'model': None,
 		'cell_runs': {
 			'load_dataset': False,
-			'define_model': False,
-			'forward_pass': False,
-			'train_model': False,
-			'inspect': False,
-			'evaluate': False,
+			'input_layer': False,
+			'activation': False,
+			'hidden_layers': False,
+			'output_layer': False,
+			'training_config': False,
 		},
-		'forward_summary': None,
 		'training_logs': [],
-		'evaluation': None,
-		'inspect_ran': False,
 	}
 
 
@@ -215,13 +215,7 @@ def level3_initialise_model(store, meta):
 	}
 	model = level2_set_baseline_history(dataset_bundle, model, meta['activation'], l2=1e-4)
 	store['model'] = model
-	store['forward_summary'] = None
-	store['evaluation'] = None
-	store['inspect_ran'] = False
-	store['cell_runs']['forward_pass'] = False
-	store['cell_runs']['train_model'] = False
-	store['cell_runs']['inspect'] = False
-	store['cell_runs']['evaluate'] = False
+	store['training_logs'] = []
 	return store
 
 
@@ -473,43 +467,52 @@ def level3_dataset_summary_children(dataset_bundle, meta):
 			f"class 1 = {int(np.sum(dataset_bundle['y_train'] == 1))}"
 		),
 		html.P(
-			f"Feature space: {meta['input_dim']} engineered input(s), "
-			f"hidden stack {meta['hidden_layer_sizes']}, output dim {meta['output_dim']}"
+			f"Feature layer width: {meta['input_dim']} | "
+			f"Hidden stack: {meta['hidden_layer_sizes']} | Output dim: {meta['output_dim']}"
+		),
+		html.P(
+			f"Cached training plan: {meta['epochs']} epochs at learning rate {meta['learning_rate']:.3f}"
 		),
 	], style={'fontSize': '12px'})
 
 
+def level3_setup_complete(store):
+	return bool(store) and all(store.get('cell_runs', {}).values())
+
+
 def level3_notebook_status_children(store):
 	if store is None or not store['cell_runs']['load_dataset']:
-		return html.Div('Start with Cell 1 to load a dataset and preview the classification split.')
-	if not store['cell_runs']['define_model']:
-		return html.Div('Dataset loaded. Next run Cell 2 to define the network architecture from code.')
-	if not store['cell_runs']['forward_pass']:
-		return html.Div('Model defined. Run Cell 3 to inspect tensor shapes before training.')
-	if not store['cell_runs']['train_model']:
-		return html.Div('Forward pass captured. Run Cell 4 to train with your code-defined epochs and learning rate.')
-	if not store['cell_runs']['inspect']:
-		return html.Div('Training complete. Run Cell 5 to inspect hidden representations and activations.')
-	if not store['cell_runs']['evaluate']:
-		return html.Div('Inspection complete. Run Cell 6 to compute evaluation metrics and misclassified points.')
-	return html.Div('All six notebook steps have been executed. Edit a code cell and rerun the affected step to compare behaviours.')
+		return html.Div('Start with Cell 1 to load the dataset and populate the output box beside it.')
+	if not store['cell_runs']['input_layer']:
+		return html.Div('Dataset committed. Run Cell 2 to define the input layer width.')
+	if not store['cell_runs']['activation']:
+		return html.Div('Input layer committed. Run Cell 3 to choose the activation function.')
+	if not store['cell_runs']['hidden_layers']:
+		return html.Div('Activation committed. Run Cell 4 to define the hidden-layer stack.')
+	if not store['cell_runs']['output_layer']:
+		return html.Div('Hidden stack committed. Run Cell 5 to define the output layer.')
+	if not store['cell_runs']['training_config']:
+		return html.Div('Structure committed. Run Cell 6 to lock in epochs and learning rate for cached training playback.')
+	if store.get('model') is None or store['model'].get('epoch', 0) == 0:
+		return html.Div('All setup cells are complete. Use the training controls below to animate the cached epoch stages.')
+	return html.Div('Cached training is available. Use Start, Pause, Auto/Semi-Auto, or stage stepping to inspect the current epoch timeline.')
 
 
 def level3_model_status_children(store):
 	if store is None or store.get('model') is None:
 		status = 'Waiting for model definition'
 		color = '#64748b'
-		detail = 'Cell 2 defines the current network architecture.'
+		detail = 'Run the structure cells to build the code-defined network.'
 	else:
-		cell_runs = store.get('cell_runs', {})
-		if cell_runs.get('train_model'):
-			status = 'Model trained'
+		epoch = int(store['model'].get('epoch', 0))
+		if epoch > 0:
+			status = 'Training cached'
 			color = '#0f766e'
-			detail = f"Epochs completed: {store['model'].get('epoch', 0)}"
+			detail = f'Epochs completed: {epoch}'
 		else:
 			status = 'Model ready'
 			color = '#1d4ed8'
-			detail = 'Architecture initialised and ready for forward / train steps.'
+			detail = 'Architecture initialised and ready for cached training playback.'
 
 	return html.Div([
 		html.Div('Model Status', style={'fontSize': '10px', 'textTransform': 'uppercase', 'letterSpacing': '0.08em', 'color': '#64748b', 'marginBottom': '4px'}),
@@ -523,11 +526,14 @@ def level3_execution_live_children(store):
 		completed = 0
 	else:
 		completed = sum(1 for value in store.get('cell_runs', {}).values() if value)
+	ready_text = 'Training controls unlock after 6 / 6 setup cells are committed.'
+	if level3_setup_complete(store):
+		ready_text = 'Setup complete. The training and animation controls now operate on the cached epoch stages.'
 
 	return html.Div([
 		html.Div('Notebook Progress', style={'fontSize': '10px', 'textTransform': 'uppercase', 'letterSpacing': '0.08em', 'color': '#64748b', 'marginBottom': '4px'}),
 		html.Div(f'{completed} / 6 cells run', style={'fontSize': '19px', 'fontWeight': '700', 'color': '#0f172a', 'marginBottom': '4px'}),
-		html.Div('Level 3 uses code cells to drive the same visuals Level 2 exposes through direct controls.', style={'fontSize': '12px', 'color': '#475569'}),
+		html.Div(ready_text, style={'fontSize': '12px', 'color': '#475569'}),
 	])
 
 
@@ -539,15 +545,6 @@ def build_level3_execution_environment(cell_number, meta):
 		output_dim=meta['output_dim'],
 	)
 	model = level2_set_baseline_history(dataset_bundle, model, meta['activation'], l2=1e-4)
-	if cell_number >= 4:
-		model = train_level2_model(
-			dataset_bundle,
-			model,
-			activation=meta['activation'],
-			epochs=meta['epochs'],
-			lr=meta['learning_rate'],
-			l2=1e-4,
-		)
 
 	return {
 		'__builtins__': {
@@ -579,6 +576,7 @@ def build_level3_execution_environment(cell_number, meta):
 		'activation': meta['activation'],
 		'epochs': meta['epochs'],
 		'learning_rate': meta['learning_rate'],
+		'training_config': {'epochs': meta['epochs'], 'learning_rate': meta['learning_rate']},
 		'dataset_bundle': dataset_bundle,
 		'X': dataset_bundle['X_raw'],
 		'y': dataset_bundle['y'],
