@@ -1,226 +1,298 @@
-from dash import html, dcc
+from dash import dcc, html
+
+
+PAGE_STYLE = {
+    'padding': '8px 0 24px 0',
+}
+
+CARD_STYLE = {
+    'backgroundColor': '#ffffff',
+    'border': '1px solid #d7e3f4',
+    'borderRadius': '18px',
+    'padding': '20px',
+    'boxShadow': '0 14px 34px rgba(15, 23, 42, 0.08)',
+    'boxSizing': 'border-box',
+}
+
+LABEL_STYLE = {
+    'display': 'block',
+    'fontWeight': '600',
+    'marginBottom': '8px',
+    'color': '#1f2937',
+}
+
+INPUT_BOX_STYLE = {
+    'marginBottom': '18px',
+}
+
+NUMBER_INPUT_STYLE = {
+    'width': '100%',
+    'padding': '10px 12px',
+    'borderRadius': '10px',
+    'border': '1px solid #cbd5e1',
+    'fontSize': '14px',
+    'boxSizing': 'border-box',
+}
+
 
 def level2_layout():
     return html.Div([
         html.H2(
-            "Level 2 – Model Builder and Training Pipeline",
-            style={'textAlign': 'center', 'marginBottom': '12px'}
+            'Level 2 - Feed-Forward Neural Network Builder',
+            style={'textAlign': 'center', 'marginBottom': '10px'}
         ),
-
         html.P(
-            "Build a small feed-forward classifier from the same ideas introduced in Level 1. "
-            "Choose the dataset, activation, and architecture, then train and compare runs to "
-            "see how design choices change the learned boundary and optimisation behaviour.",
+            'This level focuses on a binary classification workflow. Choose a dataset, shape the network architecture in the centre, control training on the left, and inspect performance and the learned decision boundary on the right.',
             style={
                 'textAlign': 'center',
                 'margin': '0 auto 24px auto',
-                'maxWidth': '960px',
-                'color': '#4b5563'
+                'maxWidth': '1040px',
+                'color': '#475569',
+                'lineHeight': '1.6',
             }
         ),
-
-        html.Div(
-            id='level2-metrics-row',
-            style={
-                'display': 'grid',
-                'gridTemplateColumns': 'repeat(auto-fit, minmax(170px, 1fr))',
-                'gap': '12px',
-                'marginBottom': '18px'
-            }
-        ),
-
         html.Div([
             html.Div([
-                html.H3("Builder Controls", style={'marginTop': '0'}),
-                html.P(
-                    "Adjust the model architecture before training. Any control change resets the current run so the diagram and metrics stay in sync with the chosen design.",
-                    style={'fontSize': '14px', 'color': '#4b5563'}
-                ),
-
-                html.Label("Hidden layers", style={'fontWeight': '600'}),
-                dcc.Slider(
-                    id='level2-hidden-layers-slider',
-                    min=1,
-                    max=4,
-                    step=1,
-                    value=2,
-                    marks={i: str(i) for i in range(1, 5)}
-                ),
-
-                html.Label("Neurons per hidden layer", style={'fontWeight': '600', 'marginTop': '16px'}),
-                dcc.Slider(
-                    id='level2-neurons-slider',
-                    min=2,
-                    max=12,
-                    step=1,
-                    value=6,
-                    marks={2: '2', 4: '4', 8: '8', 12: '12'}
-                ),
-
-                html.Label("Activation function", style={'fontWeight': '600', 'marginTop': '16px'}),
-                dcc.Dropdown(
-                    id='level2-activation-dropdown',
-                    options=[
-                        {'label': 'ReLU', 'value': 'relu'},
-                        {'label': 'Tanh', 'value': 'tanh'},
-                        {'label': 'Sigmoid', 'value': 'sigmoid'},
-                    ],
-                    value='tanh',
-                    clearable=False,
-                    style={'marginBottom': '14px'}
-                ),
-
-                html.Label("Toy dataset", style={'fontWeight': '600'}),
-                dcc.Dropdown(
-                    id='level2-dataset-dropdown',
-                    options=[
-                        {'label': 'Moons', 'value': 'moons'},
-                        {'label': 'Circles', 'value': 'circles'},
-                        {'label': 'Linear', 'value': 'linear'},
-                    ],
-                    value='moons',
-                    clearable=False,
-                    style={'marginBottom': '18px'}
-                ),
-
                 html.Div([
-                    html.Button(
-                        'Train Model',
-                        id='level2-train-btn',
-                        n_clicks=0,
+                    html.H3('Dataset Handling', style={'marginTop': '0', 'marginBottom': '10px'}),
+                    html.P(
+                        'This box controls the binary classification dataset used by the network. The inputs remain two-dimensional in raw space so the decision boundary can be visualised directly.',
+                        style={'fontSize': '14px', 'color': '#475569', 'lineHeight': '1.6'}
+                    ),
+                    html.Div('Classification Task', style={
+                        'display': 'inline-block',
+                        'padding': '6px 10px',
+                        'borderRadius': '999px',
+                        'backgroundColor': '#e0f2fe',
+                        'color': '#0f172a',
+                        'fontWeight': '600',
+                        'marginBottom': '16px',
+                    }),
+                    html.Div([
+                        html.Label('Dataset', style=LABEL_STYLE),
+                        dcc.Dropdown(
+                            id='level2-dataset-dropdown',
+                            options=[
+                                {'label': 'Moons', 'value': 'moons'},
+                                {'label': 'Circles', 'value': 'circles'},
+                                {'label': 'Linear', 'value': 'linear'},
+                            ],
+                            value='moons',
+                            clearable=False,
+                        ),
+                    ], style=INPUT_BOX_STYLE),
+                    html.Div([
+                        html.Div('Available toy datasets', style={'fontWeight': '600', 'marginBottom': '8px'}),
+                        html.Ul([
+                            html.Li('Moons: non-linear interleaving classes'),
+                            html.Li('Circles: nested ring classification'),
+                            html.Li('Linear: near linearly separable classes'),
+                        ], style={'paddingLeft': '18px', 'marginBottom': '0', 'color': '#475569'}),
+                    ]),
+                ], style=CARD_STYLE),
+                html.Div([
+                    html.H3('Training Control', style={'marginTop': '0', 'marginBottom': '10px'}),
+                    html.P(
+                        'Start or stop optimisation, monitor the live epoch count, and tune the learning rate used for gradient descent.',
+                        style={'fontSize': '14px', 'color': '#475569', 'lineHeight': '1.6'}
+                    ),
+                    html.Div([
+                        html.Button(
+                            'Start Training',
+                            id='level2-train-toggle-btn',
+                            n_clicks=0,
+                            style={
+                                'backgroundColor': '#0f766e',
+                                'color': 'white',
+                                'border': 'none',
+                                'padding': '12px 16px',
+                                'borderRadius': '10px',
+                                'fontWeight': '600',
+                                'cursor': 'pointer',
+                            }
+                        ),
+                        html.Button(
+                            'Reset Model',
+                            id='level2-reset-btn',
+                            n_clicks=0,
+                            style={
+                                'backgroundColor': '#e2e8f0',
+                                'color': '#0f172a',
+                                'border': 'none',
+                                'padding': '12px 16px',
+                                'borderRadius': '10px',
+                                'fontWeight': '600',
+                                'cursor': 'pointer',
+                            }
+                        ),
+                    ], style={'display': 'flex', 'gap': '10px', 'flexWrap': 'wrap', 'marginBottom': '18px'}),
+                    html.Div(
+                        id='level2-epoch-live',
                         style={
-                            'backgroundColor': '#0f766e',
-                            'color': 'white',
-                            'border': 'none',
-                            'padding': '10px 16px',
-                            'borderRadius': '8px',
-                            'marginRight': '8px'
+                            'display': 'flex',
+                            'justifyContent': 'space-between',
+                            'alignItems': 'center',
+                            'padding': '14px 16px',
+                            'borderRadius': '14px',
+                            'backgroundColor': '#f8fafc',
+                            'border': '1px solid #dbeafe',
+                            'marginBottom': '18px',
                         }
                     ),
-                    html.Button(
-                        'Reset',
-                        id='level2-reset-btn',
-                        n_clicks=0,
-                        style={
-                            'backgroundColor': '#e5e7eb',
-                            'border': 'none',
-                            'padding': '10px 16px',
-                            'borderRadius': '8px',
-                            'marginRight': '8px'
-                        }
+                    html.Div([
+                        html.Label('Learning Rate', style=LABEL_STYLE),
+                        dcc.Slider(
+                            id='level2-learning-rate-slider',
+                            min=0.01,
+                            max=0.2,
+                            step=0.01,
+                            value=0.08,
+                            marks={0.01: '0.01', 0.05: '0.05', 0.1: '0.10', 0.15: '0.15', 0.2: '0.20'},
+                        ),
+                    ], style={'marginBottom': '10px'}),
+                    html.Div(
+                        'A higher learning rate moves faster but can overshoot the best boundary. A lower rate is steadier but slower.',
+                        style={'fontSize': '12px', 'color': '#64748b', 'lineHeight': '1.5'}
                     ),
-                    html.Button(
-                        'Compare Run',
-                        id='level2-compare-btn',
-                        n_clicks=0,
-                        style={
-                            'backgroundColor': '#dbeafe',
-                            'border': 'none',
-                            'padding': '10px 16px',
-                            'borderRadius': '8px'
-                        }
-                    ),
-                ], style={'marginBottom': '18px'}),
-
-                html.Div(
-                    id='level2-comparison-panel',
-                    style={
-                        'backgroundColor': '#ffffff',
-                        'border': '1px solid #dbeafe',
-                        'borderRadius': '14px',
-                        'padding': '16px',
-                        'boxShadow': '0 2px 8px rgba(15, 23, 42, 0.05)'
-                    }
-                ),
-            ], style={
-                'flex': '0 0 30%',
-                'padding': '20px',
-                'backgroundColor': '#f8fafc',
-                'borderRadius': '16px',
-                'boxShadow': '0 2px 10px rgba(15, 23, 42, 0.08)',
-                'boxSizing': 'border-box'
-            }),
-
+                ], style={**CARD_STYLE, 'marginTop': '18px'}),
+            ], style={'flex': '1 1 280px', 'minWidth': '280px'}),
             html.Div([
                 html.Div([
-                    html.H3("Decision Boundary", style={'marginTop': '0'}),
-                    dcc.Graph(id='level2-decision-boundary-graph', style={'height': '52vh'})
-                ], style={
-                    'backgroundColor': 'white',
-                    'borderRadius': '16px',
-                    'padding': '18px',
-                    'boxShadow': '0 2px 10px rgba(15, 23, 42, 0.08)',
-                    'marginBottom': '16px'
-                }),
-
+                    html.H3('FNN Architecture', style={'marginTop': '0', 'marginBottom': '10px'}),
+                    html.P(
+                        'The network architecture is the centre of this level. Adjust the feature layer width, hidden-layer count, neuron count per hidden layer, output neurons, and activation function here.',
+                        style={'fontSize': '14px', 'color': '#475569', 'lineHeight': '1.6'}
+                    ),
+                    html.Div([
+                        html.Div([
+                            html.Label('Feature Layer Neurons', style=LABEL_STYLE),
+                            dcc.Input(
+                                id='level2-input-dim-input',
+                                type='number',
+                                min=2,
+                                max=8,
+                                step=1,
+                                value=2,
+                                style=NUMBER_INPUT_STYLE,
+                            ),
+                        ], style={'flex': '1 1 180px'}),
+                        html.Div([
+                            html.Label('Output Layer Neurons', style=LABEL_STYLE),
+                            dcc.Input(
+                                id='level2-output-dim-input',
+                                type='number',
+                                min=1,
+                                max=2,
+                                step=1,
+                                value=1,
+                                style=NUMBER_INPUT_STYLE,
+                            ),
+                        ], style={'flex': '1 1 180px'}),
+                        html.Div([
+                            html.Label('Activation Function', style=LABEL_STYLE),
+                            dcc.Dropdown(
+                                id='level2-activation-dropdown',
+                                options=[
+                                    {'label': 'ReLU', 'value': 'relu'},
+                                    {'label': 'Tanh', 'value': 'tanh'},
+                                    {'label': 'Sigmoid', 'value': 'sigmoid'},
+                                ],
+                                value='tanh',
+                                clearable=False,
+                            ),
+                        ], style={'flex': '1 1 220px'}),
+                    ], style={'display': 'flex', 'gap': '14px', 'flexWrap': 'wrap', 'marginBottom': '20px'}),
+                    html.Div([
+                        html.Label('Hidden Layer Count', style=LABEL_STYLE),
+                        dcc.Slider(
+                            id='level2-hidden-layers-slider',
+                            min=1,
+                            max=4,
+                            step=1,
+                            value=2,
+                            marks={i: str(i) for i in range(1, 5)},
+                        ),
+                    ], style={'marginBottom': '20px'}),
+                    html.Div([
+                        html.Div([
+                            html.Label('Hidden Layer 1 Neurons', style=LABEL_STYLE),
+                            dcc.Input(
+                                id='level2-hidden-layer-1-input',
+                                type='number',
+                                min=2,
+                                max=16,
+                                step=1,
+                                value=6,
+                                style=NUMBER_INPUT_STYLE,
+                            ),
+                        ], id='level2-hidden-layer-1-wrapper', style={'flex': '1 1 200px'}),
+                        html.Div([
+                            html.Label('Hidden Layer 2 Neurons', style=LABEL_STYLE),
+                            dcc.Input(
+                                id='level2-hidden-layer-2-input',
+                                type='number',
+                                min=2,
+                                max=16,
+                                step=1,
+                                value=6,
+                                style=NUMBER_INPUT_STYLE,
+                            ),
+                        ], id='level2-hidden-layer-2-wrapper', style={'flex': '1 1 200px'}),
+                        html.Div([
+                            html.Label('Hidden Layer 3 Neurons', style=LABEL_STYLE),
+                            dcc.Input(
+                                id='level2-hidden-layer-3-input',
+                                type='number',
+                                min=2,
+                                max=16,
+                                step=1,
+                                value=4,
+                                style=NUMBER_INPUT_STYLE,
+                            ),
+                        ], id='level2-hidden-layer-3-wrapper', style={'flex': '1 1 200px'}),
+                        html.Div([
+                            html.Label('Hidden Layer 4 Neurons', style=LABEL_STYLE),
+                            dcc.Input(
+                                id='level2-hidden-layer-4-input',
+                                type='number',
+                                min=2,
+                                max=16,
+                                step=1,
+                                value=4,
+                                style=NUMBER_INPUT_STYLE,
+                            ),
+                        ], id='level2-hidden-layer-4-wrapper', style={'flex': '1 1 200px'}),
+                    ], style={'display': 'flex', 'gap': '14px', 'flexWrap': 'wrap', 'marginBottom': '22px'}),
+                    dcc.Graph(id='level2-network-diagram-graph', style={'height': '48vh'}),
+                    html.Div(id='level2-math-explanation', style={'marginTop': '10px'}),
+                ], style=CARD_STYLE),
+            ], style={'flex': '1.35 1 520px', 'minWidth': '340px'}),
+            html.Div([
                 html.Div([
-                    html.Div([
-                        html.H3("Training Curves", style={'marginTop': '0'}),
-                        dcc.Graph(id='level2-training-curves-graph', style={'height': '30vh'})
-                    ], style={
-                        'flex': '1 1 52%',
-                        'backgroundColor': 'white',
-                        'borderRadius': '16px',
-                        'padding': '18px',
-                        'boxShadow': '0 2px 10px rgba(15, 23, 42, 0.08)'
-                    }),
-
-                    html.Div([
-                        html.H3("Activation Function", style={'marginTop': '0'}),
-                        dcc.Graph(id='level2-activation-graph', style={'height': '30vh'})
-                    ], style={
-                        'flex': '1 1 48%',
-                        'backgroundColor': 'white',
-                        'borderRadius': '16px',
-                        'padding': '18px',
-                        'boxShadow': '0 2px 10px rgba(15, 23, 42, 0.08)'
-                    }),
-                ], style={
-                    'display': 'flex',
-                    'gap': '16px',
-                    'flexWrap': 'wrap',
-                    'marginBottom': '16px'
-                }),
-
+                    html.H3('Model Output', style={'marginTop': '0', 'marginBottom': '10px'}),
+                    html.P(
+                        'Inspect train and test metrics alongside the decision boundary learned for the selected dataset.',
+                        style={'fontSize': '14px', 'color': '#475569', 'lineHeight': '1.6'}
+                    ),
+                    html.Div(id='level2-output-summary', style={'marginBottom': '18px'}),
+                    dcc.Graph(id='level2-decision-boundary-graph', style={'height': '44vh'}),
+                ], style=CARD_STYLE),
                 html.Div([
-                    html.Div([
-                        html.H3("Architecture Diagram", style={'marginTop': '0'}),
-                        dcc.Graph(id='level2-network-diagram-graph', style={'height': '38vh'})
-                    ], style={
-                        'flex': '1 1 60%',
-                        'backgroundColor': 'white',
-                        'borderRadius': '16px',
-                        'padding': '18px',
-                        'boxShadow': '0 2px 10px rgba(15, 23, 42, 0.08)'
-                    }),
-
-                    html.Div([
-                        html.H3("Model Summary", style={'marginTop': '0'}),
-                        html.Div(id='level2-math-explanation')
-                    ], style={
-                        'flex': '1 1 40%',
-                        'backgroundColor': 'white',
-                        'borderRadius': '16px',
-                        'padding': '18px',
-                        'boxShadow': '0 2px 10px rgba(15, 23, 42, 0.08)'
-                    }),
-                ], style={
-                    'display': 'flex',
-                    'gap': '16px',
-                    'flexWrap': 'wrap'
-                }),
-            ], style={
-                'flex': '1',
-                'paddingLeft': '20px',
-                'boxSizing': 'border-box'
-            }),
+                    html.H3('Activation Function Visualisation', style={'marginTop': '0', 'marginBottom': '10px'}),
+                    html.P(
+                        'This plot shows the non-linearity currently applied inside each hidden layer.',
+                        style={'fontSize': '14px', 'color': '#475569', 'lineHeight': '1.6'}
+                    ),
+                    dcc.Graph(id='level2-activation-graph', style={'height': '28vh'}),
+                ], style={**CARD_STYLE, 'marginTop': '18px'}),
+            ], style={'flex': '1 1 320px', 'minWidth': '300px'}),
         ], style={
             'display': 'flex',
+            'gap': '20px',
+            'alignItems': 'flex-start',
             'flexWrap': 'wrap',
-            'alignItems': 'flex-start'
         }),
-
-        # Stores for model state and saved comparison snapshot
+        dcc.Interval(id='level2-train-interval', interval=350, n_intervals=0, disabled=True),
         dcc.Store(id='level2-params-store'),
-        dcc.Store(id='level2-compare-store'),
-    ])
+        dcc.Store(id='level2-training-store', data={'running': False}),
+    ], style=PAGE_STYLE)

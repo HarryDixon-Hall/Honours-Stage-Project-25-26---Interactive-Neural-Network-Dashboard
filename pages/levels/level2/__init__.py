@@ -1,6 +1,7 @@
 from pages.levels.level2.callbacks import register_level2_callbacks
 from pages.levels.level2.layout import level2_layout
 from pages.levels.level2.methods import (
+	build_level2_dataset,
 	init_level2_mlp,
 	level2_evaluate_metrics,
 	level2_forward_pass,
@@ -8,8 +9,7 @@ from pages.levels.level2.methods import (
 	load_toy_dataset,
 	make_activation_figure,
 	make_decision_boundary_figure,
-	make_level2_comparison_panel,
-	make_level2_metrics_cards,
+	make_level2_output_panel,
 	make_level2_summary_panel,
 	make_level2_training_curves_figure,
 	make_network_diagram_figure,
@@ -19,6 +19,7 @@ from pages.levels.level2.methods import (
 __all__ = [
 	'level2_layout',
 	'register_level2_callbacks',
+	'build_level2_dataset',
 	'load_toy_dataset',
 	'init_level2_mlp',
 	'level2_forward_pass',
@@ -29,7 +30,6 @@ __all__ = [
 	'make_activation_figure',
 	'make_network_diagram_figure',
 	'make_level2_training_curves_figure',
-	'make_level2_metrics_cards',
+	'make_level2_output_panel',
 	'make_level2_summary_panel',
-	'make_level2_comparison_panel',
 ]
