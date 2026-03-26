@@ -93,7 +93,7 @@ def level2_layout():
                 html.Div([
                     html.H3('Training Control', style={'marginTop': '0', 'marginBottom': '10px'}),
                     html.P(
-                        'Start or stop optimisation, monitor the live epoch count, and tune the learning rate used for gradient descent.',
+                        'Start, pause, or manually step optimisation, monitor the live epoch count, and tune the learning rate used for gradient descent.',
                         style={'fontSize': '14px', 'color': '#475569', 'lineHeight': '1.6'}
                     ),
                     html.Div([
@@ -103,6 +103,21 @@ def level2_layout():
                             n_clicks=0,
                             style={
                                 'backgroundColor': '#0f766e',
+                                'color': 'white',
+                                'border': 'none',
+                                'padding': '12px 16px',
+                                'borderRadius': '10px',
+                                'fontWeight': '600',
+                                'cursor': 'pointer',
+                            }
+                        ),
+                        html.Button(
+                            'Pause Training',
+                            id='level2-pause-btn',
+                            n_clicks=0,
+                            disabled=True,
+                            style={
+                                'backgroundColor': '#b45309',
                                 'color': 'white',
                                 'border': 'none',
                                 'padding': '12px 16px',
@@ -126,6 +141,52 @@ def level2_layout():
                             }
                         ),
                     ], style={'display': 'flex', 'gap': '10px', 'flexWrap': 'wrap', 'marginBottom': '18px'}),
+                    html.Div([
+                        html.Label('Training Mode', style=LABEL_STYLE),
+                        dcc.RadioItems(
+                            id='level2-training-mode',
+                            options=[
+                                {'label': 'Auto', 'value': 'auto'},
+                                {'label': 'Semi-Auto', 'value': 'semiauto'},
+                            ],
+                            value='auto',
+                            inline=True,
+                            labelStyle={'marginRight': '16px', 'fontWeight': '600', 'color': '#334155'},
+                            inputStyle={'marginRight': '6px'},
+                        ),
+                    ], style={'marginBottom': '18px'}),
+                    html.Div([
+                        html.Button(
+                            'Previous Stage',
+                            id='level2-prev-stage-btn',
+                            n_clicks=0,
+                            disabled=True,
+                            style={
+                                'backgroundColor': '#475569',
+                                'color': 'white',
+                                'border': 'none',
+                                'padding': '12px 16px',
+                                'borderRadius': '10px',
+                                'fontWeight': '600',
+                                'cursor': 'pointer',
+                            }
+                        ),
+                        html.Button(
+                            'Next Stage',
+                            id='level2-step-btn',
+                            n_clicks=0,
+                            disabled=True,
+                            style={
+                                'backgroundColor': '#1d4ed8',
+                                'color': 'white',
+                                'border': 'none',
+                                'padding': '12px 16px',
+                                'borderRadius': '10px',
+                                'fontWeight': '600',
+                                'cursor': 'pointer',
+                            }
+                        ),
+                    ], style={'display': 'flex', 'gap': '10px', 'flexWrap': 'wrap', 'marginBottom': '18px'}),
                     html.Div(
                         id='level2-epoch-live',
                         style={
@@ -136,6 +197,12 @@ def level2_layout():
                             'borderRadius': '14px',
                             'backgroundColor': '#f8fafc',
                             'border': '1px solid #dbeafe',
+                            'marginBottom': '18px',
+                        }
+                    ),
+                    html.Div(
+                        id='level2-training-stage-panel',
+                        style={
                             'marginBottom': '18px',
                         }
                     ),
@@ -310,5 +377,5 @@ def level2_layout():
         }),
         dcc.Interval(id='level2-train-interval', interval=350, n_intervals=0, disabled=True),
         dcc.Store(id='level2-params-store'),
-        dcc.Store(id='level2-training-store', data={'running': False}),
+        dcc.Store(id='level2-training-store', data={'running': False, 'paused': False, 'mode': 'auto'}),
     ], style=PAGE_STYLE)

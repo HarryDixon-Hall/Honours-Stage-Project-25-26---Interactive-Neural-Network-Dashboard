@@ -19,6 +19,13 @@ FEATURE_NAMES = [
 CLASS_0_COLOR = '#2563eb'
 CLASS_1_COLOR = '#f97316'
 CLASS_NEUTRAL_COLOR = '#f1f5f9'
+STAGE_ACCENT = {
+    'forward': '#0f766e',
+    'loss': '#7c3aed',
+    'backward': '#dc2626',
+    'update': '#0f766e',
+    'idle': '#64748b',
+}
 
 
 def load_toy_dataset(name, n_samples=320, noise=0.2, random_state=0):
@@ -335,6 +342,87 @@ def level2_set_baseline_history(dataset_bundle, params, activation, l2=0.0):
     return params
 
 
+def compute_level2_gradients(dataset_bundle, params, activation='tanh', l2=1e-4):
+    weights, biases = level2_deserialize_params(params)
+    X_train = dataset_bundle['X_train']
+    y_train = dataset_bundle['y_train']
+    targets = level2_make_targets(y_train, weights[-1].shape[0])
+    sample_count = X_train.shape[0]
+
+    predictions, cache = level2_forward_pass(
+        X_train,
+        {
+            'weights': [weight.tolist() for weight in weights],
+            'biases': [bias.tolist() for bias in biases],
+        },
+        activation,
+    )
+    d_z = predictions - targets
+    gradients_w = [None] * len(weights)
+    gradients_b = [None] * len(biases)
+
+    for layer_index in reversed(range(len(weights))):
+        prev_activation = cache['activations'][layer_index]
+        gradients_w[layer_index] = (d_z @ prev_activation.T) / sample_count
+        gradients_b[layer_index] = np.mean(d_z, axis=1, keepdims=True)
+
+        if l2 > 0:
+            gradients_w[layer_index] += l2 * weights[layer_index]
+
+        if layer_index > 0:
+            d_activation = weights[layer_index].T @ d_z
+            d_z = activation_backward(
+                d_activation,
+                cache['pre_activations'][layer_index - 1],
+                activation,
+            )
+
+    train_loss, _ = level2_evaluate_split(X_train, y_train, params, activation, l2=l2)
+
+    return {
+        'weight_gradients': [gradient.tolist() for gradient in gradients_w],
+        'bias_gradients': [gradient.tolist() for gradient in gradients_b],
+        'gradient_norms': [float(np.linalg.norm(gradient)) for gradient in gradients_w],
+        'loss': float(train_loss),
+    }
+
+
+def apply_level2_gradients(dataset_bundle, params, gradient_snapshot, activation='tanh', lr=0.08, l2=1e-4):
+    if not gradient_snapshot:
+        return params
+
+    weights, biases = level2_deserialize_params(params)
+    gradients_w = [np.array(gradient, dtype=np.float64) for gradient in gradient_snapshot['weight_gradients']]
+    gradients_b = [np.array(gradient, dtype=np.float64) for gradient in gradient_snapshot['bias_gradients']]
+
+    for layer_index in range(len(weights)):
+        weights[layer_index] -= lr * gradients_w[layer_index]
+        biases[layer_index] -= lr * gradients_b[layer_index]
+
+    params['epoch'] = int(params.get('epoch', 0)) + 1
+    params = level2_serialize_params(weights, biases, params)
+
+    metrics = level2_evaluate_metrics(dataset_bundle, params, activation, l2=l2)
+    history = params.get(
+        'history',
+        {
+            'epochs': [0],
+            'train_loss': [],
+            'test_loss': [],
+            'train_accuracy': [],
+            'test_accuracy': [],
+        },
+    )
+    params['history'] = {
+        'epochs': list(history.get('epochs', [0])) + [params['epoch']],
+        'train_loss': list(history.get('train_loss', [])) + [metrics['train_loss']],
+        'test_loss': list(history.get('test_loss', [])) + [metrics['test_loss']],
+        'train_accuracy': list(history.get('train_accuracy', [])) + [metrics['train_accuracy']],
+        'test_accuracy': list(history.get('test_accuracy', [])) + [metrics['test_accuracy']],
+    }
+    return params
+
+
 def train_level2_model(dataset_bundle, params, activation='tanh', epochs=1, lr=0.08, l2=1e-4):
     weights, biases = level2_deserialize_params(params)
     X_train = dataset_bundle['X_train']
@@ -538,6 +626,8 @@ def make_network_diagram_figure(
     activation_snapshot=None,
     previous_weights=None,
     is_training=False,
+    stage_name='idle',
+    gradient_snapshot=None,
 ):
     if hidden_layers is None:
         hidden_layers = [6, 6]
@@ -547,6 +637,7 @@ def make_network_diagram_figure(
     weights, biases = level2_deserialize_params(params) if params else (None, None)
     safe_feature_names = feature_names or [f'x{i + 1}' for i in range(input_dim)]
     layer_activity = activation_snapshot.get('layer_activations') if activation_snapshot else None
+    gradient_layers = gradient_snapshot.get('weight_gradients') if gradient_snapshot else None
 
     nodes_x = []
     nodes_y = []
@@ -638,20 +729,36 @@ def make_network_diagram_figure(
                 if current_weights is not None:
                     weight_value = current_weights[target_index, source_index]
                     weight_delta = 0.0
+                    gradient_value = 0.0
                     if previous_layer_weights is not None:
                         weight_delta = weight_value - previous_layer_weights[target_index, source_index]
+                    if gradient_layers and layer_index < len(gradient_layers):
+                        current_gradient_layer = np.array(gradient_layers[layer_index], dtype=np.float64)
+                        gradient_value = current_gradient_layer[target_index, source_index]
+
                     edge_colour = CLASS_1_COLOR if weight_value >= 0 else CLASS_0_COLOR
                     edge_width = max(0.6, min(5.5, abs(weight_value) * 2.2 + abs(weight_delta) * 14.0))
                     edge_dash = 'solid'
-                    if abs(weight_delta) >= 0.03:
-                        edge_dash = 'dash'
-                    elif abs(weight_delta) >= 0.01:
+                    edge_opacity = 0.62
+
+                    if stage_name == 'backward':
+                        edge_colour = CLASS_1_COLOR if gradient_value >= 0 else CLASS_0_COLOR
+                        edge_width = max(0.8, min(6.0, abs(gradient_value) * 55.0))
                         edge_dash = 'dot'
-                    edge_opacity = min(1.0, 0.28 + abs(weight_delta) * 18.0) if previous_layer_weights is not None else 0.62
+                        edge_opacity = min(1.0, 0.28 + abs(gradient_value) * 18.0)
+                    elif stage_name == 'update' and previous_layer_weights is not None:
+                        if abs(weight_delta) >= 0.03:
+                            edge_dash = 'dash'
+                        elif abs(weight_delta) >= 0.01:
+                            edge_dash = 'dot'
+                        edge_opacity = min(1.0, 0.28 + abs(weight_delta) * 18.0)
+
                     edge_hover = (
                         f'Layer {layer_index + 1} weight[{target_index + 1}, {source_index + 1}] = '
                         f'{weight_value:+.3f}'
                     )
+                    if gradient_layers and layer_index < len(gradient_layers):
+                        edge_hover += f'<br>Gradient={gradient_value:+.4f}'
                     if previous_layer_weights is not None:
                         edge_hover += f'<br>Delta this epoch={weight_delta:+.4f}'
                 else:
@@ -724,7 +831,73 @@ def make_network_diagram_figure(
         plot_bgcolor='#ffffff',
         paper_bgcolor='#ffffff',
     )
+    stage_messages = {
+        'forward': 'Forward pass: the probe sample flows left to right and activates neurons.',
+        'loss': 'Loss computation: the prediction is compared with the target at the output layer.',
+        'backward': 'Backward pass: gradient signals move right to left to measure how each weight contributed to the error.',
+        'update': 'Parameter update: weights and biases are adjusted using the learning rate.',
+        'idle': 'Idle: the network is waiting to train or has paused after the most recent update.',
+    }
+    fig.add_annotation(
+        x=0.5,
+        y=1.18,
+        xref='paper',
+        yref='paper',
+        text=stage_messages.get(stage_name, stage_messages['idle']),
+        showarrow=False,
+        font=dict(size=12, color=STAGE_ACCENT.get(stage_name, STAGE_ACCENT['idle'])),
+        align='center',
+    )
     return fig
+
+
+def make_level2_training_stage_panel(current_stage='idle', epoch=0, stage_details=None):
+    stage_sequence = [
+        ('forward', 'Forward Pass'),
+        ('loss', 'Loss Computation'),
+        ('backward', 'Backward Pass'),
+        ('update', 'Parameter Update'),
+    ]
+    details = stage_details or {}
+
+    cards = []
+    for stage_key, stage_label in stage_sequence:
+        is_active = stage_key == current_stage
+        cards.append(
+            html.Div([
+                html.Div(stage_label, style={
+                    'fontSize': '12px',
+                    'textTransform': 'uppercase',
+                    'letterSpacing': '0.08em',
+                    'color': STAGE_ACCENT[stage_key] if is_active else '#64748b',
+                    'fontWeight': '700',
+                    'marginBottom': '6px',
+                }),
+                html.Div(
+                    details.get(stage_key, 'Waiting'),
+                    style={
+                        'fontSize': '12px',
+                        'color': '#334155',
+                        'lineHeight': '1.5',
+                    },
+                ),
+            ], style={
+                'padding': '12px 14px',
+                'borderRadius': '14px',
+                'border': f"2px solid {STAGE_ACCENT[stage_key] if is_active else '#dbeafe'}",
+                'backgroundColor': '#ffffff' if is_active else '#f8fafc',
+                'boxShadow': '0 6px 16px rgba(15, 23, 42, 0.06)' if is_active else 'none',
+                'transform': 'translateY(-2px)' if is_active else 'none',
+            }))
+
+    return html.Div([
+        html.Div(f'Epoch {epoch} Training Timeline', style={'fontWeight': '700', 'marginBottom': '10px', 'color': '#0f172a'}),
+        html.Div(cards, style={
+            'display': 'grid',
+            'gridTemplateColumns': 'repeat(auto-fit, minmax(150px, 1fr))',
+            'gap': '10px',
+        }),
+    ])
 
 
 def make_level2_boundary_explanation(dataset_name, activation_snapshot=None):
