@@ -153,6 +153,20 @@ def level2_parameter_count(params):
     return int(sum(weight.size + bias.size for weight, bias in zip(weights, biases)))
 
 
+def _copy_serialized_weights(weights):
+    return [[list(row) for row in layer] for layer in weights]
+
+
+def _activation_to_colour(value):
+    magnitude = min(1.0, abs(float(value)))
+    neutral = np.array([241.0, 245.0, 249.0])
+    positive = np.array([249.0, 115.0, 22.0])
+    negative = np.array([37.0, 99.0, 235.0])
+    anchor = positive if value >= 0 else negative
+    rgb = ((1.0 - magnitude) * neutral) + (magnitude * anchor)
+    return f'rgb({int(rgb[0])}, {int(rgb[1])}, {int(rgb[2])})'
+
+
 def activation_forward(z_values, activation):
     if activation == 'relu':
         return np.maximum(0, z_values)
@@ -212,6 +226,45 @@ def level2_forward_pass(X, params, activation):
     return output, {
         'activations': activations,
         'pre_activations': pre_activations,
+    }
+
+
+def make_level2_activation_snapshot(dataset_bundle, params, activation, probe_index=0):
+    X_train = dataset_bundle['X_train']
+    X_train_raw = dataset_bundle['X_train_raw']
+    y_train = dataset_bundle['y_train']
+
+    if X_train.shape[0] == 0:
+        return None
+
+    safe_probe_index = int(probe_index) % X_train.shape[0]
+    probe_features = X_train[safe_probe_index:safe_probe_index + 1]
+    probe_raw = X_train_raw[safe_probe_index]
+    probe_label = int(y_train[safe_probe_index])
+    predictions, cache = level2_forward_pass(probe_features, params, activation)
+    output_vector = predictions[:, 0]
+
+    if output_vector.shape[0] == 1:
+        positive_probability = float(output_vector[0])
+        predicted_label = int(positive_probability >= 0.5)
+        confidence = positive_probability if predicted_label == 1 else 1.0 - positive_probability
+    else:
+        predicted_label = int(np.argmax(output_vector))
+        confidence = float(output_vector[predicted_label])
+
+    layer_activations = [
+        activation_values[:, 0].astype(float).tolist()
+        for activation_values in cache['activations']
+    ]
+
+    return {
+        'probe_index': safe_probe_index,
+        'probe_raw': probe_raw.astype(float).tolist(),
+        'probe_label': probe_label,
+        'predicted_label': predicted_label,
+        'confidence': confidence,
+        'prediction_vector': output_vector.astype(float).tolist(),
+        'layer_activations': layer_activations,
     }
 
 
@@ -472,6 +525,9 @@ def make_network_diagram_figure(
     params=None,
     activation='tanh',
     feature_names=None,
+    activation_snapshot=None,
+    previous_weights=None,
+    is_training=False,
 ):
     if hidden_layers is None:
         hidden_layers = [6, 6]
@@ -480,12 +536,14 @@ def make_network_diagram_figure(
     layer_x_positions = np.linspace(0, 1, len(layer_sizes))
     weights, biases = level2_deserialize_params(params) if params else (None, None)
     safe_feature_names = feature_names or [f'x{i + 1}' for i in range(input_dim)]
+    layer_activity = activation_snapshot.get('layer_activations') if activation_snapshot else None
 
     nodes_x = []
     nodes_y = []
     labels = []
     hover_text = []
     colours = []
+    node_sizes = []
     edge_traces = []
     layer_coordinates = []
     annotations = []
@@ -508,7 +566,11 @@ def make_network_diagram_figure(
             dict(
                 x=layer_x_positions[layer_index],
                 y=1.1,
-                text=f'{layer_name}<br>{layer_size} neuron(s)',
+                text=(
+                    f'{layer_name}<br>{layer_size} neuron(s)'
+                    if not layer_activity
+                    else f'{layer_name}<br>{layer_size} neuron(s)<br>mean |a|={np.mean(np.abs(layer_activity[layer_index])):.2f}'
+                ),
                 showarrow=False,
                 font=dict(size=11),
             )
@@ -517,23 +579,38 @@ def make_network_diagram_figure(
         for node_index, y_position in enumerate(y_positions):
             nodes_x.append(layer_x_positions[layer_index])
             nodes_y.append(y_position)
-            colours.append(colour)
+
+            activation_value = None
+            if layer_activity and node_index < len(layer_activity[layer_index]):
+                activation_value = float(layer_activity[layer_index][node_index])
+                colours.append(_activation_to_colour(activation_value))
+                node_sizes.append(16 + (12 * min(1.0, abs(activation_value))))
+            else:
+                colours.append(colour)
+                node_sizes.append(16)
 
             if layer_index == 0:
                 feature_label = safe_feature_names[node_index] if node_index < len(safe_feature_names) else f'x{node_index + 1}'
                 labels.append(feature_label)
-                hover_text.append(f'Engineered feature: {feature_label}')
+                if activation_value is None:
+                    hover_text.append(f'Engineered feature: {feature_label}')
+                else:
+                    hover_text.append(
+                        f'Engineered feature: {feature_label}<br>Probe value={activation_value:+.3f}'
+                    )
             elif layer_index == len(layer_sizes) - 1:
                 labels.append('yhat' if output_dim == 1 else f'c{node_index}')
                 bias_value = biases[layer_index - 1][node_index, 0] if biases is not None else 0.0
                 output_name = 'sigmoid' if output_dim == 1 else 'softmax'
-                hover_text.append(f'Output neuron {node_index + 1}<br>bias={bias_value:+.3f}<br>{output_name} head')
+                activation_line = '' if activation_value is None else f'<br>Activation={activation_value:+.3f}'
+                hover_text.append(
+                    f'Output neuron {node_index + 1}<br>bias={bias_value:+.3f}{activation_line}<br>{output_name} head'
+                )
             else:
                 labels.append(f'h{layer_index}.{node_index + 1}')
                 bias_value = biases[layer_index - 1][node_index, 0] if biases is not None else 0.0
-                hover_text.append(
-                    f'Layer {layer_index} neuron {node_index + 1}<br>bias={bias_value:+.3f}<br>a = {activation}(z)'
-                )
+                activation_line = '' if activation_value is None else f'<br>Activation={activation_value:+.3f}'
+                hover_text.append(f'Layer {layer_index} neuron {node_index + 1}<br>bias={bias_value:+.3f}{activation_line}<br>a = {activation}(z)')
 
     for layer_index in range(len(layer_sizes) - 1):
         source_x = layer_x_positions[layer_index]
@@ -541,20 +618,37 @@ def make_network_diagram_figure(
         source_y_positions = layer_coordinates[layer_index]
         target_y_positions = layer_coordinates[layer_index + 1]
         current_weights = weights[layer_index] if weights is not None else None
+        previous_layer_weights = None
+
+        if previous_weights and layer_index < len(previous_weights):
+            previous_layer_weights = np.array(previous_weights[layer_index], dtype=np.float64)
 
         for source_index, source_y in enumerate(source_y_positions):
             for target_index, target_y in enumerate(target_y_positions):
                 if current_weights is not None:
                     weight_value = current_weights[target_index, source_index]
+                    weight_delta = 0.0
+                    if previous_layer_weights is not None:
+                        weight_delta = weight_value - previous_layer_weights[target_index, source_index]
                     edge_colour = '#2563eb' if weight_value >= 0 else '#dc2626'
-                    edge_width = max(0.6, min(4.5, abs(weight_value) * 2.2))
+                    edge_width = max(0.6, min(5.5, abs(weight_value) * 2.2 + abs(weight_delta) * 14.0))
+                    edge_dash = 'solid'
+                    if abs(weight_delta) >= 0.03:
+                        edge_dash = 'dash'
+                    elif abs(weight_delta) >= 0.01:
+                        edge_dash = 'dot'
+                    edge_opacity = min(1.0, 0.28 + abs(weight_delta) * 18.0) if previous_layer_weights is not None else 0.62
                     edge_hover = (
                         f'Layer {layer_index + 1} weight[{target_index + 1}, {source_index + 1}] = '
                         f'{weight_value:+.3f}'
                     )
+                    if previous_layer_weights is not None:
+                        edge_hover += f'<br>Delta this epoch={weight_delta:+.4f}'
                 else:
                     edge_colour = '#94a3b8'
                     edge_width = 1
+                    edge_dash = 'solid'
+                    edge_opacity = 0.4
                     edge_hover = 'Weight'
 
                 edge_traces.append(
@@ -562,10 +656,11 @@ def make_network_diagram_figure(
                         x=[source_x, (source_x + target_x) / 2, target_x],
                         y=[source_y, (source_y + target_y) / 2, target_y],
                         mode='lines',
-                        line=dict(color=edge_colour, width=edge_width),
+                        line=dict(color=edge_colour, width=edge_width, dash=edge_dash),
                         hovertext=[None, edge_hover, None],
                         hoverinfo='text',
                         showlegend=False,
+                        opacity=edge_opacity,
                     )
                 )
 
@@ -577,17 +672,47 @@ def make_network_diagram_figure(
         textposition='middle right',
         hovertext=hover_text,
         hoverinfo='text',
-        marker=dict(size=16, color=colours, line=dict(width=1, color='#0f172a')),
+        marker=dict(size=node_sizes, color=colours, line=dict(width=1.4, color='#0f172a')),
     )
 
     fig = go.Figure(data=edge_traces + [node_trace])
+    if activation_snapshot:
+        probe_raw = activation_snapshot['probe_raw']
+        prediction_vector = activation_snapshot['prediction_vector']
+        if len(prediction_vector) == 1:
+            prediction_text = f"p(class 1)={prediction_vector[0]:.3f}"
+        else:
+            prediction_text = ', '.join(f'p{index}={value:.3f}' for index, value in enumerate(prediction_vector))
+
+        annotations.append(
+            dict(
+                x=0.5,
+                y=-0.12,
+                xref='paper',
+                yref='paper',
+                text=(
+                    f"Probe sample #{activation_snapshot['probe_index'] + 1}: "
+                    f"(x1={probe_raw[0]:+.2f}, x2={probe_raw[1]:+.2f}) | "
+                    f"target={activation_snapshot['probe_label']} | "
+                    f"predicted={activation_snapshot['predicted_label']} | "
+                    f"confidence={activation_snapshot['confidence']:.3f} | {prediction_text}"
+                ),
+                showarrow=False,
+                font=dict(size=11, color='#334155'),
+            )
+        )
+
     fig.update_layout(
-        title='Central FNN architecture view',
+        title='Central FNN architecture view' + (' - animated while training' if is_training else ''),
         xaxis=dict(showgrid=False, zeroline=False, visible=False),
         yaxis=dict(showgrid=False, zeroline=False, visible=False),
-        margin=dict(l=0, r=0, t=70, b=0),
+        margin=dict(l=0, r=0, t=70, b=36),
         showlegend=False,
         annotations=annotations,
+        transition=dict(duration=280, easing='cubic-in-out'),
+        uirevision='level2-network-diagram',
+        plot_bgcolor='#ffffff',
+        paper_bgcolor='#ffffff',
     )
     return fig
 

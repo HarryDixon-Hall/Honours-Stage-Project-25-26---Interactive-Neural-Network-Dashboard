@@ -16,6 +16,7 @@ from pages.levels.level2.methods import (
     build_level2_dataset,
     init_level2_mlp,
     level2_evaluate_metrics,
+    make_level2_activation_snapshot,
     level2_set_baseline_history,
     make_activation_figure,
     make_decision_boundary_figure,
@@ -29,6 +30,10 @@ from pages.levels.level2.methods import (
 MAX_LEVEL2_EPOCHS = 200
 VISIBLE_WRAPPER_STYLE = {'flex': '1 1 200px'}
 HIDDEN_WRAPPER_STYLE = {'flex': '1 1 200px', 'display': 'none'}
+
+
+def _copy_serialized_weights(weights):
+    return [[list(row) for row in layer] for layer in weights]
 
 
 def _safe_int(value, minimum, maximum, default):
@@ -129,7 +134,7 @@ def register_level2_callbacks(app):
         ]
         safe_output_dim = _safe_int(output_dim, 1, 2, 1)
         safe_learning_rate = _safe_float(learning_rate, 0.01, 0.2, 0.08)
-        training_state = training_store or {'running': False}
+        training_state = training_store or {'running': False, 'probe_index': 0, 'previous_weights': None}
         running = bool(training_state.get('running'))
 
         dataset_bundle = build_level2_dataset(dataset, input_dim=safe_input_dim)
@@ -166,9 +171,19 @@ def register_level2_callbacks(app):
             params['meta'] = meta
             params = level2_set_baseline_history(dataset_bundle, params, activation, l2=1e-4)
             running = False
+            training_state = {
+                'running': False,
+                'max_epochs': MAX_LEVEL2_EPOCHS,
+                'probe_index': 0,
+                'previous_weights': None,
+            }
         elif trigger == 'level2-train-toggle-btn':
             running = not running
+            if running:
+                training_state['previous_weights'] = None
         elif trigger == 'level2-train-interval' and running:
+            training_state['probe_index'] = int(params.get('epoch', 0)) % max(1, dataset_bundle['X_train'].shape[0])
+            training_state['previous_weights'] = _copy_serialized_weights(params.get('weights', []))
             params['meta'] = meta
             params = train_level2_model(
                 dataset_bundle,
@@ -185,6 +200,8 @@ def register_level2_callbacks(app):
         training_state = {
             'running': running,
             'max_epochs': MAX_LEVEL2_EPOCHS,
+            'probe_index': training_state.get('probe_index', 0),
+            'previous_weights': training_state.get('previous_weights'),
         }
         button_label = 'Stop Training' if running else 'Start Training'
         interval_disabled = not running
@@ -215,6 +232,15 @@ def register_level2_callbacks(app):
         learning_rate = meta.get('learning_rate', 0.08)
         dataset_bundle = build_level2_dataset(dataset, input_dim=input_dim)
         metrics = level2_evaluate_metrics(dataset_bundle, params, activation, l2=1e-4)
+        training_state = training_store or {}
+        probe_index = training_state.get('probe_index', 0)
+        previous_weights = training_state.get('previous_weights')
+        activation_snapshot = make_level2_activation_snapshot(
+            dataset_bundle,
+            params,
+            activation,
+            probe_index=probe_index,
+        )
 
         fig_network = make_network_diagram_figure(
             input_dim=input_dim,
@@ -223,13 +249,16 @@ def register_level2_callbacks(app):
             params=params,
             activation=activation,
             feature_names=feature_names,
+            activation_snapshot=activation_snapshot,
+            previous_weights=previous_weights,
+            is_training=bool(training_state.get('running')),
         )
         explanation = make_level2_summary_panel(params, activation)
         output_summary = make_level2_output_panel(metrics, dataset)
         fig_boundary = make_decision_boundary_figure(dataset_bundle, params, activation)
         fig_activation = make_activation_figure(activation)
 
-        running = bool((training_store or {}).get('running'))
+        running = bool(training_state.get('running'))
         epoch_panel = [
             html.Div([
                 html.Div('Live Epoch Count', style={'fontSize': '12px', 'textTransform': 'uppercase', 'letterSpacing': '0.08em', 'color': '#64748b'}),
@@ -239,6 +268,14 @@ def register_level2_callbacks(app):
                 html.Div('Status', style={'fontSize': '12px', 'textTransform': 'uppercase', 'letterSpacing': '0.08em', 'color': '#64748b'}),
                 html.Div('Running' if running else 'Stopped', style={'fontSize': '16px', 'fontWeight': '700', 'color': '#0f766e' if running else '#475569'}),
                 html.Div(f'Learning rate {learning_rate:.2f}', style={'fontSize': '12px', 'color': '#64748b', 'marginTop': '4px'}),
+                html.Div(
+                    (
+                        'Animation shows a probe sample flowing through the current network.'
+                        if activation_snapshot
+                        else 'Animation snapshot unavailable.'
+                    ),
+                    style={'fontSize': '12px', 'color': '#64748b', 'marginTop': '4px'},
+                ),
             ]),
         ]
 
