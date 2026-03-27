@@ -1,6 +1,7 @@
 import numpy as np
+import pytest
 
-from modelFactory.dataload import get_dataset_stats, load_dataset
+from modelFactory.dataload import DATASETS, get_dataset_stats, load_dataset
 
 
 def test_get_dataset_stats_returns_expected_counts():
@@ -32,3 +33,12 @@ def test_load_dataset_iris_returns_consistent_shapes():
     assert x_train.shape[1] == meta["n_features"]
     assert meta["name"] == "Iris"
     assert meta["n_classes"] == 3
+
+
+def test_load_dataset_rejects_unknown_names():
+    with pytest.raises(ValueError, match="Unknown dataset"):
+        load_dataset("unknown")
+
+
+def test_supported_dataset_registry_exposes_expected_loaders():
+    assert {"iris", "wine", "digits"}.issubset(DATASETS)
