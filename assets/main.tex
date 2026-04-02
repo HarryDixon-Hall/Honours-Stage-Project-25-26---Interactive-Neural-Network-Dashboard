@@ -11,7 +11,12 @@
 \usepackage{graphicx}
 \usepackage[acronym]{glossaries}
 \usepackage{float}
+\usepackage{comment}
+\usepackage{datetime}
+\usdate
 
+\setcounter{tocdepth}{4}
+\setcounter{secnumdepth}{4}
 
 %this is for the hyperlink formatting
 \hypersetup{
@@ -61,6 +66,7 @@
     showtabs=false,                  
     tabsize=2
 }
+
 \begin{document}
 
 \begin{center}
@@ -108,7 +114,8 @@
         %\setstretch{1.5
         
         %\vfill
-        {\small \monthyeardate\today\\Word Count:}
+        \small{\today}\\
+        \small{Word Count:}
 
         
         
@@ -117,9 +124,7 @@
             
         \vspace*{0cm}
         
-    \end{center}
-
-\maketitle
+\end{center}
 
 \tableofcontents
 \newpage
@@ -133,11 +138,11 @@
 \section{Preface}
 \subsection{Declarations}
 I declare in this project report, except where explicitly outlined, the contents contained within are my own and any work is wholly intended for this assignment and degree. No work in this in report was done in collaboration with any other persons, unless specified beside the artefact. AI tools such as Perplexity (model Sonar) and Copilot (model GPT 5.4) were used in part for software implementation of features that underpin this project and for bibliographical research in the literature review. The output of these Large Language Models were validated by the author through scrutiny, testing and modification when needed. \\
-\null\hfill Harry Dixon-Hall \\
-\null\hfill \monthyeardate\today\
+\small{\today} \\
+\small{Harry Dixon-Hall}
  
 \subsection{Acknowledgements}
-I'd like to thank the following individual for their sincere and thorough encouragement during the course of this Honours Project work: James Thorley, Joeseph Lobo-Kazinczi, Reece Wilkinson, my father, mother, brother, his girlfriend (soon to be sister-in-law),
+I'd like to thank the following individual for their sincere and thorough encouragement during the course of this Honours Project work: my father, mother, brother, his girlfriend (soon to be sister-in-law),
 
 \section{Abstract} %What is considered success in a product project versus research?
 %This summarise literally everything from the introduction to the evaluation to give the user an idea of what the project work is about.
@@ -364,11 +369,11 @@ This sections will illustrate justifications for the project planning strategy a
 \textbf{Agile with 2-week sprints} Each sprint will cover a feature category for development, these being: MF, AL, SP, D, SA.
 %Gantt chart here
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.9\textwidth]{gantt_ml_sandbox.png}
-\caption{6 sprints: Model Factory → Secure Programming → Live Viz → Distribution}
-\end{figure}
+%\begin{figure}[H]
+%\centering
+%\includegraphics[width=0.9\textwidth]{gantt_ml_sandbox.png}
+%\caption{6 sprints: Model Factory → Secure Programming → Live Viz → Distribution}
+%\end{figure}
 
 \subsection{Task Management}
 \textbf{Structure for scrums in Agile iterative development (solo)}:
@@ -400,14 +405,6 @@ The idea of test driven development is ensure a feature is designed to comply wi
 %Quality control?? what does this mean and how do i show ive done, i guess it means how have a ensured my code is working/meeting functional requirement
 
 \subsection{Risk Management} 
-
-%Development
-\documentclass{article}
-\usepackage{float} % Supports [H] placement
-
-\setcounter{secnumdepth}{3}    % Enables up to subsubsection
-\setcounter{tocdepth}{3}       % Includes them in TOC
-
 
 %Development
 \subsubsection{Development Risks}  % Changed from \subssubsection
@@ -456,49 +453,47 @@ Coverage <85\% & Medium & Medium   & Medium $\times$ Medium & test1 & test2 \\
 %I think it would be easier to discusss this if i do the user testing because then there's a wealth of problems to discuss
 
 \subsection{Supervisor Meetings}
-\paragraph{Meetings with Supervisor:} Supervisory in-person meetings have been conducted on a fortnightly basis in order to discuss current progress towards goals set in the task plan and ensure accountability in working towards those goals. The discussion of programme competencies throughout the meetings was influential in the decision to pivot the project.
+\subsubsection{Meetings with Supervisor:} Supervisory in-person meetings have been conducted on a fortnightly basis in order to discuss current progress towards goals set in the task plan and ensure accountability in working towards those goals. The discussion of programme competencies throughout the meetings was influential in the decision to pivot the project.
 
 \textbf{Meeting log outcomes(Appendix B)}
-
+\begin{itemize}
 \item \textbf{Date: 15th October}
 \item \textbf{Mode:} In-person
 \item \textbf{Participants:} Harry Dixon-Hall and Dr John Dixon
-
-\begin{itemize}
 \item The report must have sufficient references when key points are made.
 \item Project should be emphasised as a Computer Science Product not a pure research project.
 \item Supervisor suggested adding a Translation-Layer Interface between simulation and ML controller for handling data, manual control of parameters and visualisation of live data.
 \end{itemize}
 
+\begin{itemize}
 \item \textbf{29th October:}
 \item \textbf{Mode:} In-person
 \item \textbf{Participants:} Harry Dixon-Hall and Dr John Dixon
-\begin{itemize}
 \item Supervisor suggested digital twins for forecasting of ML control over simulation parameters.
 \item Supervisor suggested training a model on a multitude of episodes to get the optimised control strategy
 \end{itemize}
 
+\begin{itemize}
 \item \textbf{12th November:}
 \item \textbf{Mode:} In-person
 \item \textbf{Participants:} Harry Dixon-Hall and Dr John Dixon
-\begin{itemize}
 \item Showcase of PID control over CSTR simulation with a temperature plot over time
 \item Supervisor suggested an increased granularity of temperature changes, more frequent time steps.
 \item Plan to show supervisor a simulation with NN control against PID control of the CSTR simulation.
 \end{itemize}
 
+\begin{itemize}
 \item \textbf{26th November:}
 \item \textbf{Mode:} In-person
 \item \textbf{Participants:} Harry Dixon-Hall and Dr John Dixon
-\begin{itemize}
 \item Project pivot to interactive NN teaching dashboard from process control optimisation with ML controller.
 \item Discussion of Gantt chart and how to explain not fulfilling deadlines because of project pivot.
 \end{itemize}
 
+\begin{itemize}
 \item \textbf{10th December:}
 \item \textbf{Mode:} In-person
 \item \textbf{Participants:} Harry Dixon-Hall and Dr John Dixon
-\begin{itemize}
 \item Discussion of midway review meeting details such as time and process.
 \item Discussion of how to conduct an ethical user study of the interactive NN dashboard.
 \item Discussion of bringing relevant papers from the field that discuss pedagogical efficacy in teaching tools.
@@ -536,24 +531,118 @@ Functional requirement verification by number
 \subsection{Rationale for Technologies}
 
 \subsubsection{Interactive Development Environment}
+%Visual studio code
+Chosen item - Visual Studio Code \\
+\large{Rationale:} \\
+\begin{enumerate}
+    \item A versatile platform for python programming, an abundance of extensions for testing development. 
+    \item Supports the modular aspect of the code.
+\end{enumerate}
+\large{Items considered \& objection:} \\
+\begin{enumerate}
+    \item \textbf{Jupyter Notebook} - Highly suited to experimentation in machine learning, specifically classification, but the project has evolved into a modular design due to introduction of a web framework, therefore, the versatility of VS code enables better maintenance of the system architecture.
+    \item \textbf{Pycharm} - This was considered because of its strong integration of python tools for machine learning. On the other hand, VS code is lightweight and is backed by an abundance of libraries/extensions that is more than sufficient for the projects requirements.
+\end{enumerate}
+
 
 \subsubsection{Programming Language}
+%Python
+Chosen item - Python \\
+\large{Rationale:} \\
+\begin{enumerate}
+    \item Abundant libraries for ML pipeline (data handling, computation).
+    \item Use of one language for back-end logic will reduce cognitive overload.
+\end{enumerate}
+\large{Items considered \& objection:} \\
+\begin{enumerate}
+    \item \textbf{C\#} - This language generally offers stronger computational performance than Python and would be a good choice for application development, however, the project is very ML dominant and relies on libraries for data handling that Python has in abundance, using C\# would introduce an additional layer of complexity when to experimentation with data %why would there be a problem with experimentation? be specific!
+    \item \textbf{Java} - Java offers robust performance with application that are potentially scalable, but unfortunately, it offers an inferior selection of data science libraries compared to Python
+\end{enumerate}
 
 \subsubsection{Website Framework}
+%Dash app
+Chosen item - Dash App \\
+\large{Rationale:} \\
+\begin{enumerate}
+    \item Dash is highly suitable for an interactive application, the framework allows for reactive controls and dynamic visualisation which can change upon user input (FR 1.1?).
+    \item Dash enables an integrative development strategy which easily combines the frontend and backend logic together with callbacks and methods respectively. %reference connection ?
+\end{enumerate}
+\large{Items considered \& objection:} \\
+\begin{enumerate}
+    \item \textbf{Flask} - This framework is analogous to Dash app because its a flexible Python web framework but it lacks the the same level of frontend/backend integration to Dash meaning there would be significantly more frontend development rather than using the component library that dash offers for things like callback. % this is wrong, dash USES flask!!
+    \item \textbf{Streamlit} - A framework that suitable for fast prototyping of a data science dashboard in python, however this has a similar problem to Flash which is that lacks dash app's level of callback control, which is vital for a multi-page application with interdependent components.
+\end{enumerate}
 
-\subsubsection{Library for ML mathemical computation}
-
-\subsubsection{Visualisation}
-
-\subsubsection{Data handling from datasets}
+\subsubsection{Library for ML mathematical computation}
+Chosen item - Sci-kit-learn \\
+\large{Rationale:} \\
+\begin{enumerate}
+    \item The primary goal is solve classification problems such splitting or evaluation
+    \item It also contain preconfigured models such as LogisticRegression which can serve as helpful baselines in testing
+\end{enumerate}
+\large{Items considered \& objection:} \\
+\begin{enumerate}
+    \item \textbf{Tensorflow} - This framework is very powerful for deep learning strategies but for the requirements of this project a lightweight Sci-kit-learn library is able to fulfil them.
+    \item \textbf{PyTorch} - A widely used framework for experminentation in deep learning and neural network, yet, it's powerful abilities will actually introduce complexity (similar to TensorFlow) such as addition of train-test-splitting compared to Sci-Kit-Learn.
+\end{enumerate}
 
 \subsubsection{Persistent storage of user data}
+Chosen item - JSON file database \\
+\large{Rationale:} \\
+\begin{enumerate}
+    \item Lightweight
+    \item Persistent mechanism to store data in the short term
+    \item appropriate for early stage implementation
+\end{enumerate}
+\large{Items considered \& objection:} \\
+\begin{enumerate}
+    \item \textbf{SQLite} - 
+    \item \textbf{External database} - Unnecessary complication in the prototyping stage
+\end{enumerate}
 
 \subsubsection{Testing}
+Chosen item - Pytests and unit tests (github native) \\
+\large{Rationale:} \\
+\begin{enumerate}
+    \item 
+    \item
+\end{enumerate}
+\large{Items considered \& objection:} \\
+\begin{enumerate}
+    \item 
+    \item
+\end{enumerate}
 
 \subsubsection{AI-Assistive Software}
+Chosen item - Github Copilot (GPT 5.4)  \\
+\large{Rationale:} \\
+\begin{enumerate}
+    \item Large context base - excellent for bibliographical research
+    \item
+\end{enumerate}
+\large{Items considered \& objection:} \\
+\begin{enumerate}
+    \item 
+    \item
+\end{enumerate}
 
-\section{Technical Design} %this needs to be a story
+\subsubsection{Development Pipeline} %devsecops Github agents, actions, security, deployment
+Chosen item - Github Workflow - agents, actions, security, wiki \\
+\large{Rationale:} \\
+\begin{enumerate}
+    \item 
+    \item
+\end{enumerate}
+\large{Items considered \& objection:} \\
+\begin{enumerate}
+    \item 
+    \item
+\end{enumerate}
+
+\section{Technical Development} %this needs to be a story
+
+\subsection{Introduction}
+This section is split into five broad areas of Computer Science, each category will contain features that fulfil its respective CS area, the technique and what problem it will solve. Each feature will relate to a functional requirement open up the avenue for testing item with evaluation.
 
 \subsection{Application Domain \& Problem}
 %The technical primer what the user will be involved with
@@ -567,7 +656,7 @@ To continue from the Literature Review, application of self-learning for CS or M
 \end{itemize}
 
 \subsection{Design Process Narrative Summary}
-As stated in the Methodology the project development will follow TDD principles. Each feature should map to a relevant list of requirements that will conform to acceptance tests to ensure the feature is fulfilling functional/non-functional conditions. After the features, requirements and tests are created, the features themselves must be designed to ensure the minimal implementation conforms to acceptance tests.
+As stated in the Methodology the project development will follow TDD principles. Each feature should map to a relevant list of requirements that will conform to acceptance tests to ensure the feature is fulfilling functional/non-functional conditions. After the requirements, tests and features are designed, the features themselves must be designed to ensure the minimal implementation conforms to acceptance tests.
 
 The following designs will ensure the following attributes of each feature:
 
@@ -577,7 +666,39 @@ The following designs will ensure the following attributes of each feature:
 \item User Story - Illuminates user flow through the UI path
 \end{itemize} %function requirents => acceptance tests => designs
 
-\subsection{Test Design of Feature Requirements - Acceptance and Quality (TDD) - By Category}
+
+\subsection{System Design Diagrams} %Can draw these later
+\subsubsection{System Architecture}
+%High level diagram of python script modules and their relationship
+
+\subsubsection{Module Interfaces}
+%A big UML diagram, what is UML? why do i need it to show interfaces?
+
+\subsubsection{Control flow sequence in System}
+%I think i need a diagram that shows how the python scripts control each other for data
+
+\subsubsection{UI wireframes}
+
+% All these need to be beginner, intermediate and advanced wireframes to show design progression at difference time/date
+
+%1. Each task 1-5 (task complete/in progress/fail) (code cell changes)
+%2. Skill tree 
+%3. Home page
+
+\subsubsection{User Story/Flow} %is there a /flow????
+
+%\section{Technical Implementation \& Testing} %This area is split between what WILL happen from design and what
+
+\subsection{Testing and Quality Control}
+\subsubsection{Automated Testing Framework}
+\subsubsection{Requirement Traceability}
+\subsubsection{Continuous Integration and Coverage}
+\subsubsection{Manual Verification}
+\subsubsection{Maintainability and Code Quality}
+
+\subsection{Requirements by Feature Category}
+% - Acceptance and Quality (TDD) - By Category
+%My understanding is these Requirements will fulfill the deliverables which fulfill the aims which fulfill the objectives.
 
 %function
 %quality - not just tests
@@ -587,221 +708,241 @@ The following designs will ensure the following attributes of each feature:
 %\paragraph{Sandbox security}
 %\paragraph{UI standards}
 
-\subsubsection{Model Factory}
+\subsubsection{Learning Interface}
+
 \begin{table}[H]
 \centering
-\begin{tabular}{|p{0.7cm}|p{7cm}|p{7cm}|}
+\begin{tabular}{|p{0.7cm}|p{14cm}|}
 \hline
-\textbf{Req} & \textbf{F/NF Requirement} & \textbf{Pseudocode Test Logic}  \\
+\textbf{Req} & \textbf{F/NF Requirement} \\
 \hline
-1.1.1 &  Fabricate model from UI building blocks.   & \textbf{INPUT:} UI layer config [4,8,3] \\
-(F)   &                                             &         CREATE model from UI blocks     \\
-      &                                             &         ASSERT model weights exist      \\
+1.1 &
+Provide a home page to introduce the purpose and functionality of the platform. \\
+(F) & \\
 \hline
-1.1.2 &  Fabricate model from python code           & \textbf{INPUT:} SimpleNN Model"\\
-(F)   &  execution.                                 &        EXECUTE code in sandbox \\
-      &                                             &        ASSERT model object created successfully \\
+1.2 &
+Provide a means of navigation to a skill tree page for the 3 different levels. \\
+(F) & \\
 \hline
-1.1.3 & Optimise pre-configured models using        & \textbf{INPUT:} slider hidden=8       \\
-(F)   & hyperparameter sliders.                      &        UPDATE visualization          \\
-      &                                             &         COUNT hidden nodes in diagram \\
-      &                                             &         ASSERT count EQUALS 8         \\
+1.3 &
+Provide 3 levels with increasing complexity and user control while iterating over the same concepts underpinning FNN architecture. \\
+(F) & \\
 \hline
-1.1.4 & Models can be deleted after fabrication.    & \textbf{INPUT:} Existing model \\
-(F)   &                                             &         DELETE model \\
-      &                                             &         ASSERT model reference NULL \\
+1.4 &
+Provide interactive controls, explanatory boxes, and visual output from user interaction. \\
+(F) & \\
 \hline
-1.1.5 & Models can solve problems from              & \textbf{INPUT:} Iris dataset \\
-(F)   & classification datasets,                    &         TRAIN model on data \\
-      & (IRIS, WINE, DIGITS).                       &         PREDICT test set \\
-      &                                             &         ASSERT accuracy GREATER 90\% \\
+1.5 &
+Provide links on the top bar for moving between home, skill tree, and sandbox. \\
+(F) & \\
 \hline
-1.2.1 &  Architecture Visualisation Latency.        & \textbf{INPUT:} slider change \\
-(NF)  &                                             &         MEASURE visualization render time \\
-      &                                             &         ASSERT time LESS THAN 200ms \\
-\hline
-1.2.2 & Model training accuracy >90\% on Iris       & \textbf{INPUT:} Iris dataset \\
-(NF)  & classification.                             &         TRAIN model 100 epochs \\
-      &                                             &         ASSERT final accuracy GREATER 90\% \\
-\hline
-1.2.3 & Memory usage below 500MB for concurrent     & \textbf{INPUT:} 10 concurrent models \\
-(NF)  & model training.                             &         MEASURE peak memory usage \\
-      &                                             &         ASSERT usage LESS THAN 500MB \\
+1.6 &
+To aid user learning, the system shall output FNN architecture, training status, and decision boundary charts during each level. \\
+(F) & \\
 \hline
 \end{tabular}
-\caption{Model Factory TDD specifications}
+\caption{Learning Interface requirements}
 \end{table}
-
-\subsubsection{Secure Programming}
+\subsubsection{Adaptive Learning \& Progression}
 \begin{table}[H]
 \centering
-\begin{tabular}{|p{1cm}|p{6cm}|p{6cm}|}
+\begin{tabular}{|p{1cm}|p{12.5cm}|}
 \hline
-\textbf{Req} & \textbf{F/NF Requirement} & \textbf{Pseudocode Test Logic}  \\
+\textbf{Req} & \textbf{F/NF Requirement} \\
 \hline
-2.1.1 & Highlight python code syntax in real time & \textbf{INPUT:} Python code with keywords \\
-      &                                           &         PARSE code \\
-      &                                           &         IDENTIFY syntax keywords \\
-      &                                           &         ASSERT keywords highlighted \\
+3.1.1 & Provide representation of learner progression through the skill tree structure across the three levels and within code cells. (F) \\
 \hline
-2.1.2 & Validate python code for syntax errors    & \textbf{INPUT:} valid Python code \\
-      &                                           &         VALIDATE syntax \\
-      &                                           &         ASSERT validation passes \\
+3.1.2 & Provide a progress status of ``LOCKED'', ``IN PROGRESS'', and ``COMPLETED'' for each level in the skill tree and for code cells (tasks) within Level 3. (F) \\
 \hline
-2.1.3 & Execute validated python code             & \textbf{INPUT:} valid model code \\
-      &                                           &         EXECUTE in sandbox \\
-      &                                           &         ASSERT output displayed \\
+3.1.3 & The access status of a level shall depend on the completion status of the previous level. (F) \\
 \hline
-2.1.4 & Return output upon successful compile     & \textbf{INPUT:} malicious commands \\
-      &                                           &         EXECUTE each in sandbox \\
-      &                                           &         ASSERT ALL raise security exceptions \\
+3.1.4 & Track progress of completed tasks and levels on the skill tree page in a right-aligned progress box. (F) \\
 \hline
-2.1.5 & Return error upon compile fail            & \textbf{INPUT:} malicious commands \\
-      &                                           &         EXECUTE each in sandbox \\
-      &                                           &         ASSERT ALL raise security exceptions \\
+3.1.5 & Expose progress of completed tasks and levels on the top bar of the platform. (F) \\
 \hline
-2.1.6 & Code execution sent to middleware first   & \textbf{INPUT:} malicious commands \\
-      &                                           &         EXECUTE each in sandbox \\
-      &                                           &         ASSERT ALL raise security exceptions \\
+3.1.6 & Record progress of tasks and levels in a persistent database. (F) \\
 \hline
-2.2.1 & All potential attack vectors are blocked  & \textbf{INPUT:} SandboxEval attack suite \\
-      &                                           &         EXECUTE all 15 vectors \\
-      &                                           &         ASSERT 100\% blocked [2.6.2] \\
+3.2.1 & Visualisation callback latency shall remain below 150 ms. (NF) \\
 \hline
-2.2.2 & No globals leakage                        & \textbf{INPUT:} 1000-line Python \\
-      &&         MEASURE syntax validation time \\
-      &&         ASSERT time LESS THAN 50ms \\
+3.2.2 & Progress state shall persist across browser sessions. (NF) \\
 \hline
-2.2.3 && \textbf{INPUT:} dangerous globals \\
-      &&         CHECK sandbox environment \\
-      &&         ASSERT os/sys modules ABSENT \\
+3.2.3 & Audio assets shall remain below 100 kb in memory and be non-blocking to the system. (NF) \\
 \hline
 \end{tabular}
-\caption{Secure Programming TDD specifications}
+\caption{Adaptive Learning requirements}
 \end{table}
 
-\subsubsection{Adaptive Learning}
+\subsubsection{Model Fabrication \& Testing}
 \begin{table}[H]
 \centering
-\begin{tabular}{|p{1cm}|p{6cm}|p{6cm}|}
+\begin{tabular}{|p{1cm}|p{12.5cm}|}
 \hline
-\textbf{Req} & \textbf{F/NF Requirement}                 & \textbf{Pseudocode Test Logic}  \\
+\textbf{Req} & \textbf{F/NF Requirement} \\
 \hline
-3.1.1        & Visualise weights in FNNs.                & \textbf{INPUT:} trained FNN model \\
-             &                                           &         EXTRACT weight matrices \\
-             &                                           &         CREATE heatmap visualization \\
-             &                                           &         ASSERT weights visible \\
+3.1.1 & The system shall allow a preconfigured neural network model to be explored and trained. (F) \\
 \hline
-3.1.2        & Visualise activation functions in FNNs.   & \textbf{INPUT:} slider hidden=12 \\
-             &                                           &         UPDATE architecture diagram \\
-             &                                           &         ASSERT 12 hidden nodes (r) \\
+3.1.2 & The system shall allow a user to construct a model through UI controls. (F) \\
 \hline
-3.1.3        & Visualise forward pass in FNNs.           & \textbf{INPUT:} slider hidden=12 \\
-             &                                           &         UPDATE architecture diagram \\
-             &                                           &         ASSERT 12 hidden nodes (r) \\
+3.1.3 & The system shall allow a user to define a model structure through code input. (F) \\
 \hline
-3.1.4        & Visualise backward pass in FNNs.          & \textbf{INPUT:} slider hidden=12 \\
-             &                                           &         UPDATE architecture diagram \\
-             &                                           &         ASSERT 12 hidden nodes (r) \\
+3.1.4 & The system shall allow model architecture parameters to be configured, including input size, hidden layers, neuron counts, activation function, and output structure. (F) \\
 \hline
-3.1.5        & Real time model-architecture visual       & \textbf{INPUT:} slider hidden=12 \\
-             & depending on slider input from user.      &         UPDATE architecture diagram \\
-             &                                           &         ASSERT 12 hidden nodes (r) \\
+3.1.5 & The system shall initialise a valid model from the selected configuration. (F) \\
 \hline
-3.1.6        & Real time model-architecture visual       & \textbf{INPUT:} slider hidden=12 \\
-             & depending on python code.                 &         UPDATE architecture diagram \\
-             &                                           &         ASSERT 12 hidden nodes (r) \\
+3.1.6 & The system shall train the model over multiple epochs. (F) \\
 \hline
-3.1.7        & Topological sorting will display .        & \textbf{INPUT:} slider hidden=12 \\
-             & progress of code cells within tasks       &         UPDATE architecture diagram \\
-             & visually                                  &         ASSERT 12 hidden nodes (r) \\
+3.1.7 & The system shall perform forward-pass, loss, backpropagation, and parameter-update stages. (F) \\
 \hline
-3.1.8        & A state machine to keep track of progress & \textbf{INPUT:} slider hidden=12 \\
-             & for user.                                 &         UPDATE architecture diagram \\
-             &                                           &         ASSERT 12 hidden nodes (r) \\
+3.1.8 & The system shall expose training metrics such as loss and accuracy. (F) \\
 \hline
-3.1.9        & Play/mute asset music.                    & \textbf{INPUT:} slider hidden=12 \\
-             &                                           &         UPDATE architecture diagram \\
-             &                                           &         ASSERT 12 hidden nodes (r) \\
+3.1.9 & The system shall visualise model architecture, decision boundary, activations, and training curves. (F) \\
 \hline
-3.1.10       & System will play brief completion music   & \textbf{INPUT:} slider hidden=12 \\
-             & upon code cell completion.                &         UPDATE architecture diagram \\
-             &                                           &         ASSERT 12 hidden nodes (r) \\
+3.1.10 & The system shall evaluate trained models on held-out data. (F) \\
 \hline
-3.2.1        &  Visualisation callback latency below     & \textbf{INPUT:} task dep graph \\
-             &  150 ms                                   &         APPLY topological sort \\
-             &                                           &         ASSERT linear progression \\   &                                           &         valid \\
+3.2.1 & Visualisation callback latency shall remain below 150 ms. (NF) \\
 \hline
-3.2.2        & Progress state persists across browser    & \textbf{INPUT:} visual trigger \\
-             & sessions.                                 &         MEASURE callback execution \\
-             &                                           &         ASSERT time LESS THAN 150ms \\
+3.2.2 & Progress state shall persist across browser sessions. (NF) \\
 \hline
-3.2.3        & Topological sort completes 50 tasks       & \textbf{INPUT:} 50 task dependencies \\
-             & below 10ms.                               &         COMPUTE topological sort \\
-             &                                           &         ASSERT computation LESS THAN\\ &                                           &         10ms \\
-\hline
-3.2.4        & Audio assets are below 100 kb in memory   & \textbf{INPUT:} 50 task dependencies \\
-             & and are non-blocking to the system.       &         COMPUTE topological sort \\
-             &                                           &         ASSERT computation LESS THAN\\ &                                           &         10ms \\
+3.2.3 & Audio assets shall remain below 100 kb in memory and be non-blocking to the system. (NF) \\
 \hline
 \end{tabular}
-\caption{Adaptive Learning TDD specifications}
+\caption{Adaptive Learning requirements}
 \end{table}
 
-\subsubsection{Distribution}
+\subsubsection{Data Handling}
 \begin{table}[H]
 \centering
-\begin{tabular}{|p{1cm}|p{6cm}|p{6cm}|}
+\begin{tabular}{|p{1cm}|p{12.5cm}|}
 \hline
-\textbf{Req} & \textbf{F/NF Requirement}               & \textbf{Pseudocode Test Logic}  \\
+\textbf{Req} & \textbf{F/NF Requirement} \\
+%Feature 1
 \hline
-4.1.1 & Cloud deployment of dash app using dash server.& \textbf{INPUT:} production URL \\
-      &                                                &         SEND HTTP GET request \\
-      &                                                &         ASSERT response STATUS 200 \\
+4.1.1 & Load any dataset through a common entrypoint (F) \\
 \hline
-4.1.2 & Use of vertical machines.                      & \textbf{INPUT:} production URL \\
-      &                                                &         SEND HTTP GET request \\
-      &                                                &         ASSERT response STATUS 200 \\
+4.1.2 & Support toy datasets such as toy datasets such moon, circles, linear through loader contract (F) \\
 \hline
-4.1.3 & External database that will store user         & \textbf{INPUT:} user progress data \\
-      & progress and model configuration as            &         SAVE to database \\
-      & persistent long-term data.                     &         RETRIEVE data \\
-      &                                                &         ASSERT data preserved \\
+4.1.3 & Support benchmark datasets such as toy datasets such iris, wine, digits through loader contract (F) \\
 \hline
-4.1.4 & External database that will store user         & \textbf{INPUT:} user progress data \\
-      & progress and model configuration as            &         SAVE to database \\
-      & persistent long-term data.                     &         RETRIEVE data \\
-      &                                                &         ASSERT data preserved \\
+4.1.4 & Return the same data structure bundle regardless of toy/benchmark source (F) \\
+\hline %what does this mean? How is this tested? what is the structure type?
+%Feature 2
+4.1.5 & Mandatory exposition of metadata from dataset - task type, input dimensions, class count (F) \\
 \hline
-4.1.5 & External database that will store user         & \textbf{INPUT:} user progress data \\
-      & progress and model configuration as            &         SAVE to database \\
-      & persistent long-term data.                     &         RETRIEVE data \\
-      &                                                &         ASSERT data preserved \\
+4.1.6 & User-optional exposition of metadata from dataset - feature names, class names and visual flags (F) \\ % what could this mean??
 \hline
-4.2.1 & The deployment style (Heroku) has capacity     & \textbf{INPUT:} 1000 database queries \\
-      & to scale 100 concurrent users.                 &         MEASURE 99 percentile latency \\
-      &                                                &         ASSERT latency LESS THAN 100ms \\
+4.1.7 & Flexible consumption of metadata information from current dataset instead of hardcoded metadata (assumptions about dataset). (F) \\ %how would this be tested?
 \hline
-4.2.2 & Database query latency below 100 ms            & \textbf{INPUT:} 1000 database queries \\
-      &                                                &         MEASURE 99 percentile latency \\
-      &                                                &         ASSERT latency LESS THAN 100ms \\
+%Feature 3
+4.1.8 & UI configurable pipeline for preprocessing - scaling, encoding, imputation. (F) \\
 \hline
-4.2.3 & The uptime is 99.9\%                           & \textbf{INPUT:} continuous monitoring \\
-      & (this is heroku monitoring for dyno)           &         TRACK uptime 24 hours \\
-      &                                                &         ASSERT uptime GREATER 99.9\% \\
+4.1.9 & Pipeline only works on training split of dataset, transformed data used for testing/validation set (F) \\
 \hline
-4.2.4 & Auto-save triggers less then 10 seconds        & \textbf{INPUT:} continuous monitoring \\
-      & after execution                                &         TRACK uptime 24 hours \\
-      &                                                &         ASSERT uptime GREATER 99.9\% \\
+4.1.10 & The preprocessing configuration shall be attached to the dataset's metadata bundle. (F) \\
 \hline
-4.2.5 & Upon save command, the system will save        & \textbf{INPUT:} continuous monitoring \\
-      & in less 10ms                                   &         TRACK uptime 24 hours \\
-      &                                                &         ASSERT uptime GREATER 99.9\% \\
+%Feature 4
+4.1.11 & Generate train/validation/test split from dataset (F) \\
+\hline
+4.1.12 & An established split shall be reproducible by random seed. (F) \\
+\hline
+4.1.13 & Splits for classification problems shall support stratification when suitable (F) \\
+\hline %how to support? %what would be suitable?
+%Feature 5
+4.1.14 & Validation of dataset input shape, check for missing/bad values, put validity check into datasets metadata (F) \\
+\hline
+4.1.15 & Output of dataset statistics (metadata, shape, validity). (F) \\
+\hline
+4.1.16 & Failure of validation will return a failure message to UI. (F) \\
 \hline
 \end{tabular}
-\caption{Distribution TDD specifications}
+\caption{Adaptive Learning requirements}
+\end{table}
+\subsubsection{Secure Code Execution}
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{1cm}|p{12cm}|}
+\hline
+%Secure editor feedback feature
+\textbf{Req} & \textbf{F/NF Requirement} \\
+\hline
+5.1.1 & Highlight Python code syntax in real time. \\
+\hline
+5.1.2 & Provide line aware messages as a result of invalidated Python code syntax.\\
+\hline
+%execution orchestration layer
+5.1.3 & Execute validated code submissions through a dedicated interface service. \\
+\hline
+5.1.4 & Force code submissions through a pre-execution validation gate. \\
+\hline
+%Controlled sandbox runtime
+5.1.5 & Execute code submission in a namespace with allow list. \\
+\hline
+5.1.6 & Runtime shall block access to OS, process or network (primitives?) from code submission \\
+\hline
+%may need to rewrite this...
+5.1.7 & Runtime shall reinitialise code submission, per run to reduce cross leakage. \\
+\hline
+%Result and error reports
+5.1.8 & Return standard output for successful compile and execution \\
+\hline
+5.1.9 & Return line syntax/runtime error feedback that is line-aware, after compile and execution fail. \\
+\hline
+5.1.10 & System shall support safe rendering of visual outputs from code submission. \\
+\hline
+%Security monitoring/hardening
+5.1.11 & Logging of code submissions which are policy denied for audit capacity. \\
+\hline
+5.1.12 & Enforce per-run resource limits of timeout or code submission limit or output size limit \\
+\hline
+5.1.13 & System shall support a centralised module for code-submission policy, which can support future policy updates (scalability).  \\
+\hline
+\end{tabular}
+\caption{Secure Programming TDD specifications (simplified)}
 \end{table}
 
+\subsubsection{Deployment \& Persistence}
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{1cm}|p{12cm}|}
+\hline
+%Deployable Application
+\textbf{Req} & \textbf{F/NF Requirement} \\
+\hline
+6.1.1 & Application deployment underpinned by a reproducible build artefact. \\
+\hline
+6.1.2 & Runtime dependencies pinned inside requirements document\\
+\hline
+6.1.3 & Setup instructions shall be documented inside a README file to deploy application on ANY machine\\
+\hline
+%Reliable data persistence
+6.1.4 & Persistence of user progress and model configuration within a database. \\
+\hline
+6.1.5 & Restoration of persisted user data upon application restart \\
+\hline
+%High performance save mechanism
+6.1.6 & Save latency below a threshold under load. \\
+\hline
+6.1.7 & Read latency below a threshold under load. \\
+\hline
+6.1.8 & Write latency below a threshold under load. \\
+\hline
+%Scalability for Availability
+6.1.9 & System can support concurrent users. \\
+\hline
+6.1.10 & System can acclimate to concurrent user base by decreasing/increasing capacity. \\
+\hline
+6.1.11 & Monitoring of application uptime. \\ %probably future work...
+\hline
+%Operation Records
+6.1.12 & System recording of requests (callbacks), errors and data persistence timings \\
+\hline
+6.1.13 & As a result of records, health checks for monitoring of deployment. \\
+\hline
+\end{tabular}
+\caption{Deployment and Persistence TDD specifications}
+\end{table}
+
+
+\begin{comment}
 \subsubsection{System Architecture}
 \begin{table}[H]
 \centering
@@ -837,41 +978,386 @@ The following designs will ensure the following attributes of each feature:
 \caption{System Architecture TDD specifications}
 \end{table}
 
-\subsection{System Design Diagrams} %Can draw these later
-\subsubsection{System Architecture}
-%High level diagram of python script modules and their relationship
 
-\subsubsection{Module Interfaces}
-%A big UML diagram, what is UML? why do i need it to show interfaces?
+\end{comment}
+%Features of LI
+\subsection{Learning Interface}
+\subsubsection{Overview of Features}
 
-\subsubsection{Control flow sequence in System}
-%I think i need a diagram that shows how the python scripts control each other for data
+\paragraph{Navigation \& Entry Pages} \mbox{} \\
+\noindent Code: LF1 \\
+\noindent Requirements: [FR 1.1.1, FR 1.1.2]
 
-\subsubsection{UI wireframes}
+\paragraph{Progressive Learning Levels} \mbox{} \\
+\noindent Code: LF2 \\
+\noindent Requirements: [FR 1.1.3]
 
-% All these need to be beginner, intermediate and advanced wireframes to show design progression at difference time/date
+\paragraph{Interactive Learning Controls} \mbox{} \\
+\noindent Code: LF3 \\
+\noindent Requirements: [FR 1.1.4, FR 1.1.5]
 
-%1. Each task 1-5 (task complete/in progress/fail) (code cell changes)
-%2. Skill tree 
-%3. Home page
+\paragraph{Visual Learning Feedback} \mbox{} \\
+\noindent Code: LF4 \\
+\noindent Requirements: [FR 1.1.6]
 
-\subsubsection{User Story/Flow} %is there a /flow????
+\subsubsection{Design Rationale}
+\begin{itemize}
+    \item \textbf{LF1} will provide a top bar and entry page which serve as a constant navigation structure so support the user orientation within the application. The justification is the "The Signpost Principle" (Henley et al.) on page 40 in the Discussion section, which says that points of navigation should be designed to provide as much information as possible to prevent user navigation mistakes.
+    \item \textbf{LF2} will provide progressive disclosure of the level complexity, this design was chosen to prevent the user from being overwhelmed with too much control of the Model Fabrication and Testing. The design justification also comes from "The Signpost Principle" (Henley et al.) because it talks of "concise representations or summaries of open patches that provide sufficient information to quickly make effective navigation decision" which goes against an overload of information.
+    \item \textbf{LF3} will provide controls and visual context to enable user exploration of model fabrication and testing. This item of design was chosen because HCD (Norman, 2013) must be helpful when things go wrong because "the machine highlights the problems" and the person "takes the proper actions".
+    \item \textbf{LF4} will provide a multitude of visualisations - FNN architecture, training status and decision boundaries. This is chosen because in HCD (Norman, 2013) a machine should say "indicating what actions are possible, what is happening, and what is about to happen" for interpretability of the FNN model.
+\end{itemize}
 
-\section{Technical Implementation \& Testing} %This area is split between what WILL happen from design and what 
+\subsubsection{Acceptance and Validation Plan}
+\textbf{LF1} \mbox{} \\
+\textbf{LF2} \mbox{} \\
+\textbf{LF3} \mbox{} \\
+\textbf{LF4} \mbox{} \\
 
-\subsection{Introduction}
-This section is split into five broad areas of Computer Science, each category will contain features that fulfil its respective CS area, the technique and what problem it will solve. Each feature will relate to a functional requirement open up the avenue for testing item with evaluation.
+\subsubsection{Implementation}
+\textbf{LF1} \mbox{} \\
+\textbf{LF2} \mbox{} \\
+\textbf{LF3} \mbox{} \\
+\textbf{LF4} \mbox{} \\
 
+\subsubsection{Verification}
+\textbf{LF1} \mbox{} \\
+\textbf{LF2} \mbox{} \\
+\textbf{LF3} \mbox{} \\
+\textbf{LF4} \mbox{} \\
+
+
+
+%Features of AL
+\subsection{Adaptive Learning \& Progression} %gamification
+\subsubsection{Overview of Features}
+\paragraph{Non-Linear Skill Tree Progression} \mbox{} \\
+\noindent Code: AF1 \\
+\noindent Requirements: [FR 2.1.1, FR 2.1.2, FR 2.1.3]
+
+\paragraph{Level 3 Task Progress Tracking} \mbox{} \\
+\noindent Code: AF2 \\
+\noindent Requirements: [FR 2.1.1, FR 2.1.2]]
+
+\paragraph{Progress Summary Displays} \mbox{} \\
+\noindent Code: AF3 \\
+\noindent Requirements: [FR 2.1.4, FR 2.1.5]
+
+\paragraph{Persistent Progress Storage } \mbox{} \\
+\noindent Code: AF4 \\
+\noindent Requirements: [FR 2.1.6, NFR 2.2.2]
+
+\paragraph{Adaptive Learning Performance and Media Constraints} \mbox{} \\
+\noindent Code: AF5 \\
+\noindent Requirements: [NFR 2.2.1, NFR 2.2.3]
+
+\subsubsection{Design Rationale}
+\begin{itemize}
+\item \textbf{AF1} will provide a visual progression map so that a user can see current skill position but can chose to explore any pathway they wish because according to the Design Choices of Steph Piper (Piper, 2024) a user often learns "non-linearly" in "self-directed learning" so this will best enable the \textbf{usability} of the application.
+\item \textbf{AF2} will provide real-time progress feedback by showing the number of code cells completed on the top bar, a dependent progress tracker was chosen because "reliable, revealing and relevant data" p3 (Molenaar, 2019) is important to for the user to draw "valid inferences about their own learning process" which provides a level of \textbf{accessibility} at the activity level.
+\item \textbf{AF3} will provide an activity level progress bar that only appears at the activity level which will dependent on the activity context, so number of code cells completed for level 3 for example. This is again justified by the need "reliable, revealing and relevant data" p3 (Molenaar, 2019) and this feature aim to illustrate the extent of that from AF2. 
+\item \textbf{AF4} will provide data storage of user progress within activities and overall activity completion which will be stored persistently between sessions. This design is inspired by the notion that "users expect" to keep application-work constant from "device" to "device" (Introduction, Belluci, 2011) but for this project the work would be kept session to session.
+\item \textbf{AF5} will provide
+\end{itemize}
+\subsubsection{Acceptance and Validation Plan}
+\textbf{AF1} \mbox{} \\
+\textbf{AF2} \mbox{} \\
+\textbf{AF3} \mbox{} \\
+\textbf{AF4} \mbox{} \\
+\textbf{AF5} \mbox{} \\
+
+\subsubsection{Implementation}
+\textbf{AF1} \mbox{} \\
+\textbf{AF2} \mbox{} \\
+\textbf{AF3} \mbox{} \\
+\textbf{AF4} \mbox{} \\
+\textbf{AF5} \mbox{} \\
+
+\subsubsection{Verification}
+\textbf{AF1} \mbox{} \\
+\textbf{AF2} \mbox{} \\
+\textbf{AF3} \mbox{} \\
+\textbf{AF4} \mbox{} \\
+\textbf{AF5} \mbox{} \\
+
+
+\begin{comment}
+%\subsubsection{FR: 2.1 - Provide representation of learner progression through skill tree structure through the three levels and within code cells.}
+
+%\subsubsection{FR: 2.2 - Provide a progress status of "LOCKED" , "IN PROGRESS" and "LOCKED" for each level in the skill tree and within level 3 for code cells (tasks).}
+
+%\subsubsection{FR: 2.3} The access status of a level should depend on the previous level status.
+%\subsubsection{FR: 2.3 - Track progress of tasks and levels completed on the skill tree page in a right aligned box.}
+
+%\subsubsection{FR: 2.4 - Expose progress of tasks and levels completed on the top bar of platform.}
+
+%\subsubsection{FR: 2.5 - Record progress of tasks and levels in persistent database}
+
+%\subsubsection{Visualise code cells or UI sliders in real time}
+%ive put this as an all in one thing because visualisation seems like a catch all skill
+%split between:
+%oppurtunity to show forward or backpropagation
+%to show model architecture with layers, sizes etc depending what code cell task is completing, the good thing would be to somehow show the architecute changing in real time as the user changes code e.g 1 or 2 hidden layers, so the code would need to execute before the user has actually executed it themselves
+
+%there's something in my head thats thinking about showing the mathematics off but is showing lots of visualisation just the same skill
+
+%skills in visualisation:
+
+%1. Real time code visualisation (checking for conditions in code real-time, continuous execution
+%2. showing off maths (activations, architecture, weights, forward/back pass
+\end{comment}
+
+%Features of MFT
+\subsection{Model Fabrication \& Testing}
+\subsubsection{Overview of Features}
+
+\paragraph{Preconfigured Model Exploration} \mbox{} \\
+\noindent Code: MF1 \\
+\noindent Requirements: [FR 3.1.1, FR 3.1.6, FR 3.1.8, FR 3.1.9, FR 3.1.10] 
+
+\paragraph{UI-Driven Model Fabrication}  \mbox{} \\
+\noindent Code: MF2 \\
+\noindent Requirements: [FR 3.1.2, FR 3.1.4, FR 3.1.5, FR 3.1.6, FR 3.1.9]
+
+\paragraph{Code-Driven Model Fabrication} \mbox{} \\
+\noindent Code: MF3 \\
+\noindent Requirements: [FR 3.1.3, FR 3.1.4, FR 3.1.5, FR 3.1.6, FR 3.1.10]
+
+\paragraph{Training Pipeline \& Optimisation} \mbox{} \\
+\noindent Code: MF4 \\
+\noindent Requirements: [FR 3.1.6, FR 3.1.7, FR 3.1.8, FR 3.1.10]
+
+\paragraph{Visual Model Feedback} \mbox{} \\
+\noindent Code: MF5 \\
+\noindent Requirements: [FR 3.1.8, FR 3.1.9, FR 3.1.10]
+
+\subsubsection{Design Rationale}
+\begin{itemize}
+\item \textbf{MF1} will provide an exploration suite for preconfigured models to inspect, train and evaluate its architecture and training dynamics for model discoverability. The design justification is the user can see "strengths and weaknesses of network" by the "the actual behaviour of the network given user-provided input" Introduction,(Harley, 2015) which links the model factory logic to the progressive disclosure UI of LF1.
+
+\item \textbf{MF2} will provide a UI-driven fabrication of a model through by stepping through the input-layer, hidden-layer, output and activation function and hidden-layer count. The justification is that "visualization should easily allow users to experiment with the input-output process of the network" (Harley, 2015) to build usability through discoverable interaction by allowing user manipulation and inspection of a model before progressing to complex code-driven tasks to support application usability and interpretability.
+
+\item \textbf{MF3} will provide code-driven model fabrication, to design the FNN model architecture through code submissions to the application. This design justified by the example of "Examplar"(Wrenn et al, 2019) allows a "Pyret editing environment"(p4, 4.Exmplar) and "instant feedback on whether they have correctly and thoroughly explored a problem independent of their implementation progress"(p1, Introduction) which suggests the interpretability value of a UI operating at the executable level. %independent of their implementation progress?? ...
+
+\item \textbf{MF4} will provide a visible training pipeline for each epoch-stage of the FNN architecture: forward pass, loss computation, backward pass, update parameters. The design justification to make the training \textbf{visible} is that "model metrics are typically computed every epoch and represented as a time series" (p10, 6.52. Model Metrics, Hohman, 2018) while this paper is discussing model overfitting, the concept of displaying model-training information over time will be translated over to inspecting the mechanism-stages within an epoch of model training.
+
+\item \textbf{MF5} will provide an amalgamation of static or animatory visual feedback in relation to current FNN architecture, model training status, and decision boundaries. This is intended improve visibility of model training mechanisms and how the user input affects the behaviour of those mechanisms over time. The a visualisation design generally "should allow users view details on individual nodes" (p872. 3.1 Task Analysis, Harley, 2015) the visuals aim to illuminate the "activation level, calculation being performed, the learned parameters (i.e., the node's weights)" that can be inspected over time (epoch-step).
+\end{itemize}
+
+\subsubsection{Acceptance and Validation Plan}
+\textbf{MF1} \mbox{} \\
+\textbf{MF2} \mbox{} \\
+\textbf{MF3} \mbox{} \\
+\textbf{MF4} \mbox{} \\
+\textbf{MF5} \mbox{} \\
+
+\subsubsection{Implementation}
+\textbf{MF1} \mbox{} \\
+\textbf{MF2} \mbox{} \\
+\textbf{MF3} \mbox{} \\
+\textbf{MF4} \mbox{} \\
+\textbf{MF5} \mbox{} \\
+
+\subsubsection{Verification}
+\textbf{MF1} \mbox{} \\
+\textbf{MF2} \mbox{} \\
+\textbf{MF3} \mbox{} \\
+\textbf{MF4} \mbox{} \\
+\textbf{MF5} \mbox{} \\
+
+
+
+
+%Features of DH
+\subsection{Data Handling}
+\subsubsection{Overview of Features}
+\paragraph{Unified Data Loader API} \mbox{} \\
+\noindent Code: DF1 \\
+\noindent Requirements: [FR 4.1.1, FR 4.1.2, FR 4.1.3, 4.1.4] 
+
+\paragraph{Dataset profiling of metadata}  \mbox{} \\
+\noindent Code: DF2 \\
+\noindent Requirements: [FR 4.1.5, FR 4.1.6, FR 4.1.7] 
+
+\paragraph{Pre-processing Pipeline} \mbox{} \\
+\noindent Code: DF3 \\
+\noindent Requirements: [FR 4.1.8, FR 4.1.9, FR 4.1.10] 
+
+\paragraph{Split/Sample Management} \mbox{} \\
+\noindent Code: DF4 \\
+\noindent Requirements: [FR 4.1.11, FR 4.1.12, FR 4.1.13] 
+
+\paragraph{Data Validation \& Quality Report} \mbox{} \\
+\noindent Code: DF5 \\
+\noindent Requirements: [FR 4.1.14, FR 4.1.15, FR 4.1.16] 
+
+\subsubsection{Design Rationale}
+\begin{itemize}
+\item \textbf{DF1} will provide a consistent interface for a user to swap between the dataset selection that is either toy or benchmark without needing to change any logic within the application. This design mirrors the strategy of ML libraries such as scikit-learn where "inheritance is not enforced: instead, code conventions provide a consistent interface" (p2827, 4.Code Design, Pedregosa, 2011). \\
+
+\item \textbf{DF2} will provide two sets of metadata, a mandatory and optional, these items would include task type, input size, class/feature names, this is attended to help the user make an informed decision about suitability of the dataset if all metadata is on display using the DF1 interface. This metadata design follows the proposal of "Datasheets for datasets" that every dataset should have "Transparency on the part of dataset creators is necessary is necessary for dataset to be sufficiently well informed"(pg 2, 1.1 Objectives, Gebru et al.,2021). \\
+
+\item \textbf{DF3} will provide a UI-driven pre-processing pipeline (scaling, encoding, imputation) that will use the training split from each dataset and a preprocessed dataset will be indicated in the metadata bundle (DF2). This follows the general pipeline design pattern of scikit-learn that "a Pipeline object can combine several transformers and an estimator to create a combined estimator" which "behaves as a standard estimator"(pg 2828, 4.Code Design, Pedregosa, 2011), which justifies configuring the preprocessing pipeline as an abstract component in the wider machine learning pipeline. \\
+
+\item \textbf{DF4} will provide an UI-driven management of the dataset splitting into train, test and validate sets for (optional) stratifaction and random sees. This design follows the practice of Skicit learn where splits are explicit (train/test/validate) controlled (SckikitLearn, 2026) and inspectable by UI (DF1). \\
+
+\item \textbf{DF5} will provide a validation of dataset shape for missing/bad values with a quality-check report that will be exposed by the dataset interface, this is intended to give instant feedback to prevent the use anomalous data in the ML pipeline which follows the design pattern Erick Brock et al paper, a validation approach based on schema to that "detect issues as early in pipeline as possible to avoid training on bad data" (p4, 3.Single Batch Validation, Brock et al., 2019) 
+\end{itemize}
+
+\subsubsection{Acceptance and Validation Plan}
+\textbf{DF1} \mbox{} \\
+\textbf{DF2} \mbox{} \\
+\textbf{DF3} \mbox{} \\
+\textbf{DF4} \mbox{} \\
+\textbf{DF5} \mbox{} \\
+
+\subsubsection{Implementation}
+\textbf{DF1} \mbox{} \\
+\textbf{DF2} \mbox{} \\
+\textbf{DF3} \mbox{} \\
+\textbf{DF4} \mbox{} \\
+\textbf{DF5} \mbox{} \\
+
+\subsubsection{Verification}
+\textbf{DF1} \mbox{} \\
+\textbf{DF2} \mbox{} \\
+\textbf{DF3} \mbox{} \\
+\textbf{DF4} \mbox{} \\
+\textbf{DF5} \mbox{} \\
+
+
+
+
+
+
+%Non functional features of SCE
+\subsection{Secure Code Execution}
+\subsubsection{Overview of Features}
+
+\paragraph{Pre-execution Code Feedback} \mbox{} \\
+\noindent Code: SF1 \\
+\noindent Requirements: [FR 5.1.1, FR 5.1.2] 
+
+\paragraph{Execution Handle Layer}  \mbox{} \\
+\noindent Code: SF2 \\
+\noindent Requirements: [FR 5.1.3, FR 5.1.4]
+
+\paragraph{Controlled Sandbox Runtime} \mbox{} \\
+\noindent Code: SF3 \\
+\noindent Requirements: [FR 5.1.5, FR 5.1.6, FR 5.1.7]
+
+\paragraph{Post-Execution Code Feedback} \mbox{} \\
+\noindent Code: SF4 \\
+\noindent Requirements: [FR 5.1.8, FR 5.1.9, FR 5.1.10]
+
+\paragraph{Code Security Monitoring} \mbox{} \\
+\noindent Code: SF5 \\
+\noindent Requirements: [FR 5.1.11, FR 5.1.12, FR 5.1.13]
+\subsubsection{Design Rationale}
+\begin{itemize}
+\item \textbf{SF1} will provide pre-execution syntax highlighting and corrective feedback in real time for ill-formed code before execution. This instant-feedback design is intended to "prevent avoidable errors" (Wrenn et al. 2019) during code-driven model fabrication. Additionally, research from the Henley paper (Henley, 2017) shows that an code editor interface exposing syntax state directly supports "interpretation effort" as opposed to waiting for runtime.\\
+
+\item \textbf{SF2} will provide an execution handler that will funnel code-submission through a validation gate after user request, the code will stay in a validation environment governed by a security policy before proceeding to the runtime environment. This design pattern follows "secure execution architectures"(Chang, 1999) which generally policy checks before allowing untrusted code to execute. \\
+
+\item \textbf{SF3} will provide a sandbox runtime that is controlled under a restricted namespace, because it has an allow list such OS/process/network access. This design follows the "principle of least privilege" and "sandbox isolation" (Chang, 1999)in which untrusted code is confined to permitted operations inside container (sandbox) so it doesn't affect other workloads of the application. \\
+
+\item \textbf{SF4} will provide post-execution feedback with a standard output upon successful runtime or syntax/runtime/ errors(line aware) upon failed runtime. The design justification is that "useful feedback should be immediate" and "presented in a form that helps the user connect observed output to the code they wrote" (Wrenn, 2019). Additionally, there can be a separation between the submitted code and the application itself (Chang, 1999)\\
+\item \textbf{SF5} will provide a policy enforcement handler that threads into SF2 by providing an audit log of failed code submissions that failed the validation gate. The design justification is to support maintainability so that when there's a different policy it will affect the conditions of the validation gate which follows the emphasis of "traceability" on "runaway code"(Chang, 2019) \\
+\end{itemize}
+
+\subsubsection{Acceptance and Validation Plan}
+\textbf{SF1} \mbox{} \\
+\textbf{SF2} \mbox{} \\
+\textbf{SF3} \mbox{} \\
+\textbf{SF4} \mbox{} \\
+\textbf{SF5} \mbox{} \\
+
+\subsubsection{Implementation}
+\textbf{SF1} \mbox{} \\
+\textbf{SF2} \mbox{} \\
+\textbf{SF3} \mbox{} \\
+\textbf{SF4} \mbox{} \\
+\textbf{SF5} \mbox{} \\
+
+\subsubsection{Verification}
+\textbf{SF1} \mbox{} \\
+\textbf{SF2} \mbox{} \\
+\textbf{SF3} \mbox{} \\
+\textbf{SF4} \mbox{} \\
+\textbf{SF5} \mbox{} \\
+
+
+
+
+
+
+
+%Non functional features of DP - i think this should be connected with SYSTEM ARCHITECTURE
+\subsection{Deployment and Persistence}
+\subsubsection{Category Attributes Overview of Features}
+\paragraph{Deployable application} \mbox{} \\
+\noindent Code: DPA1 \\
+\noindent Requirements: [NFR 6.1.1, NFR 6.1.2, NFR 6.1.3] 
+
+\paragraph{Reliable data persistence}  \mbox{} \\
+\noindent Code: DPA2 \\
+\noindent Requirements: [NFR 6.1.4, NFR 6.1.5]
+
+\paragraph{High-Performance user data handling mechanism} \mbox{} \\
+\noindent Code: DPA3 \\
+\noindent Requirements: [NFR 6.1.6, NFR 3.1.7, NFR 3.1.8]
+
+\paragraph{Attribute: Scalable Application} \mbox{} \\
+\noindent Code: DPA4 \\
+\noindent Requirements: [NFR 6.1.9, NFR 6.1.10, NFR 6.1.11]
+
+\paragraph{Reliable deployment-operation health checks} \mbox{} \\
+\noindent Code: DPA5 \\
+\noindent Requirements: [NFR 6.1.12, NFR 6.1.13]
+\subsubsection{Design Rationale}
+\textbf{DPA1} will provide an application that is deployable through reproducible build artefact (a URL link to hosted web application), pinned runtime dependencies, minimal setup instructions because it should be hosted through Render/Railway. An environment with consistent procedure for setup ensures a "predictable system runtime" (Fourne, 2023). \\
+
+\textbf{DPA2} will provide reliable persistence of user data, that being progress status and saved model configurations within an ML pipeline abstraction(DF4). The design justification is that its generally important to preserve tasks continuity when the session ends which mirros Bellucis development of a JavaScript migration on devices that allowed the user experience task continuity from "device" to "device" which similarly discussed in AF4 (Bellucci, 2011).\\
+
+\textbf{DPA3} will provide high performance mechanism for save/read/write functions, the latency of these functions will be low because its considered the "critical path of interaction"(Waseem, 2021) so an excessive latency would hinder responsivity of the application. Additionaly, setting the latency with an \textbf{explicit threshold} will make the non-functional requirement of bounded latency testable in the persistence layer of the application.\\
+
+\textbf{DPA4} will provide support for adjusting capacity of the application depending on the size of the concurrent user base in order to make the web application scalable in real-time. This design follows the principle of "capacity elasticity"(Waseem, 2021) which acknowledges the variability of user demand in the sense that fixed provision would; waste resources during below threshold demand or denote an application failure during above threshold demand. \\ 
+\textbf{DPA5} will provide reliable health checks of the web application during deployment and expose the evaluation as a continuous audit log, this would include user requests, errors and persistence timings (read/write/save). The design justification is that the core practices of micro service monitoring tend to be "log management", "exception tracking", "health-check APIs" to understand "runtime health" (Waseem, 2021). Additionally, it is also said in Waseem's paper that recording timings is crucial to predict application failure before its user visible which can be tested as non-functional requirement.\\
+
+\subsubsection{Acceptance and Validation Plan}
+\textbf{DPA1} \mbox{} \\
+\textbf{DPA2} \mbox{} \\
+\textbf{DPA3} \mbox{} \\
+\textbf{DPA4} \mbox{} \\
+\textbf{DPA5} \mbox{} \\
+
+\subsubsection{Implementation}
+\textbf{DPA1} \mbox{} \\
+\textbf{DPA2} \mbox{} \\
+\textbf{DPA3} \mbox{} \\
+\textbf{DPA4} \mbox{} \\
+\textbf{DPA5} \mbox{} \\
+
+\subsubsection{Verification}
+\textbf{DPA1} \mbox{} \\
+\textbf{DPA2} \mbox{} \\
+\textbf{DPA3} \mbox{} \\
+\textbf{DPA4} \mbox{} \\
+\textbf{DPA5} \mbox{} \\
+
+\begin{comment}
 \subsection{Model Factory Features} %use the table in the email to John DIXON, feature, technique, CS area and problem solved
+\subsubsection{Visualisation Feedback} %does each visualisation clearly show the meaning of whatever its showing??
 
-%Feature categories
-%1. Model Factory (advanced computational architecture)
-%2. Secure programming
-%3. Adaptive Learning
-%4. Distribution
-%5. Systems architecture
+\paragraph{Dynamic FNN Architecture to user slider}
 
-\subsubsection{NN-visualisation}
+\paragraph{Dynamic FNN Architecture to user code} %the user can change a number and aslong as its "pre-executed" it will display it live - the architecture change such as hidden neuron
+
+\paragraph{Forward Pass}
+
+\paragraph{Backpropagation}
+
+\paragraph{Weights and sums}
 
 \subsubsection{Optimisation of model}
 
@@ -880,6 +1366,41 @@ This section is split into five broad areas of Computer Science, each category w
 \subsubsection{Build model by python code sandbox}
 
 \subsubsection{Model testing suite by UI control}
+
+
+%Feature categories
+%1. Model Factory (advanced computational architecture)
+%2. Secure programming
+%3. Adaptive Learning
+%4. Distribution
+%5. Systems architecture
+
+\subsubsection{Visualisation Feedback} %does each visualisation clearly show the meaning of whatever its showing??
+
+\paragraph{Dynamic FNN Architecture to user slider}
+
+\paragraph{Dynamic FNN Architecture to user code} %the user can change a number and aslong as its "pre-executed" it will display it live - the architecture change such as hidden neuron
+
+\paragraph{Forward Pass}
+
+\paragraph{Backpropagation}
+
+\paragraph{Weights and sums}
+
+\subsubsection{Optimisation of model}
+
+\subsubsection{Build model by UI building blocks}
+
+\subsubsection{Build model by python code sandbox}
+
+\subsubsection{Model testing suite by UI control}
+
+
+
+
+
+
+\subsection{Data Handling}
 
 \subsection{Secure Programming Features}
 
@@ -897,26 +1418,8 @@ This section is split into five broad areas of Computer Science, each category w
 \subsubsection{Safe execution of code - sent away}
 %In a proper web app, the execution code is sent away to a separate area for execution the result of that execution (success or fail) will be given back to the user the idea is the user with malicious intentions can't directly meddle with the backend logic of the app through the task cells
 
-\subsection{Adaptive Learning Features} %gamification
 
-\subsubsection{Permissive on user controls}
-%is this still a real feature because i've removed the teacher role
-\subsubsection{Level dependency graph skill tree}
-
-\subssubsection{Visualise code cells or UI sliders in real time}
-%ive put this as an all in one thing because visualisation seems like a catch all skill
-%split between:
-%oppurtunity to show forward or backpropagation
-%to show model architecture with layers, sizes etc depending what code cell task is completing, the good thing would be to somehow show the architecute changing in real time as the user changes code e.g 1 or 2 hidden layers, so the code would need to execute before the user has actually executed it themselves
-
-%there's something in my head thats thinking about showing the mathematics off but is showing lots of visualisation just the same skill
-
-%skills in visualisation:
-
-%1. Real time code visualisation (checking for conditions in code real-time, continuous execution
-%2. showing off maths (activations, architecture, weights, forward/back pass
-
-\subsection{Distribution Features}
+\subsection{Deployment \& Persistence}
 \subsubsection{Database for user information (progress scores etc)} 
 %should i use a hosted database? the difference is between a long-term-persistent data or short-term data?
 
@@ -942,7 +1445,7 @@ This section is split into five broad areas of Computer Science, each category w
 %I dont know how necessary this is really, i probably won't have to time to implement any changes as a result of feedback...
 
 %It would be a good show of feedback-driven developement if i could get something if i could make a change
-
+\end{comment}
 
 
 
@@ -1016,4 +1519,6 @@ This section is split into five broad areas of Computer Science, each category w
 \item Ying, R. \emph{et al.} (2019) DataSifter: An interpretable model for graph representation learning. \emph{Nature Machine Intelligence}, 1(12), pp. 565--573. [online] Available at: \url{https://www.nature.com/articles/s42256-019-0120-9} [Accessed 17 March 2026]. %paper doesn't exist, bad link
 \end{itemize}
 
+
 \end{document}
+

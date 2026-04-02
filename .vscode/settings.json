@@ -1,5 +1,5 @@
 {
-    "python.defaultInterpreterPath": "C:/Users/664077/AppData/Local/interactive-dashboard/.venv/Scripts/python.exe",
+    "python.defaultInterpreterPath": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
     "python.terminal.activateEnvironment": false,
     "files.exclude": {
         "**/.venv": true
