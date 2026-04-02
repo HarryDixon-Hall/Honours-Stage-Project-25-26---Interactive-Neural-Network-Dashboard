@@ -1,5 +1,6 @@
 #region Imports
 from importlib import import_module
+import os
 
 import dash
 from dash import dcc, html
@@ -137,6 +138,7 @@ SAFE_PYTHON_ENV = {
 #====DELCARATION: CODE HERE IS ASSISTED BY https://www.perplexity.ai/ 04/12/25 - 03/03/25====
 #region app setup and information layout
 app = dash.Dash(__name__)
+server = app.server
 
 app.config.suppress_callback_exceptions = True #to prevent callback errors from the teacher page for the dataset/model selection
 
@@ -823,6 +825,10 @@ def syntax_highlighter(pythonCode):
 #endregion
 
 if __name__ == '__main__':
-    app.run(debug=False)   #changed debug to false because otherwise it resets the page every minute
+    app.run(
+        debug=False,
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", "8050")),
+    )   #changed debug to false because otherwise it resets the page every minute
 
 
