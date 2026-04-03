@@ -2,15 +2,43 @@
 
 ## Recommended environment
 
-Use a Linux container host for production. The best fit for this project as it stands is Google Cloud Run running the Docker image built from this repository.
+Use a Linux container host for production. The best fit for this project as it stands is Google Cloud Run running the Docker image built from this repository, with Cloud SQL for PostgreSQL added when you need real persistence.
 
 Why this is the best fit:
 
 - Dash and Flask deploy cleanly on Linux with Gunicorn.
 - The app is effectively stateless today, so it does not need Kubernetes or a more complex platform yet.
+- When you add persistence, Cloud Run plus Cloud SQL keeps the same operational model and avoids a second hosting platform.
 - Cloud Run stays simple for one public web service, but still leaves room for extra services, jobs, secrets, and databases later.
 - GitHub Actions integrates cleanly with Google Cloud through Workload Identity Federation, so you do not need to store a long-lived JSON key in GitHub.
 - The same Docker image can later move to GKE, Azure, AWS, Fly.io, or Render if the project grows.
+
+## Best way to add persistence
+
+For this codebase, the cleanest path is:
+
+1. Keep the Dash app on Cloud Run.
+2. Use Cloud SQL for PostgreSQL as the production database.
+3. Use SQLAlchemy in the application so local development can still fall back to SQLite while production uses PostgreSQL.
+4. Store the production connection string in Secret Manager and inject it into Cloud Run as `DATABASE_URL`.
+
+Why this is the right fit:
+
+- Cloud Run containers have an ephemeral filesystem, so SQLite is acceptable for local development but not for durable production data.
+- PostgreSQL gives you a durable relational store for learner progress, level completion, and experiment history.
+- SQLAlchemy keeps the application code independent from the exact database driver and makes later schema growth easier.
+- Secret Manager keeps credentials out of GitHub and out of the repository.
+
+## Suggested persistence scope
+
+The first database-backed features should be narrow and durable:
+
+- learner profile or anonymous learner ID
+- level completion state
+- notebook or experiment run metadata
+- training configuration and resulting summary metrics
+
+Do not start by trying to persist every transient UI store. Persist outcomes and checkpoints first.
 
 ## Identity and services model
 
@@ -68,6 +96,23 @@ User browser
 Future extension:
 Cloud SQL for PostgreSQL
   - stores user progress, accounts, or experiment history
+
+Recommended production data flow once persistence is enabled:
+
+```text
+User browser
+        |
+        v
+Cloud Run service
+        - Dash / Flask app
+        - SQLAlchemy persistence layer
+        |
+        v
+Cloud SQL for PostgreSQL
+        - learner_profiles
+        - level_progress
+        - experiment_runs
+```
 ```
 
 ## What Docker and the container do
@@ -91,6 +136,21 @@ The workflow in `.github/workflows/deploy.yml` does this on every push to `main`
 3. Builds a Linux Docker image on Ubuntu.
 4. Pushes the image to Google Artifact Registry as `latest` and a commit-specific SHA tag.
 5. Deploys the image to Google Cloud Run.
+6. If configured, attaches a Cloud SQL instance and injects the `DATABASE_URL` secret into the Cloud Run service.
+
+## Application database configuration
+
+The persistence scaffold in `distribution/database.py` resolves configuration in this order:
+
+1. `DATABASE_URL`
+2. `CLOUD_SQL_CONNECTION_NAME` + `DB_NAME` + `DB_USER` + `DB_PASSWORD`
+3. local SQLite fallback for development only
+
+That means:
+
+- local Windows development can run without extra infrastructure
+- Cloud Run can use a Secret Manager-backed `DATABASE_URL`
+- the code stays portable if you later move away from Google Cloud
 
 ## One-time Google Cloud setup
 
@@ -109,11 +169,32 @@ The workflow in `.github/workflows/deploy.yml` does this on every push to `main`
          - `GCP_REGION`
          - `GCP_ARTIFACT_REGISTRY_REPOSITORY`
          - `GCP_CLOUD_RUN_SERVICE`
+         - `GCP_CLOUD_SQL_INSTANCE` if you attach Cloud SQL
+         - `APP_DATABASE_URL_SECRET` if you inject `DATABASE_URL` from Secret Manager
 9. Add these GitHub repository secrets:
          - `GCP_WORKLOAD_IDENTITY_PROVIDER`
          - `GCP_SERVICE_ACCOUNT`
 
 The workflow is designed to use short-lived Google credentials issued at runtime. That is more secure than storing a JSON service account key in GitHub.
+
+## Cloud SQL setup for this project
+
+If you are adding the persistence layer now, create a PostgreSQL instance in Cloud SQL rather than trying to persist local files from Cloud Run.
+
+Recommended setup:
+
+1. Create a Cloud SQL for PostgreSQL instance in the same region as Cloud Run.
+2. Create an application database, for example `interactive_dashboard`.
+3. Create a least-privilege application user.
+4. Store the SQLAlchemy connection string in Secret Manager as one secret, for example `interactive-dashboard-database-url`.
+5. Set the GitHub variable `GCP_CLOUD_SQL_INSTANCE` to the instance connection name.
+6. Set the GitHub variable `APP_DATABASE_URL_SECRET` to the Secret Manager secret name.
+
+Example production `DATABASE_URL` value for Cloud SQL over the Unix socket mounted by Cloud Run:
+
+`postgresql+pg8000://DB_USER:DB_PASSWORD@/interactive_dashboard?unix_sock=/cloudsql/PROJECT_ID:REGION:INSTANCE_NAME/.s.PGSQL.5432`
+
+This is the simplest secure pattern for this repository because the workflow can attach the instance and inject the secret without hardcoding credentials anywhere in source control.
 
 ## Detailed first deployment walkthrough
 

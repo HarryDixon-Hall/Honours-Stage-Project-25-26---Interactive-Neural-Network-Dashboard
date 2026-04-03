@@ -150,6 +150,26 @@ jobs:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
+      - name: Build Cloud Run flags
+        id: deploy-flags
+        shell: bash
+        env:
+          GCP_CLOUD_SQL_INSTANCE: ${{ vars.GCP_CLOUD_SQL_INSTANCE }}
+          APP_DATABASE_URL_SECRET: ${{ vars.APP_DATABASE_URL_SECRET }}
+        run: |
+          flags="--allow-unauthenticated --port=8080"
+
+          if [ -n "${GCP_CLOUD_SQL_INSTANCE}" ]; then
+            flags="${flags} --add-cloudsql-instances=${GCP_CLOUD_SQL_INSTANCE}"
+            flags="${flags} --set-env-vars=CLOUD_SQL_CONNECTION_NAME=${GCP_CLOUD_SQL_INSTANCE}"
+          fi
+
+          if [ -n "${APP_DATABASE_URL_SECRET}" ]; then
+            flags="${flags} --set-secrets=DATABASE_URL=${APP_DATABASE_URL_SECRET}:latest"
+          fi
+
+          echo "value=${flags}" >> "$GITHUB_OUTPUT"
+
       - name: Deploy to Cloud Run
         id: deploy
         uses: google-github-actions/deploy-cloudrun@v3
@@ -158,7 +178,7 @@ jobs:
           service: ${{ vars.GCP_CLOUD_RUN_SERVICE }}
           region: ${{ vars.GCP_REGION }}
           image: ${{ needs.build-image.outputs.image }}
-          flags: '--allow-unauthenticated --port=8080'
+          flags: ${{ steps.deploy-flags.outputs.value }}
 
       - name: Show Cloud Run URL
         run: |

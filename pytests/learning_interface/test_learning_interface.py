@@ -1,4 +1,5 @@
 from adaptiveLearning.gamification.skillTree import skilltree_layout
+from app import app
 from pages.homePage.layout import home_layout
 from pages.levels.level2.layout import level2_layout
 from pages.levels.level3.layout import level3_layout
@@ -33,6 +34,17 @@ def test_level2_layout_exposes_key_learning_controls():
     assert "level2-hidden-layers-slider" in component_ids
     assert "level2-train-toggle-btn" in component_ids
     assert "level2-reset-btn" in component_ids
+    assert "level2-save-model-btn" in component_ids
+    assert "level2-replay-saved-btn" in component_ids
+
+
+def test_app_layout_exposes_topbar_saved_model_history_controls():
+    component_ids = collect_component_ids(app.layout)
+
+    assert "user-session-store" in component_ids
+    assert "model-history-refresh-store" in component_ids
+    assert "topbar-model-history-dropdown" in component_ids
+    assert "topbar-load-model-btn" in component_ids
 
 
 def test_level3_layout_exposes_code_cells_and_live_architecture_outputs():

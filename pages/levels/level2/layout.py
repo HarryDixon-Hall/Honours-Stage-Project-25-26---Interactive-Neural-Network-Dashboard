@@ -204,6 +204,69 @@ def level2_layout():
                             'Pausing freezes the current epoch stage. Reset rebuilds the model and returns the stage timeline to the start.',
                             style={'fontSize': '11px', 'color': '#64748b', 'lineHeight': '1.4'}
                         ),
+                        html.Div([
+                            html.Label('Saved Model Name', style=LABEL_STYLE),
+                            dcc.Input(
+                                id='level2-save-model-name',
+                                type='text',
+                                value='My Level 2 Model',
+                                placeholder='Name this trained model',
+                                style=NUMBER_INPUT_STYLE,
+                            ),
+                        ], style={'marginTop': '14px', 'marginBottom': '10px'}),
+                        html.Div([
+                            html.Button(
+                                'Save Trained Model',
+                                id='level2-save-model-btn',
+                                n_clicks=0,
+                                style={
+                                    'backgroundColor': '#1d4ed8',
+                                    'color': 'white',
+                                    'border': 'none',
+                                    'padding': '10px 14px',
+                                    'borderRadius': '10px',
+                                    'fontWeight': '600',
+                                    'fontSize': '13px',
+                                    'cursor': 'pointer',
+                                }
+                            ),
+                            html.Button(
+                                'Replay Saved Run',
+                                id='level2-replay-saved-btn',
+                                n_clicks=0,
+                                disabled=True,
+                                style={
+                                    'backgroundColor': '#7c3aed',
+                                    'color': 'white',
+                                    'border': 'none',
+                                    'padding': '10px 14px',
+                                    'borderRadius': '10px',
+                                    'fontWeight': '600',
+                                    'fontSize': '13px',
+                                    'cursor': 'pointer',
+                                }
+                            ),
+                            html.Button(
+                                'Stop Replay',
+                                id='level2-stop-replay-btn',
+                                n_clicks=0,
+                                disabled=True,
+                                style={
+                                    'backgroundColor': '#475569',
+                                    'color': 'white',
+                                    'border': 'none',
+                                    'padding': '10px 14px',
+                                    'borderRadius': '10px',
+                                    'fontWeight': '600',
+                                    'fontSize': '13px',
+                                    'cursor': 'pointer',
+                                }
+                            ),
+                        ], style={'display': 'flex', 'gap': '8px', 'flexWrap': 'wrap', 'marginBottom': '10px'}),
+                        html.Div(
+                            id='level2-save-feedback',
+                            style={'fontSize': '11px', 'color': '#475569', 'lineHeight': '1.4'}
+                        ),
                     ], style={**CARD_STYLE, 'flex': '1 1 280px', 'marginTop': '18px'}),
                     html.Div([
                         html.H3('Animation Control', style={'marginTop': '0', 'marginBottom': '8px', 'fontSize': '18px'}),
@@ -427,6 +490,8 @@ def level2_layout():
             'flexWrap': 'wrap',
         }),
         dcc.Interval(id='level2-train-interval', interval=350, n_intervals=0, disabled=True),
+        dcc.Interval(id='level2-replay-interval', interval=450, n_intervals=0, disabled=True),
         dcc.Store(id='level2-params-store'),
         dcc.Store(id='level2-training-store', data={'running': False, 'paused': False, 'mode': 'auto'}),
+        dcc.Store(id='level2-replay-store', data={'active': False, 'current_index': 0, 'loaded_run_id': None, 'model_name': None}),
     ], style=PAGE_STYLE)

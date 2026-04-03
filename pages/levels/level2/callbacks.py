@@ -1,4 +1,5 @@
 from importlib import import_module
+from urllib.parse import parse_qs
 
 import dash
 
@@ -11,6 +12,8 @@ except ImportError:
     State = dash_dependencies.State
 
 from dash import html
+
+from distribution.database import get_level2_model_run, save_level2_model_run
 
 from pages.levels.level2.methods import (
     apply_level2_gradients,
@@ -45,6 +48,22 @@ def _copy_serialized_weights(weights):
     return [[list(row) for row in layer] for layer in weights]
 
 
+def _copy_replay_frames(replay_frames):
+    copied = []
+    for frame in replay_frames or []:
+        copied.append({
+            'epoch': int(frame.get('epoch', 0)),
+            'weights': _copy_serialized_weights(frame.get('weights', [])),
+            'biases': _copy_serialized_weights(frame.get('biases', [])),
+            'history': {
+                key: list(value)
+                for key, value in (frame.get('history') or {}).items()
+            },
+            'meta': dict(frame.get('meta', {})),
+        })
+    return copied
+
+
 def _copy_params(params):
     if params is None:
         return None
@@ -62,7 +81,38 @@ def _copy_params(params):
     if params.get('meta') is not None:
         copied['meta'] = dict(params['meta'])
 
+    if params.get('replay_frames') is not None:
+        copied['replay_frames'] = _copy_replay_frames(params.get('replay_frames', []))
+
+    if params.get('saved_run_id') is not None:
+        copied['saved_run_id'] = int(params['saved_run_id'])
+
+    if params.get('saved_model_name') is not None:
+        copied['saved_model_name'] = params['saved_model_name']
+
     return copied
+
+
+def _build_params_from_replay_frame(frame, replay_frames, *, saved_run_id=None, saved_model_name=None):
+    params = {
+        'weights': _copy_serialized_weights(frame.get('weights', [])),
+        'biases': _copy_serialized_weights(frame.get('biases', [])),
+        'epoch': int(frame.get('epoch', 0)),
+        'history': {
+            key: list(value)
+            for key, value in (frame.get('history') or {}).items()
+        },
+        'meta': dict(frame.get('meta', {})),
+        'replay_frames': _copy_replay_frames(replay_frames),
+    }
+
+    if saved_run_id is not None:
+        params['saved_run_id'] = int(saved_run_id)
+
+    if saved_model_name is not None:
+        params['saved_model_name'] = saved_model_name
+
+    return params
 
 
 def _safe_int(value, minimum, maximum, default):
@@ -224,6 +274,7 @@ def register_level2_callbacks(app):
         Input('level2-learning-rate-slider', 'value'),
         Input('level2-play-speed-control', 'value'),
         Input('level2-training-mode', 'value'),
+        Input('level2-replay-store', 'data'),
         State('level2-params-store', 'data'),
         State('level2-training-store', 'data'),
     )
@@ -246,6 +297,7 @@ def register_level2_callbacks(app):
         learning_rate,
         play_speed,
         training_mode,
+        replay_store,
         params,
         training_store,
     ):
@@ -267,6 +319,7 @@ def register_level2_callbacks(app):
         training_state = training_store or _make_training_state(play_speed='normal', mode=safe_mode)
         training_state['play_speed'] = safe_play_speed
         training_state['mode'] = safe_mode
+        replay_active = bool((replay_store or {}).get('active'))
         running = bool(training_state.get('running'))
         paused = bool(training_state.get('paused'))
 
@@ -399,7 +452,9 @@ def register_level2_callbacks(app):
             'epoch_updated_params': training_state.get('epoch_updated_params'),
         }
         max_epochs_reached = params.get('epoch', 0) >= MAX_LEVEL2_EPOCHS
-        if max_epochs_reached:
+        if replay_active:
+            button_label = 'Replay Active'
+        elif max_epochs_reached:
             button_label = 'Max Epochs Reached'
         elif running:
             button_label = 'Training Active'
@@ -407,11 +462,11 @@ def register_level2_callbacks(app):
             button_label = 'Resume Training'
         else:
             button_label = 'Start Training'
-        start_disabled = running or max_epochs_reached
-        pause_disabled = (not running) or max_epochs_reached
-        prev_stage_disabled = (not running) or safe_mode != 'semiauto' or int(training_state.get('stage_index', 0)) <= 0 or max_epochs_reached
-        step_disabled = (not running) or safe_mode != 'semiauto' or max_epochs_reached
-        interval_disabled = (not running) or safe_mode != 'auto' or max_epochs_reached
+        start_disabled = replay_active or running or max_epochs_reached
+        pause_disabled = replay_active or (not running) or max_epochs_reached
+        prev_stage_disabled = replay_active or (not running) or safe_mode != 'semiauto' or int(training_state.get('stage_index', 0)) <= 0 or max_epochs_reached
+        step_disabled = replay_active or (not running) or safe_mode != 'semiauto' or max_epochs_reached
+        interval_disabled = replay_active or (not running) or safe_mode != 'auto' or max_epochs_reached
         interval_ms = SPEED_TO_INTERVAL[safe_play_speed]
 
         return params, training_state, button_label, start_disabled, pause_disabled, prev_stage_disabled, step_disabled, interval_disabled, interval_ms
@@ -428,8 +483,9 @@ def register_level2_callbacks(app):
         Output('level2-training-stage-panel', 'children'),
         Input('level2-params-store', 'data'),
         Input('level2-training-store', 'data'),
+        Input('level2-replay-store', 'data'),
     )
-    def update_level2_views(params, training_store):
+    def update_level2_views(params, training_store, replay_store):
         if params is None:
             raise dash.exceptions.PreventUpdate
 
@@ -452,6 +508,8 @@ def register_level2_callbacks(app):
         gradient_norms = training_state.get('gradient_norms') or []
         paused = bool(training_state.get('paused'))
         mode = training_state.get('mode', 'auto')
+        replay_active = bool((replay_store or {}).get('active'))
+        replay_model_name = (replay_store or {}).get('model_name') or params.get('saved_model_name')
         stage_index = int(training_state.get('stage_index', 0))
         previous_stage = STAGE_SEQUENCE[stage_index - 1] if 0 < stage_index < len(STAGE_SEQUENCE) else 'none'
         next_stage = STAGE_SEQUENCE[(stage_index + 1) % len(STAGE_SEQUENCE)] if current_stage != 'idle' and metrics['epoch'] < MAX_LEVEL2_EPOCHS else STAGE_SEQUENCE[0]
@@ -496,7 +554,10 @@ def register_level2_callbacks(app):
 
         running = bool(training_state.get('running'))
         play_speed = training_state.get('play_speed', 'normal')
-        if running:
+        if replay_active:
+            model_status = 'Replay'
+            status_color = '#7c3aed'
+        elif running:
             model_status = 'Training'
             status_color = '#0f766e'
         elif metrics['epoch'] == 0 and current_stage == 'idle':
@@ -510,8 +571,13 @@ def register_level2_callbacks(app):
             html.Div('Model Status', style={'fontSize': '11px', 'textTransform': 'uppercase', 'letterSpacing': '0.08em', 'color': '#64748b', 'marginBottom': '4px'}),
             html.Div(model_status, style={'fontSize': '21px', 'fontWeight': '700', 'color': status_color, 'marginBottom': '2px'}),
             html.Div(
-                'Training is active.' if running else (
+                (
+                    f'Replaying saved run {replay_model_name}.'
+                    if replay_active and replay_model_name else 'Replaying a saved run.'
+                ) if replay_active else (
+                    'Training is active.' if running else (
                     'Model initialised.' if model_status == 'Ready' else f'Holding at {current_stage}.'
+                    )
                 ),
                 style={'fontSize': '11px', 'color': '#64748b', 'lineHeight': '1.35'},
             ),
@@ -540,3 +606,166 @@ def register_level2_callbacks(app):
             epoch_panel,
             stage_panel,
         )
+
+    @app.callback(
+        Output('level2-save-model-btn', 'disabled'),
+        Output('level2-replay-saved-btn', 'disabled'),
+        Output('level2-stop-replay-btn', 'disabled'),
+        Input('level2-params-store', 'data'),
+        Input('level2-replay-store', 'data'),
+    )
+    def update_level2_persistence_controls(params, replay_store):
+        replay_active = bool((replay_store or {}).get('active'))
+        replay_frames = (params or {}).get('replay_frames', [])
+        current_epoch = int((params or {}).get('epoch', 0))
+
+        save_disabled = replay_active or current_epoch <= 0
+        replay_disabled = replay_active or len(replay_frames) <= 1
+        stop_disabled = not replay_active
+        return save_disabled, replay_disabled, stop_disabled
+
+    @app.callback(
+        Output('level2-save-feedback', 'children'),
+        Output('model-history-refresh-store', 'data', allow_duplicate=True),
+        Input('level2-save-model-btn', 'n_clicks'),
+        State('level2-save-model-name', 'value'),
+        State('level2-params-store', 'data'),
+        State('user-session-store', 'data'),
+        State('model-history-refresh-store', 'data'),
+        prevent_initial_call=True,
+    )
+    def save_level2_model(n_clicks, requested_name, params, user_store, refresh_store):
+        if not n_clicks:
+            raise dash.exceptions.PreventUpdate
+
+        if not params or int(params.get('epoch', 0)) <= 0:
+            return 'Train the Level 2 model before saving it to history.', dash.no_update
+
+        learner_id = (user_store or {}).get('learner_id')
+        if not learner_id:
+            return 'User identity is not ready yet. Reload the page and try again.', dash.no_update
+
+        meta = params.get('meta', {})
+        dataset_bundle = build_level2_dataset(
+            meta.get('dataset', 'moons'),
+            input_dim=meta.get('input_dim', 2),
+        )
+        metrics = level2_evaluate_metrics(dataset_bundle, params, meta.get('activation', 'tanh'), l2=1e-4)
+        model_name = (requested_name or '').strip() or f"Level 2 {meta.get('dataset', 'model')} epoch {params.get('epoch', 0)}"
+        saved_run = save_level2_model_run(
+            learner_id,
+            model_name,
+            _copy_params(params),
+            metrics,
+            display_name=(user_store or {}).get('display_name'),
+        )
+        refresh_count = int((refresh_store or {}).get('version', 0)) + 1
+        return (
+            f"Saved {saved_run['model_name']} to your Level 2 history.",
+            {'version': refresh_count, 'last_saved_run_id': saved_run['id']},
+        )
+
+    @app.callback(
+        Output('level2-params-store', 'data', allow_duplicate=True),
+        Output('level2-training-store', 'data', allow_duplicate=True),
+        Output('level2-replay-store', 'data', allow_duplicate=True),
+        Output('level2-replay-interval', 'disabled', allow_duplicate=True),
+        Output('level2-save-feedback', 'children', allow_duplicate=True),
+        Output('level2-save-model-name', 'value', allow_duplicate=True),
+        Input('url', 'pathname'),
+        Input('url', 'search'),
+        State('user-session-store', 'data'),
+        prevent_initial_call='initial_duplicate',
+    )
+    def load_saved_level2_model(pathname, search, user_store):
+        if pathname != '/level2':
+            raise dash.exceptions.PreventUpdate
+
+        query = parse_qs((search or '').lstrip('?'))
+        run_id = query.get('model_run', [None])[0]
+        if not run_id:
+            raise dash.exceptions.PreventUpdate
+
+        learner_id = (user_store or {}).get('learner_id')
+        if not learner_id:
+            return dash.no_update, dash.no_update, dash.no_update, True, 'User identity is not ready yet.', dash.no_update
+
+        saved_run = get_level2_model_run(learner_id, int(run_id))
+        if saved_run is None:
+            return dash.no_update, dash.no_update, dash.no_update, True, 'Saved model not found for this user.', dash.no_update
+
+        saved_params = _copy_params(saved_run.get('params', {}))
+        replay_frames = _copy_replay_frames(saved_params.get('replay_frames', []))
+        if not replay_frames:
+            replay_frames = [_build_params_from_replay_frame(saved_params, [], saved_run_id=saved_run['id'], saved_model_name=saved_run['model_name'])]
+            initial_params = replay_frames[0]
+        else:
+            initial_params = _build_params_from_replay_frame(
+                replay_frames[0],
+                replay_frames,
+                saved_run_id=saved_run['id'],
+                saved_model_name=saved_run['model_name'],
+            )
+
+        training_state = _make_training_state()
+        training_state['current_stage'] = 'idle'
+        replay_state = {
+            'active': len(replay_frames) > 1,
+            'current_index': 0,
+            'loaded_run_id': saved_run['id'],
+            'model_name': saved_run['model_name'],
+        }
+        replay_disabled = len(replay_frames) <= 1
+        feedback = f"Loaded saved model {saved_run['model_name']} from your history."
+        return initial_params, training_state, replay_state, replay_disabled, feedback, saved_run['model_name']
+
+    @app.callback(
+        Output('level2-params-store', 'data', allow_duplicate=True),
+        Output('level2-replay-store', 'data', allow_duplicate=True),
+        Output('level2-replay-interval', 'disabled', allow_duplicate=True),
+        Input('level2-replay-saved-btn', 'n_clicks'),
+        Input('level2-stop-replay-btn', 'n_clicks'),
+        Input('level2-replay-interval', 'n_intervals'),
+        State('level2-params-store', 'data'),
+        State('level2-replay-store', 'data'),
+        prevent_initial_call=True,
+    )
+    def replay_saved_level2_model(n_replay, n_stop, n_intervals, params, replay_store):
+        _ = (n_replay, n_stop, n_intervals)
+        if not params:
+            raise dash.exceptions.PreventUpdate
+
+        replay_frames = _copy_replay_frames(params.get('replay_frames', []))
+        if len(replay_frames) <= 1:
+            raise dash.exceptions.PreventUpdate
+
+        current_replay = dict(replay_store or {})
+        trigger = dash.callback_context.triggered[0]['prop_id'].split('.')[0] if dash.callback_context.triggered else None
+        model_name = current_replay.get('model_name') or params.get('saved_model_name')
+        run_id = current_replay.get('loaded_run_id') or params.get('saved_run_id')
+
+        if trigger == 'level2-stop-replay-btn':
+            current_replay['active'] = False
+            return dash.no_update, current_replay, True
+
+        if trigger == 'level2-replay-saved-btn':
+            current_replay = {
+                'active': True,
+                'current_index': 0,
+                'loaded_run_id': run_id,
+                'model_name': model_name,
+            }
+            return _build_params_from_replay_frame(replay_frames[0], replay_frames, saved_run_id=run_id, saved_model_name=model_name), current_replay, False
+
+        if trigger != 'level2-replay-interval' or not current_replay.get('active'):
+            raise dash.exceptions.PreventUpdate
+
+        next_index = int(current_replay.get('current_index', 0)) + 1
+        if next_index >= len(replay_frames):
+            final_index = len(replay_frames) - 1
+            current_replay['active'] = False
+            current_replay['current_index'] = final_index
+            return _build_params_from_replay_frame(replay_frames[final_index], replay_frames, saved_run_id=run_id, saved_model_name=model_name), current_replay, True
+
+        current_replay['current_index'] = next_index
+        return _build_params_from_replay_frame(replay_frames[next_index], replay_frames, saved_run_id=run_id, saved_model_name=model_name), current_replay, False

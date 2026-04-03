@@ -1,6 +1,7 @@
 #region Imports
 from importlib import import_module
 import os
+from uuid import uuid4
 
 import dash
 from dash import dcc, html
@@ -58,6 +59,7 @@ matplotlib.use('Agg') #for the png whic dash plotly can display
 
 #page layout imports
 from adaptiveLearning.gamification.skillTree import skilltree_layout
+from distribution.database import init_database, list_level2_model_runs
 from pages.homePage.layout import home_layout
 from pages.sandboxPage.layout import SANDBOX_EDITOR, sandbox_layout
 
@@ -139,6 +141,7 @@ SAFE_PYTHON_ENV = {
 #region app setup and information layout
 app = dash.Dash(__name__)
 server = app.server
+init_database()
 
 app.config.suppress_callback_exceptions = True #to prevent callback errors from the teacher page for the dataset/model selection
 
@@ -149,8 +152,21 @@ register_level3_callbacks(app)
 app.layout = html.Div([
     # Fixed top navigation bar
     html.Div([
-        html.H3("Neural Network Dashboard (WORK IN PROGRESS)", 
-                style={'margin': '0 20px', 'display': 'inline-block'}),
+        html.Div([
+            html.H3("Neural Network Dashboard (WORK IN PROGRESS)", 
+                    style={'margin': '0 20px 6px 0', 'display': 'inline-block'}),
+            html.Div(id='topbar-user-pill', style={
+                'display': 'inline-flex',
+                'alignItems': 'center',
+                'padding': '6px 12px',
+                'borderRadius': '999px',
+                'backgroundColor': '#ecfeff',
+                'border': '1px solid #99f6e4',
+                'color': '#115e59',
+                'fontSize': '12px',
+                'fontWeight': '600',
+            }),
+        ], style={'display': 'flex', 'alignItems': 'center', 'gap': '10px', 'flexWrap': 'wrap'}),
         html.Div([
             html.Img(src="/assets/construction_man.gif", style={"width": "100px", "height": "100px", "borderRadius": "50%"}),
             html.Img(src="/assets/empire-state.gif", style={"width": "100px", "height": "100px", "borderRadius": "50%"}),
@@ -173,20 +189,64 @@ app.layout = html.Div([
             dcc.Link("Sandbox", href="/sandbox", 
                     style={'padding': '10px 15px', 'display': 'inline-block', 
                           'color': '#333', 'textDecoration': 'none'}),
-            
-        ], style={'float': 'right'})
+            html.Div([
+                dcc.Dropdown(
+                    id='topbar-model-history-dropdown',
+                    options=[],
+                    placeholder='Saved Level 2 models',
+                    clearable=False,
+                    disabled=True,
+                    style={
+                        'minWidth': '260px',
+                        'fontSize': '12px',
+                        'color': '#0f172a',
+                    },
+                ),
+                html.Button(
+                    'Load In Level 2',
+                    id='topbar-load-model-btn',
+                    n_clicks=0,
+                    style={
+                        'backgroundColor': '#0f172a',
+                        'color': 'white',
+                        'border': 'none',
+                        'padding': '10px 14px',
+                        'borderRadius': '10px',
+                        'fontWeight': '600',
+                        'fontSize': '12px',
+                        'cursor': 'pointer',
+                    }
+                ),
+                html.Div(
+                    id='topbar-model-history-status',
+                    style={'fontSize': '11px', 'color': '#0f172a', 'lineHeight': '1.3'}
+                ),
+            ], style={
+                'display': 'flex',
+                'flexDirection': 'column',
+                'gap': '6px',
+                'minWidth': '280px',
+                'padding': '0 12px',
+            }),
+        ], style={'marginLeft': 'auto', 'display': 'flex', 'alignItems': 'center', 'gap': '6px', 'flexWrap': 'wrap'})
     ], style={
         'backgroundColor': "#29c08e", 
         'borderBottom': '1px solid #dee2e6',
         'padding': '30px 0', 
         'position': 'sticky',
         'top': '0',
-        'zIndex': '1000'
+        'zIndex': '1000',
+        'display': 'flex',
+        'alignItems': 'center',
+        'gap': '18px',
+        'flexWrap': 'wrap',
     }),
 
 
     dcc.Location(id="url", refresh=True), #url watchdog
     dcc.Store(id="lesson-config-store"),   #sharing between teacher/student of lesson config
+    dcc.Store(id='user-session-store', storage_type='local'),
+    dcc.Store(id='model-history-refresh-store', data={'version': 0}),
     html.Div(id="page-content"),           #student/teacher pa
 ])
 
@@ -759,6 +819,69 @@ def train_visualise_or_reset(train_clicks,
 #region page layout routing logic (callbacks/ methods)
 #callback for display decision: student or teacher page
 #now the callback to get to the homepage actually works, can navigate all pages
+@app.callback(
+   Output('user-session-store', 'data'),
+   Output('topbar-user-pill', 'children'),
+   Input('url', 'pathname'),
+   State('user-session-store', 'data'),
+)
+def ensure_user_session(pathname, user_store):
+    _ = pathname
+    existing_user = user_store or {}
+    learner_id = existing_user.get('learner_id') or str(uuid4())
+    display_name = existing_user.get('display_name') or f"Learner {learner_id.split('-')[0][:8]}"
+    return {
+        'learner_id': learner_id,
+        'display_name': display_name,
+    }, display_name
+
+
+@app.callback(
+   Output('topbar-model-history-dropdown', 'options'),
+   Output('topbar-model-history-dropdown', 'value'),
+   Output('topbar-model-history-dropdown', 'disabled'),
+   Output('topbar-model-history-status', 'children'),
+   Input('user-session-store', 'data'),
+   Input('model-history-refresh-store', 'data'),
+)
+def refresh_topbar_model_history(user_store, refresh_store):
+    _ = refresh_store
+    learner_id = (user_store or {}).get('learner_id')
+    if not learner_id:
+        return [], None, True, 'Preparing your personal model history.'
+
+    saved_runs = list_level2_model_runs(learner_id, limit=20)
+    if not saved_runs:
+        return [], None, True, 'No saved Level 2 models yet.'
+
+    options = []
+    for saved_run in saved_runs:
+        dataset_name = saved_run.get('dataset_name') or 'dataset'
+        epoch = saved_run.get('epoch', 0)
+        created_at = saved_run.get('created_at', '')
+        created_display = created_at.replace('T', ' ')[:16] if created_at else 'saved run'
+        options.append({
+            'label': f"{saved_run['model_name']} | {dataset_name} | epoch {epoch} | {created_display}",
+            'value': str(saved_run['id']),
+        })
+
+    return options, None, False, f"{len(saved_runs)} saved Level 2 model(s) available."
+
+
+@app.callback(
+   Output('url', 'pathname', allow_duplicate=True),
+   Output('url', 'search', allow_duplicate=True),
+   Input('topbar-load-model-btn', 'n_clicks'),
+   State('topbar-model-history-dropdown', 'value'),
+   prevent_initial_call=True,
+)
+def open_saved_level2_model(n_clicks, selected_model_id):
+    if not n_clicks or not selected_model_id:
+        raise dash.exceptions.PreventUpdate
+
+    return '/level2', f'?model_run={selected_model_id}'
+
+
 @app.callback(
    Output("page-content", "children"),
    Input("url", "pathname"), 

@@ -144,6 +144,21 @@ def init_level2_mlp(input_dim=2, hidden_layers=None, output_dim=1, rng=None):
             'train_accuracy': [],
             'test_accuracy': [],
         },
+        'replay_frames': [],
+    }
+
+
+def _make_level2_replay_frame(params):
+    history = params.get('history') or {}
+    return {
+        'epoch': int(params.get('epoch', 0)),
+        'weights': [[list(row) for row in layer] for layer in params.get('weights', [])],
+        'biases': [[list(row) for row in layer] for layer in params.get('biases', [])],
+        'history': {
+            key: list(values)
+            for key, values in history.items()
+        },
+        'meta': dict(params.get('meta', {})),
     }
 
 
@@ -590,6 +605,7 @@ def level2_set_baseline_history(dataset_bundle, params, activation, l2=0.0):
         'train_accuracy': [metrics['train_accuracy']],
         'test_accuracy': [metrics['test_accuracy']],
     }
+    params['replay_frames'] = [_make_level2_replay_frame(params)]
     return params
 
 
@@ -671,6 +687,9 @@ def apply_level2_gradients(dataset_bundle, params, gradient_snapshot, activation
         'train_accuracy': list(history.get('train_accuracy', [])) + [metrics['train_accuracy']],
         'test_accuracy': list(history.get('test_accuracy', [])) + [metrics['test_accuracy']],
     }
+    replay_frames = list(params.get('replay_frames', []))
+    replay_frames.append(_make_level2_replay_frame(params))
+    params['replay_frames'] = replay_frames
     return params
 
 
