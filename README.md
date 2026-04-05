@@ -1,5 +1,30 @@
 # Honours-Stage-Project-25-26---Interactive Neural Network Dashboard
-[![Python CI](https://github.com/HarryDixon-Hall/Honours-Stage-Project-25-26---Interactive-Neural-Network-Dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/HarryDixon-Hall/Honours-Stage-Project-25-26---Interactive-Neural-Network-Dashboard/actions/workflows/ci.yml)
+
+## Quality Control
+
+### Aim 1 - Learning Interface
+[![Objective 1.1 - Learning Interface](https://github.com/HarryDixon-Hall/Honours-Stage-Project-25-26---Interactive-Neural-Network-Dashboard/actions/workflows/objective-1-1-learning-interface.yml/badge.svg)](https://github.com/HarryDixon-Hall/Honours-Stage-Project-25-26---Interactive-Neural-Network-Dashboard/actions/workflows/objective-1-1-learning-interface.yml)
+[![Objective 1.2 - Adaptive Learning](https://github.com/HarryDixon-Hall/Honours-Stage-Project-25-26---Interactive-Neural-Network-Dashboard/actions/workflows/objective-1-2-adaptive-learning.yml/badge.svg)](https://github.com/HarryDixon-Hall/Honours-Stage-Project-25-26---Interactive-Neural-Network-Dashboard/actions/workflows/objective-1-2-adaptive-learning.yml)
+
+### Aim 2 - Model Factory Subsystem
+[![Objective 2.1 - Model Fabrication and Testing](https://github.com/HarryDixon-Hall/Honours-Stage-Project-25-26---Interactive-Neural-Network-Dashboard/actions/workflows/objective-2-1-model-fabrication-testing.yml/badge.svg)](https://github.com/HarryDixon-Hall/Honours-Stage-Project-25-26---Interactive-Neural-Network-Dashboard/actions/workflows/objective-2-1-model-fabrication-testing.yml)
+[![Objective 2.2 - Data Handling](https://github.com/HarryDixon-Hall/Honours-Stage-Project-25-26---Interactive-Neural-Network-Dashboard/actions/workflows/objective-2-2-data-handling.yml/badge.svg)](https://github.com/HarryDixon-Hall/Honours-Stage-Project-25-26---Interactive-Neural-Network-Dashboard/actions/workflows/objective-2-2-data-handling.yml)
+
+### Aim 3 - Secure and Deployable Application
+[![Objective 3.1 - Secure Code Execution](https://github.com/HarryDixon-Hall/Honours-Stage-Project-25-26---Interactive-Neural-Network-Dashboard/actions/workflows/objective-3-1-secure-code-execution.yml/badge.svg)](https://github.com/HarryDixon-Hall/Honours-Stage-Project-25-26---Interactive-Neural-Network-Dashboard/actions/workflows/objective-3-1-secure-code-execution.yml)
+[![Objective 3.2 - Deployment and Persistence](https://github.com/HarryDixon-Hall/Honours-Stage-Project-25-26---Interactive-Neural-Network-Dashboard/actions/workflows/objective-3-2-deployment-persistence.yml/badge.svg)](https://github.com/HarryDixon-Hall/Honours-Stage-Project-25-26---Interactive-Neural-Network-Dashboard/actions/workflows/objective-3-2-deployment-persistence.yml)
+
+### Deployment
+[![Deploy To Cloud Run](https://github.com/HarryDixon-Hall/Honours-Stage-Project-25-26---Interactive-Neural-Network-Dashboard/actions/workflows/deploy.yml/badge.svg)](https://github.com/HarryDixon-Hall/Honours-Stage-Project-25-26---Interactive-Neural-Network-Dashboard/actions/workflows/deploy.yml)
+
+Configure GitHub branch protection on `main` to require these six objective workflows before merge:
+
+1. Objective 1.1 - Learning Interface
+2. Objective 1.2 - Adaptive Learning
+3. Objective 2.1 - Model Fabrication and Testing
+4. Objective 2.2 - Data Handling
+5. Objective 3.1 - Secure Code Execution
+6. Objective 3.2 - Deployment and Persistence
 
 A final year project to design an Interactive Dashboard that will serve as a walkthrough in using Feed-Forward Neural Networks to solve a classification problem, the Iris Dataset
 
